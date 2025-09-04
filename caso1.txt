@@ -1,0 +1,6 @@
+A=4
+
+print(A)
+
+if A>3
+    print("si amigo")
