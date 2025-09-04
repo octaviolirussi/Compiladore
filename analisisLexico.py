@@ -16,10 +16,10 @@ class MyLexer(Lexer):
     ignore_newline = r'\n+'
 
     # Reglas de tokens
-    ID          = r'[A-Z][A-Z0-9%]{0,19}'
+    RESERVED    = r'if|else|endif|print|return|while|do' # primero por prioridad, para evitar problemas al convertir en mayusculas
+    ID          = r'[A-Za-z][A-Za-z0-9%]{0,}'
     CONST_INT   = r'\d+I'
     CONST_FLOAT = r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?'
-    RESERVED    = r'if|else|endif|print|return|while|do'
     PLUS        = r'\+'
     MINUS       = r'-'
     TIMES       = r'\*'
@@ -63,13 +63,27 @@ class MyLexer(Lexer):
     
     #Acciones semanticas
     #ID
+    @_(r'[A-Za-z][A-Za-z0-9%]{0,}')
+    def ID(self, t):
+        max_length = 20
     
+    # Convertir cualquier minúscula a mayúscula
+        if any(c.islower() for c in t.value):
+            print(f"Warning: Identificador '{t.value}' convertido a mayúsculas (línea {self.lineno})")
+            t.value = ''.join(c.upper() for c in t.value)
+    
+    # Truncar si excede longitud máxima
+        if len(t.value) > max_length:
+            print(f"Warning: Identificador '{t.value}' truncado a {max_length} caracteres (línea {self.lineno})")
+            t.value = t.value[:max_length]
+
+        t.lineno = self.lineno
+        return t
 
     # Manejo de errores
     def error(self, t):
-        print(f"Carácter ilegal '{t.value[0]}'")
-        self.index += 1
-
+        print(f"Carácter ilegal '{t.value[0]}' en línea {self.lineno}")
+        self.index += 1  # Avanza solo un carácter para continuar
 
 if __name__ == '__main__':
     lexer = MyLexer()
