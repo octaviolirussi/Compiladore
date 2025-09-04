@@ -16,7 +16,7 @@ class MyLexer(Lexer):
     ignore_newline = r'\n+'
 
     # Reglas de tokens
-    RESERVED    = r'if|else|endif|print|return|while|do' # primero por prioridad, para evitar problemas al convertir en mayusculas
+    RESERVED    = r'if|else|endif|print|return|while|do|float' # primero por prioridad, para evitar problemas al convertir en mayusculas
     ID          = r'[A-Za-z][A-Za-z0-9%]{0,}'
     CONST_INT   = r'\d+I'
     CONST_FLOAT = r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?'
@@ -40,6 +40,7 @@ class MyLexer(Lexer):
     SEMI        = r';'
     COMMA       = r','
     STRING      = r'"[^"\n]*"'
+    #NUMBER      = r'\d+ |\d+\n'
 
     # Palabras reservadas
     RESERVED['if']     = IF
@@ -51,10 +52,10 @@ class MyLexer(Lexer):
     RESERVED['do']     = DO
 
 
-    @_(r'\d+')
-    def NUMBER(self, t):
-        t.value = int(t.value)
-        return t
+    #@_(r'\d+')
+    #def NUMBER(self, t):
+     #   t.value = int(t.value)
+      #  return t
     
     #Track line number
     @_(r'\n+')
