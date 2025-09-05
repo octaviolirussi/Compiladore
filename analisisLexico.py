@@ -1,5 +1,5 @@
 from sly import Lexer
-#djaskdasdskdjaskj
+
 class MyLexer(Lexer):
 
     def __init__(self):
@@ -17,8 +17,8 @@ class MyLexer(Lexer):
     ignore_newline = r'\n+'
 
     # Reglas de tokens
-    RESERVED    = r'if|else|endif|print|return|while|do|float' # primero por prioridad, para evitar problemas al convertir en mayusculas
-    ID          = r'[A-Za-z][A-Za-z0-9%]{0,}'
+    RESERVED    = r'if|else|endif|print|return|while|do|float' 
+    ID          = r'[A-Z][A-Z0-9%]{0,}'
     CONST_INT   = r'\d+I'
     CONST_FLOAT = r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?'
     PLUS        = r'\+'
@@ -41,7 +41,6 @@ class MyLexer(Lexer):
     SEMI        = r';'
     COMMA       = r','
     STRING      = r'"[^"\n]*"'
-    #NUMBER      = r'\d+ |\d+\n'
 
     # Palabras reservadas
     RESERVED['if']     = IF
@@ -53,11 +52,6 @@ class MyLexer(Lexer):
     RESERVED['do']     = DO
 
 
-    #@_(r'\d+')
-    #def NUMBER(self, t):
-     #   t.value = int(t.value)
-      #  return t
-    
     #Track line number
     @_(r'\n+')
     def ignore_newline(self,t):
@@ -65,14 +59,9 @@ class MyLexer(Lexer):
     
     #Acciones semanticas
     #ID
-    @_(r'[A-Za-z][A-Za-z0-9%]{0,}')
+    @_(r'[A-Z][A-Z0-9%]{0,}')
     def ID(self, t):
         max_length = 20
-    
-    # Convertir cualquier minúscula a mayúscula
-        if any(c.islower() for c in t.value):
-            print(f"Warning: Identificador '{t.value}' convertido a mayúsculas (línea {self.lineno})")
-            t.value = ''.join(c.upper() for c in t.value)
     
     # Truncar si excede longitud máxima
         if len(t.value) > max_length:
