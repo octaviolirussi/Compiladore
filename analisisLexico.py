@@ -1,8 +1,8 @@
 from sly import Lexer
 
-
 class MyLexer(Lexer):
     
+
     def __init__(self):
         self.lineno = 1
 
@@ -77,10 +77,4 @@ class MyLexer(Lexer):
         print(f"Carácter ilegal '{t.value[0]}' en línea {self.lineno}")
         self.index += 1  # Avanza solo un carácter para continuar
 
-if __name__ == '__main__':
-    lexer = MyLexer()
-    # Abrimos el archivo en modo lectura ('r')
-    with open("caso1.txt", "r", encoding="utf-8") as f:
-        text = f.read()  # lee todo el contenido
-    for tok in lexer.tokenize(text):
-        print('type=%r, value=%r' % (tok.type, tok.value))
+   
