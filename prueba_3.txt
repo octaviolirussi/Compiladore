@@ -1,0 +1,31 @@
+if (CONDICION) {
+    // CODIGO
+}
+
+else {
+    // CODIGO
+}
+
+endif
+
+print("Mensaje")
+
+return
+
+while (CONDICION) {
+    // CODIGO
+}
+
+do {
+    // CODIGO
+} while (CONDICION)
+
+iF (CONDICION) {
+    // CODIGO
+}
+
+ELSE {
+    // CODIGO
+}
+
+PRINT("Mensaje")

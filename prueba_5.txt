@@ -1,0 +1,7 @@
+cadena1 = "Hola Mundo"
+
+
+CADENA2 = "Esta cadena no termina
+
+
+CADENA3 = "OTRA cadena"

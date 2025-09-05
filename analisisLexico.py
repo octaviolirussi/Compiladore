@@ -2,7 +2,6 @@ from sly import Lexer
 
 class MyLexer(Lexer):
     
-
     def __init__(self):
         self.lineno = 1
 
@@ -12,7 +11,7 @@ class MyLexer(Lexer):
     ignore = ' \t'
     
     # Comentarios
-    ignore_comment = r'##(.|\n)*?##'
+    ignore_comment = r'##(.|\n| )*?##'
 
     #Ignore new line
     ignore_newline = r'\n+'
@@ -51,7 +50,6 @@ class MyLexer(Lexer):
     RESERVED['return'] = RETURN
     RESERVED['while']  = WHILE
     RESERVED['do']     = DO
-
 
     #Track line number
     @_(r'\n+')

@@ -1,0 +1,13 @@
+## Esto es un comentario
+que puede ocupar
+varias lineas ##
+
+
+## Comentario de una sola linea valido ##
+
+
+## Comentario de varias lineas 
+
+con espacio en el medio ##
+
+Comentario sin apertura ##
