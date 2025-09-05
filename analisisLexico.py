@@ -86,8 +86,14 @@ class MyLexer(Lexer):
     #CONST_FLOAT
     @_(r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?')
     def CONST_FLOAT(self,t):
+
         # Agregar a la tabla de simbolos
         symbol_Table.add_token(t.value, "CONST_FLOAT")
+
+        #Conversion a str
+        t.value = str(t.value)
+        return t
+
 
     #STRING
     @_(r'"[^"\n]*"')
