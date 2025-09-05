@@ -1,10 +1,10 @@
 from tablaSimbolos import SymbolTable
 from analisisLexico import MyLexer
 
-lexer = MyLexer()
-
 symbol_Table = SymbolTable()
 symbol_Table.load_keyword()
+
+lexer = MyLexer()
 
 # Abrimos el archivo en modo lectura ('r')
 with open("Compiladore\prueba_4.txt", "r", encoding="utf-8") as f:
@@ -12,3 +12,7 @@ with open("Compiladore\prueba_4.txt", "r", encoding="utf-8") as f:
     for tok in lexer.tokenize(text):
         print('type=%r, value=%r' % (tok.type, tok.value))
 
+print("\n")
+print(symbol_Table.keywords)
+print("\n")
+print(symbol_Table.show())

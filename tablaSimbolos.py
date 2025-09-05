@@ -1,8 +1,8 @@
 class SymbolTable:
 
-    def __init__(self):
-        self.symbols = {}
-        self.keywords = {}
+    
+    symbols = {}
+    keywords = {}
 
     def load_keyword(self):
         self.keywords = {
@@ -20,9 +20,8 @@ class SymbolTable:
         if lexema in self.symbols:
             print(f"Warning: Identificador '{lexema}' ya declarado")
         else:
-            self.symbols[lexema] = {
-                "type": token_type,
-            }
+            self.symbols.update({lexema:token_type})
+            
 
     #def update_token(self, lexema, value):
     #    if lexema in self.symbols:
@@ -33,8 +32,8 @@ class SymbolTable:
     def get_token(self, lexema):
         return self.symbols.get(lexema, None)
 
-    def __str__(self):
+    def show(self):
         result = "Tabla de Símbolos:\n"
-        for lexema, info in self.symbols.items():
-            result += f"{lexema} -> {info}\n"
+        for lexema, token in self.symbols.items():
+            result += f"{lexema} -> {token}\n"
         return result

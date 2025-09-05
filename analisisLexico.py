@@ -1,7 +1,11 @@
 from sly import Lexer
+from tablaSimbolos import SymbolTable
+
+symbol_Table = SymbolTable() 
 
 class MyLexer(Lexer):
     
+
     def __init__(self):
         self.lineno = 1
 
@@ -67,9 +71,31 @@ class MyLexer(Lexer):
             print(f"Warning: Identificador '{t.value}' truncado a {max_length} caracteres (línea {self.lineno})")
             t.value = t.value[:max_length]
 
+    # Agregar a la tabla de simbolos
+        symbol_Table.add_token(t.value, "ID")
+        
         t.lineno = self.lineno
         return t
 
+    #CONST_INT
+    @_(r'\d+I')
+    def CONST_INT(self,t):
+        # Agregar a la tabla de simbolos
+        symbol_Table.add_token(t.value, "CONST_INT")
+
+    #CONST_FLOAT
+    @_(r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?')
+    def CONST_FLOAT(self,t):
+        # Agregar a la tabla de simbolos
+        symbol_Table.add_token(t.value, "CONST_FLOAT")
+
+    #STRING
+    @_(r'"[^"\n]*"')
+    def STRING(self,t):
+        # Agregar a la tabla de simbolos
+        symbol_Table.add_token(t.value, "STRING")
+
+    
     # Manejo de errores
     def error(self, t):
         print(f"Carácter ilegal '{t.value[0]}' en línea {self.lineno}")
