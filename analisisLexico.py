@@ -23,8 +23,6 @@ class MyLexer(Lexer):
     #Ignore new line
     ignore_newline = r'\n+'
 
-    #|if|else|endif|print|return|while|do|float
-
     # Reglas de tokens
     RESERVED    = r'[a-z]+' 
     ID          = r'[A-Z][A-Z0-9%]{0,}'
