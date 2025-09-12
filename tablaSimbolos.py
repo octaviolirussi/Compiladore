@@ -18,7 +18,7 @@ class SymbolTable:
 
     def add_token(self, lexema, token_type=None):
         if lexema in self.symbols:
-            print(f"Warning: Identificador '{lexema}' ya declarado")
+            print(f"Warning: Identificador '{lexema}' ya agregado en la tabla de simbolos")
         else:
             self.symbols.update({lexema:token_type})
             
