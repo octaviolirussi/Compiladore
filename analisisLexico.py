@@ -8,12 +8,15 @@ class MyLexer(Lexer):
 
     def __init__(self):
         self.lineno = 1
+        self.keywords = ['if' , 'else', 'endif', 'print', 'return', 'while', 'do', 'float']
+
 
     # Lista de tokens
     tokens = { ID, CONST_INT, CONST_FLOAT, NUMBER, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, GE, LE, GT, LT, EQ, NE
               ,LPAREN, RPAREN, LBRACE, RBRACE, UNDERSCORE, SEMI, COMMA, ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO}
     ignore = ' \t'
-    
+
+
     # Comentarios
     ignore_comment = r'##(.|\n| )*?##'
 
@@ -21,7 +24,7 @@ class MyLexer(Lexer):
     ignore_newline = r'\n+'
 
     # Reglas de tokens
-    RESERVED    = r'if|else|endif|print|return|while|do|float' 
+    RESERVED    = r'[a-z]+' 
     ID          = r'[A-Z][A-Z0-9%]{0,}'
     CONST_INT   = r'\d+I'
     CONST_FLOAT = r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?'
@@ -71,36 +74,58 @@ class MyLexer(Lexer):
             print(f"Warning: Identificador '{t.value}' truncado a {max_length} caracteres (línea {self.lineno})")
             t.value = t.value[:max_length]
 
-    # Agregar a la tabla de simbolos
-        symbol_Table.add_token(t.value, "ID")
-        
-        t.lineno = self.lineno
-        return t
+
+    #Verificar palabras reservadas en mayusculas
+        if t.value.lower() in self.keywords:
+            print(f"Warning: {t.value} es una palabra reservada en linea {self.lineno}")
+        else:
+            # Agregar a la tabla de simbolos
+            symbol_Table.add_token(t.value, "ID")
+            t.lineno = self.lineno
+            return t
 
     #CONST_INT
     @_(r'\d+I')
     def CONST_INT(self,t):
-        # Agregar a la tabla de simbolos
-        symbol_Table.add_token(t.value, "CONST_INT")
+        numero = int(t.value[:-1])
+        if (numero >= -2**15 and numero <= 2**15-1):
+            # Agregar a la tabla de simbolos
+            symbol_Table.add_token(t.value, "CONST_INT")
+            return t
+        else:
+            print(f"Warning: Constante fuera de rango en linea {self.lineno}")
+            return None
 
     #CONST_FLOAT
     @_(r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?')
     def CONST_FLOAT(self,t):
-
-        # Agregar a la tabla de simbolos
-        symbol_Table.add_token(t.value, "CONST_FLOAT")
-
-        #Conversion a str
-        t.value = str(t.value)
-        return t
-
+        partes = t.value.split('F')
+        base = float(partes[0])
+        exponente = int(partes[1])
+        numero = base * (10 ** exponente)
+        if numero >= 1.17549435**-38 and numero <= 3.40282347**38:
+            # Agregar a la tabla de simbolos
+            symbol_Table.add_token(t.value, "CONST_FLOAT")
+            #Conversion a str
+            t.value = str(t.value)
+            return t
+        else:
+            print(f"Warning: Constante fuera de rango en linea {self.lineno}")
+            return None
 
     #STRING
     @_(r'"[^"\n]*"')
     def STRING(self,t):
         # Agregar a la tabla de simbolos
         symbol_Table.add_token(t.value, "STRING")
+        return t
 
+
+    @_(r'[a-z]+')
+    def RESERVED(self,t):
+        if t.value not in self.keywords:
+            print(f"Warning: Palabra reservada {t.value} no encontrada en linea {self.lineno}")
+            return None
     
     # Manejo de errores
     def error(self, t):
