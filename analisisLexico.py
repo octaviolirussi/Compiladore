@@ -99,15 +99,18 @@ class MyLexer(Lexer):
     #CONST_FLOAT
     @_(r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?')
     def CONST_FLOAT(self,t):
-        partes = t.value.split('F')
-        base = float(partes[0])
-        exponente = int(partes[1])
-        numero = base * (10 ** exponente)
-        if numero >= 1.17549435**-38 and numero <= 3.40282347**38:
+        if 'F' in t.value.upper():
+            partes = t.value.split('F')
+            base = float(partes[0])
+            exponente = int(partes[1])
+            numero = base * (10 ** exponente)
+        else:
+            numero = float(t.value)
+        if numero >= 1.17549435e-38 and numero <= 3.40282347e38:
             # Agregar a la tabla de simbolos
             symbol_Table.add_token(t.value, "CONST_FLOAT")
             #Conversion a str
-            t.value = str(t.value)
+            t.value = str(t.value)   
             return t
         else:
             print(f"Warning: Constante fuera de rango en linea {self.lineno}")
