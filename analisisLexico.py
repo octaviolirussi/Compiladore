@@ -8,7 +8,6 @@ class MyLexer(Lexer):
 
     def __init__(self):
         self.lineno = 1
-        self.keywords = ['if' , 'else', 'endif', 'print', 'return', 'while', 'do', 'float']
 
 
     # Lista de tokens
@@ -76,7 +75,7 @@ class MyLexer(Lexer):
 
 
     #Verificar palabras reservadas en mayusculas
-        if t.value.lower() in self.keywords:
+        if t.value.lower() in symbol_Table.keywords:
             print(f"Warning: {t.value} es una palabra reservada en linea {self.lineno}")
         else:
             # Agregar a la tabla de simbolos
@@ -87,6 +86,7 @@ class MyLexer(Lexer):
     #CONST_INT
     @_(r'\d+I')
     def CONST_INT(self,t):
+        #Verifico rangos
         numero = int(t.value[:-1])
         if (numero >= -2**15 and numero <= 2**15-1):
             # Agregar a la tabla de simbolos
@@ -99,6 +99,7 @@ class MyLexer(Lexer):
     #CONST_FLOAT
     @_(r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?')
     def CONST_FLOAT(self,t):
+        #Verifico rangos
         partes = t.value.split('F')
         base = float(partes[0])
         exponente = int(partes[1])
@@ -120,14 +121,14 @@ class MyLexer(Lexer):
         symbol_Table.add_token(t.value, "STRING")
         return t
 
-
+    #Palabra reservada no encontrada
     @_(r'[a-z]+')
     def RESERVED(self,t):
-        if t.value not in self.keywords:
+        if t.value not in symbol_Table.keywords:
             print(f"Warning: Palabra reservada {t.value} no encontrada en linea {self.lineno}")
             return None
     
-    # Manejo de errores
+    # Caracteres ilegales
     def error(self, t):
         print(f"Carácter ilegal '{t.value[0]}' en línea {self.lineno}")
         self.index += 1  # Avanza solo un carácter para continuar
