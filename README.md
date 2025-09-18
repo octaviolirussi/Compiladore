@@ -5,3 +5,8 @@ El presente trabajo práctico integrador tiene como objetivo principal el desarr
 Para esta primera entrega, nos enfocamos en el analizador léxico. Su tarea fundamental consiste en leer la secuencia de caracteres del programa de entrada y agruparlos en unidades lógicas y significativas conocidas como tokens.
 
 El analizador léxico que diseñaremos será el encargado de reconocer y clasificar una variedad de elementos del lenguaje, incluyendo identificadores, constantes, operadores, delimitadores y palabras reservadas. Además, deberá gestionar de manera eficiente elementos que no deben ser interpretados como tokens, como los comentarios, asegurando que el flujo de tokens que se genere sea limpio y esté listo para la siguiente fase del compilador: el análisis sintáctico.
+
+
+**PARA EJECUTAR**
+Ingrese el nombre del archivo dentro de la carpeta "Pruebas"
+Por ejemplo: test_cadenas.txt
