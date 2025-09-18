@@ -1,5 +1,6 @@
 from sly import Lexer
 from tablaSimbolos import SymbolTable
+from colorama import Fore, Style
 
 symbol_Table = SymbolTable() 
 
@@ -15,9 +16,6 @@ class MyLexer(Lexer):
               ,LPAREN, RPAREN, LBRACE, RBRACE, UNDERSCORE, SEMI, COMMA, ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO}
     ignore = ' \t'
 
-
-    # Comentarios
-    ignore_comment = r'##(.|\n| )*?##'
 
     #Ignore new line
     ignore_newline = r'\n+'
@@ -57,10 +55,19 @@ class MyLexer(Lexer):
     RESERVED['while']  = WHILE
     RESERVED['do']     = DO
 
+    def print_color(self,msg):
+        print(Fore.YELLOW + msg + Style.RESET_ALL)
+
     #Track line number
     @_(r'\n+')
     def ignore_newline(self,t):
         self.lineno += len(t.value)
+
+    #Ignora comentarios y cuenta lineas
+    @_(r'##(.|\n| )*?##')
+    def comments(self,t):
+         self.lineno += t.value.count('\n')
+         pass
     
     #Acciones semanticas
     #ID
@@ -70,13 +77,15 @@ class MyLexer(Lexer):
 
     # Truncar si excede longitud máxima
         if len(t.value) > max_length:
-            print(f"Warning: Identificador '{t.value}' truncado a {max_length} caracteres (línea {self.lineno})")
+            msg = f"Warning: Identificador '{t.value}' truncado a {max_length} caracteres (línea {self.lineno})"
+            self.print_color(msg)
             t.value = t.value[:max_length]
 
 
     #Verificar palabras reservadas en mayusculas
         if t.value.lower() in symbol_Table.keywords:
-            print(f"Warning: {t.value} es una palabra reservada en linea {self.lineno}")
+            msg = f"Warning: {t.value} es una palabra reservada (linea {self.lineno})"
+            self.print_color(msg)
         else:
             # Agregar a la tabla de simbolos
             symbol_Table.add_token(t.value, "ID")
@@ -93,7 +102,8 @@ class MyLexer(Lexer):
             symbol_Table.add_token(t.value, "CONST_INT")
             return t
         else:
-            print(f"Warning: Constante fuera de rango en linea {self.lineno}")
+            msg = f"Warning: Constante fuera de rango (linea {self.lineno})"
+            self.print_color(msg)
             return None
 
     #CONST_FLOAT
@@ -114,7 +124,8 @@ class MyLexer(Lexer):
             t.value = str(t.value)   
             return t
         else:
-            print(f"Warning: Constante fuera de rango en linea {self.lineno}")
+            msg = f"Warning: Constante fuera de rango (linea {self.lineno})"
+            self.print_color(msg)
             return None
 
     #STRING
@@ -128,12 +139,13 @@ class MyLexer(Lexer):
     @_(r'[a-z]+')
     def RESERVED(self,t):
         if t.value not in symbol_Table.keywords:
-            print(f"Warning: Palabra reservada {t.value} no encontrada en linea {self.lineno}")
+            msg = f"Warning: Palabra reservada {t.value} no encontrada (linea {self.lineno})"
+            self.print_color(msg)
             return None
     
     # Caracteres ilegales
     def error(self, t):
-        print(f"Carácter ilegal '{t.value[0]}' en línea {self.lineno}")
+        msg = f"Warning: Carácter ilegal '{t.value[0]}' (línea {self.lineno})"
+        self.print_color(msg)
         self.index += 1  # Avanza solo un carácter para continuar
-
    

@@ -1,3 +1,5 @@
+from colorama import Fore, Style
+
 class SymbolTable:
 
     
@@ -16,9 +18,13 @@ class SymbolTable:
             "float": "FLOAT"
         }
 
+    def print_color(self,msg):
+        print(Fore.YELLOW + msg + Style.RESET_ALL)
+
     def add_token(self, lexema, token_type=None):
         if lexema in self.symbols:
-            print(f"Warning: Identificador '{lexema}' ya declarado")
+            msg = f"Warning: Identificador '{lexema}' ya se encuentra en la tabla de simbolos"
+            self.print_color(msg)
         else:
             self.symbols.update({lexema:token_type})
             

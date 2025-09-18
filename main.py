@@ -25,7 +25,6 @@ try:
 except FileNotFoundError:
     print(f"No se encontró el archivo en: {file_path}")
 
-
 print("\n")
 print(symbol_Table.keywords)
 print("\n")
