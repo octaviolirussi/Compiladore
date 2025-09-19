@@ -14,8 +14,11 @@ class MyLexer(Lexer):
     # Lista de tokens
     tokens = { ID, CONST_INT, CONST_FLOAT, NUMBER, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, GE, LE, GT, LT, EQ, NE
               ,LPAREN, RPAREN, LBRACE, RBRACE, UNDERSCORE, SEMI, COMMA, ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO}
-    ignore = ' \t'
+   
+    literals = { '+', '-', '*', '/', '=', '>', '<',
+                 '(', ')', '{', '}', '_', ';', ',' }
 
+    ignore = ' \t'
 
     #Ignore new line
     ignore_newline = r'\n+'
@@ -25,25 +28,11 @@ class MyLexer(Lexer):
     ID          = r'[A-Z][A-Z0-9%]{0,}'
     CONST_INT   = r'\d+I'
     CONST_FLOAT = r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?'
-    PLUS        = r'\+'
-    MINUS       = r'-'
-    TIMES       = r'\*'
-    DIVIDE      = r'/'
     EQ          = r'=='
-    ASSIGN      = r'='
     GE          = r'>='
     LE          = r'<='
-    NE          = r'=!'
-    GT          = r'>'
-    LT          = r'<'
+    NE          = r'!='
     ARROW       = r'->'
-    LPAREN      = r'\('
-    RPAREN      = r'\)'
-    LBRACE      = r'\{'
-    RBRACE      = r'\}'
-    UNDERSCORE  = r'_'
-    SEMI        = r';'
-    COMMA       = r','
     STRING      = r'"[^"\n]*"'
 
     # Palabras reservadas
@@ -70,6 +59,7 @@ class MyLexer(Lexer):
          pass
     
     #Acciones semanticas
+    
     #ID
     @_(r'[A-Z][A-Z0-9%]{0,}')
     def ID(self, t):
