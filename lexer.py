@@ -13,10 +13,11 @@ class MyLexer(Lexer):
 
     # Lista de tokens
     tokens = { ID, CONST_INT, CONST_FLOAT, NUMBER, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, GE, LE, GT, LT, EQ, NE
-              ,LPAREN, RPAREN, LBRACE, RBRACE, UNDERSCORE, SEMI, COMMA, ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO}
+              ,LPAREN, RPAREN, LBRACE, RBRACE, UNDERSCORE, SEMI, COMMA, ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
+              ,INT, CV}
    
     literals = { '+', '-', '*', '/', '=', '>', '<',
-                 '(', ')', '{', '}', '_', ';', ',' }
+                 '(', ')', '{', '}', '_', ';', ',', ';' }
 
     ignore = ' \t'
 
@@ -43,6 +44,9 @@ class MyLexer(Lexer):
     RESERVED['return'] = RETURN
     RESERVED['while']  = WHILE
     RESERVED['do']     = DO
+    RESERVED['float']  = FLOAT
+    RESERVED['int']    = INT
+    RESERVED['cv']     = CV
 
     def print_color(self,msg):
         print(Fore.YELLOW + msg + Style.RESET_ALL)

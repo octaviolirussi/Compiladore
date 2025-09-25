@@ -15,7 +15,9 @@ class SymbolTable:
             "return": "RETURN",
             "while" : "WHILE",
             "do" : "DO",
-            "float": "FLOAT"
+            "float": "FLOAT",
+            "int" : "INT",
+            "cv" : "CV"
         }
 
     def print_color(self,msg):
