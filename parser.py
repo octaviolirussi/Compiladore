@@ -24,17 +24,31 @@ class MyParser(Parser):
         return [p.statement]
 
     # === SENTENCIAS ===
-    # @_('CONST_INT ";"')
-    # def statement(self, p):
-    #     return ('num_stmt', p.CONST_INT)
+    
+    
 
     @_('expr ";"')
     def statement(self, p):
         return ('expr_stmt', p.expr)
 
+    # asignación
     @_('ID "=" expr ";"')
     def statement(self, p):
         return ('assign', p.ID, p.expr)
+    
+    # declaración de variables
+    @_('INT id_list ";"')
+    def statement(self, p):
+        return ('declaration', p.INT, p.id_list)
+    
+    @_('FLOAT id_list ";"')
+    def statement(self, p):
+        return ('declaration', p.FLOAT, p.id_list)
+    
+    # Regla recursiva para lista de IDs
+    @_('id_list "," ID')
+    def id_list(self, p):
+        return p.id_list + [p.ID]
 
     # === EXPRESIONES ===
     @_('expr "+" expr')
@@ -52,11 +66,33 @@ class MyParser(Parser):
     @_('expr "/" expr')
     def expr(self, p):
         return ('division', p.expr0, p.expr1)
-
-    @_('CONST_INT')
-    def expr(self, p):
-        return ('num', p.CONST_INT)
-
+    
+    # ID recursivo para listas de declaraciones
+    @_('ID')
+    def id_list(self, p):
+        return [p.ID]
+    
+    # ID recursivo para pasaje de parámetros
+    @_('ID')
+    def id_list_parametros(self, p):
+        return [p.ID]
+    
     @_('ID')
     def expr(self, p):
         return ('var', p.ID)
+
+    @_('CONST_INT')
+    def expr(self, p):
+        return ('num_int', p.CONST_INT)
+    
+    @_('CONST_FLOAT')
+    def expr(self, p):
+        return ('num_float', p.CONST_FLOAT)
+    
+    @_('INT')
+    def expr(self, p):
+        return ('int',p.INT)
+    
+    @_('FLOAT')
+    def expr(self, p):
+        return ('float',p.FLOAT)
