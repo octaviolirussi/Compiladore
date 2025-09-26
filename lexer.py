@@ -75,16 +75,10 @@ class MyLexer(Lexer):
             self.print_color(msg)
             t.value = t.value[:max_length]
 
-
-    #Verificar palabras reservadas en mayusculas
-        if t.value.lower() in symbol_Table.keywords:
-            msg = f"Warning: {t.value} es una palabra reservada (linea {self.lineno})"
-            self.print_color(msg)
-        else:
-            # Agregar a la tabla de simbolos
-            symbol_Table.add_token(t.value, "ID")
-            t.lineno = self.lineno
-            return t
+        # Agregar a la tabla de simbolos
+        symbol_Table.add_token(t.value, "ID")
+        t.lineno = self.lineno
+        return t
 
     #CONST_INT
     @_(r'\d+I')
@@ -93,6 +87,7 @@ class MyLexer(Lexer):
         numero = int(t.value[:-1])
         if (numero >= -2**15 and numero <= 2**15-1):
             # Agregar a la tabla de simbolos
+            t.value = t.value[:-1]
             symbol_Table.add_token(t.value, "CONST_INT")
             return t
         else:
@@ -113,9 +108,8 @@ class MyLexer(Lexer):
             numero = float(t.value)
         if numero >= 1.17549435e-38 and numero <= 3.40282347e38:
             # Agregar a la tabla de simbolos
-            symbol_Table.add_token(t.value, "CONST_FLOAT")
-            #Conversion a str
-            t.value = str(t.value)   
+            t.value = t.value.replace('F', 'E')  # cambia "F" por "E"
+            symbol_Table.add_token(t.value, "CONST_FLOAT")  
             return t
         else:
             msg = f"Warning: Constante fuera de rango (linea {self.lineno})"

@@ -1,1 +1,13 @@
-PEDRO = 5I;
+int JUAN, MIGUEL, MARIO;
+
+JUAN = 43I;
+
+PEDRO = 1.234F+5;
+
+float DOU;
+
+int DMK, PAL;
+
+5I - 6I * 8I;
+
+6I - 2I;

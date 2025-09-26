@@ -23,34 +23,32 @@ class MyParser(Parser):
     def statement_list(self, p):
         return [p.statement]
 
-    # === SENTENCIAS ===
-    
-    
+    # === SENTENCIAS =============================================================================================================================
 
     @_('expr ";"')
     def statement(self, p):
-        return ('expr_stmt', p.expr)
+        return (f"Linea {p.lineno} --> expr_stmt:", p.expr)
 
     # asignación
     @_('ID "=" expr ";"')
     def statement(self, p):
-        return ('assign', p.ID, p.expr)
+        return (f"Linea: {p.lineno} --> assign", p.ID, p.expr)
     
-    # declaración de variables
     @_('INT id_list ";"')
     def statement(self, p):
-        return ('declaration', p.INT, p.id_list)
+        return (f"Linea: {p.lineno} --> declaration:", p.INT, p.id_list)
     
     @_('FLOAT id_list ";"')
     def statement(self, p):
-        return ('declaration', p.FLOAT, p.id_list)
+        return (f"Linea: {p.lineno} --> declaration:", p.FLOAT, p.id_list)
     
     # Regla recursiva para lista de IDs
     @_('id_list "," ID')
     def id_list(self, p):
         return p.id_list + [p.ID]
+    
 
-    # === EXPRESIONES ===
+    # === EXPRESIONES ==========================================================================================================================
     @_('expr "+" expr')
     def expr(self, p):
         return ('suma', p.expr0, p.expr1)
@@ -67,14 +65,8 @@ class MyParser(Parser):
     def expr(self, p):
         return ('division', p.expr0, p.expr1)
     
-    # ID recursivo para listas de declaraciones
     @_('ID')
     def id_list(self, p):
-        return [p.ID]
-    
-    # ID recursivo para pasaje de parámetros
-    @_('ID')
-    def id_list_parametros(self, p):
         return [p.ID]
     
     @_('ID')
