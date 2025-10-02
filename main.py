@@ -21,7 +21,7 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 
 # Abrimos el archivo en modo lectura ('r')
 try:
-    with open("Pruebas/test.txt", "r", encoding="utf-8") as f:
+    with open("Pruebas/test_if.txt", "r", encoding="utf-8") as f:
         text = f.read()  # lee todo el contenido y muestra los tokens
         print("\nWarnings:\n")
         tokens = list(lexer.tokenize(text))
