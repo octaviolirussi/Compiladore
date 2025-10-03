@@ -12,8 +12,8 @@ class MyLexer(Lexer):
 
 
     # Lista de tokens
-    tokens = { ID, CONST_INT, CONST_FLOAT, NUMBER, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, GE, LE, GT, LT, EQ, NE
-              ,LPAREN, RPAREN, LBRACE, RBRACE, UNDERSCORE, SEMI, COMMA, ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
+    tokens = { ID, CONST_INT, CONST_FLOAT, NUMBER, GE, LE, GT, LT, EQ, NE
+              , ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
               ,INT, CV}
    
     literals = { '+', '-', '*', '/', '=', '>', '<',
@@ -85,7 +85,7 @@ class MyLexer(Lexer):
     def CONST_INT(self,t):
         #Verifico rangos
         numero = int(t.value[:-1])
-        if (numero >= -2**15 and numero <= 2**15-1):
+        if (numero >= -2**15 and numero <= 2**15): #2**15-1
             # Agregar a la tabla de simbolos
             t.value = t.value[:-1]
             symbol_Table.add_token(t.value, "CONST_INT")
@@ -130,9 +130,16 @@ class MyLexer(Lexer):
             msg = f"Warning: Palabra reservada {t.value} no encontrada (linea {self.lineno})"
             self.print_color(msg)
             return None
+        
+    @_(r'\d+')
+    def NUMBER(self,t):
+        msg = f"Warning: Número {t.value} sin sufijo (línea {self.lineno})"
+        self.print_color(msg)
+        return None
     
     # Caracteres ilegales
     def error(self, t):
+        
         msg = f"Warning: Carácter ilegal '{t.value[0]}' (línea {self.lineno})"
         self.print_color(msg)
         self.index += 1  # Avanza solo un carácter para continuar
