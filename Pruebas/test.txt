@@ -1,13 +1,15 @@
-int JUAN, MIGUEL, MARIO;
-
-JUAN = 43I;
-
-PEDRO = 1.234F+5;
-
-float DOU;
-
-int DMK, PAL;
-
-5I - 6I * 8I;
-
-6I - 2I;
+int F3 (int W, int Z){
+    float X;
+    X = 3I;
+    if (X > 0I)
+        return (X + 2L);
+    else{
+        X = 2I;
+    return (X * 2I);
+    }
+    endif;
+    
+    while (3I > 2I) do{
+    I = I + 1I;
+    }
+}
