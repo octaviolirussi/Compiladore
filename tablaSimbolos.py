@@ -24,10 +24,7 @@ class SymbolTable:
         print(Fore.YELLOW + msg + Style.RESET_ALL)
 
     def add_token(self, lexema, token_type=None):
-        if lexema in self.symbols:
-            msg = f"Warning: Identificador '{lexema}' ya se encuentra en la tabla de simbolos"
-            self.print_color(msg)
-        else:
+        if lexema not in self.symbols:
             self.symbols.update({lexema:token_type})
             
 
