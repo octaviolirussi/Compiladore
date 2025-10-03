@@ -1,15 +1,17 @@
 from sly import Parser
+from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 
 class MyParser(Parser):
     tokens = MyLexer.tokens
-    
+        
     precedence = (
         ('left', '+', '-'),
         ('left', '*', '/'),
-    )
+        ('right', UMINUS),
+        )
 
-    # ===================================== PROGRAMA =====================================================
+# ===================================== PROGRAMA =====================================================
 
     @_('statement_list')
     def program(self, p):
@@ -199,8 +201,56 @@ class MyParser(Parser):
 
     @_('CONST_INT')
     def expr(self, p):
+        
         return ('num_int', p.CONST_INT)
+    
+    # Manejo de enteros negativos con verificación de rango
+    @_('UMINUS CONST_INT')
+    def expr(self, p):
+        signed_value = -int(p.CONST_INT)
+        
+        # Rango INT (16 bits): [-32768, 32767]
+        MIN_INT = -32768 
+        
+        if signed_value < MIN_INT:
+            # TODO son errores, no debe seguir ejecutando?
+            msg = f"Error: Constante entera negativa {signed_value} fuera de rango (Línea {self.lineno}). Se usará el límite ({MIN_INT})."
+            self.print_color(msg)
+            final_value = MIN_INT
+        else:
+            final_value = signed_value
+
+        # 3. Modificación de la Tabla de Símbolos. Registrar el valor negativo.
+        symbol_Table.update_token(p.CONST_INT, str(final_value))
+        
+        return ('num_int', final_value)
 
     @_('CONST_FLOAT')
     def expr(self, p):
         return ('num_float', p.CONST_FLOAT)
+    
+    # Regla para la negación de CONST_FLOAT (detecta unario)
+    @_('MINUS CONST_FLOAT')
+    def expr(self, p):        
+        # Obtenemos el valor de la magnitud
+        try:
+            magnitude = float(p.CONST_FLOAT)
+        except ValueError:
+            # Manejo de error si el valor del token es inválido
+            return ('num_float', 0.0) 
+
+        signed_value = -magnitude
+        
+        # Rango FLOAT (single precision)
+        MIN_FLOAT = -3.40282347e38
+        
+        if signed_value < MIN_FLOAT:
+            msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango (underflow). Se usará el límite ({MIN_FLOAT})."
+            self.print_color(msg)
+            final_value = MIN_FLOAT
+        else:
+            final_value = signed_value
+            
+        # Modificación de la Tabla de Símbolos
+        
+        return ('num_float', final_value)

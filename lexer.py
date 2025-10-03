@@ -12,7 +12,7 @@ class MyLexer(Lexer):
 
 
     # Lista de tokens
-    tokens = { ID, CONST_INT, CONST_FLOAT, NUMBER, GE, LE, GT, LT, EQ, NE
+    tokens = { ID, UMINUS, CONST_INT, CONST_FLOAT, NUMBER, GE, LE, GT, LT, EQ, NE
               , ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
               ,INT, CV}
    
@@ -24,9 +24,12 @@ class MyLexer(Lexer):
     #Ignore new line
     ignore_newline = r'\n+'
 
+
+    # TODO revisar que no haga conflictos con lo de UMINUS
     # Reglas de tokens
     RESERVED    = r'[a-z]+' 
     ID          = r'[A-Z][A-Z0-9%]{0,}'
+    UMINUS       = r'-'
     CONST_INT   = r'\d+I'
     CONST_FLOAT = r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?'
     EQ          = r'=='
@@ -91,7 +94,7 @@ class MyLexer(Lexer):
             symbol_Table.add_token(t.value, "CONST_INT")
             return t
         else:
-            msg = f"Warning: Constante fuera de rango (linea {self.lineno})"
+            msg = f"Warning: Constante entera fuera de rango (linea {self.lineno})"
             self.print_color(msg)
             return None
 
@@ -106,13 +109,13 @@ class MyLexer(Lexer):
             numero = base * (10 ** exponente)
         else:
             numero = float(t.value)
-        if numero >= 1.17549435e-38 and numero <= 3.40282347e38:
+        if numero >= 1.17549435**(-38) and numero <= 3.40282347**38:
             # Agregar a la tabla de simbolos
             t.value = t.value.replace('F', 'E')  # cambia "F" por "E"
             symbol_Table.add_token(t.value, "CONST_FLOAT")  
             return t
         else:
-            msg = f"Warning: Constante fuera de rango (linea {self.lineno})"
+            msg = f"Warning: Constante flotante fuera de rango (linea {self.lineno})"
             self.print_color(msg)
             return None
 

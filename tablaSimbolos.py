@@ -27,6 +27,15 @@ class SymbolTable:
         if lexema not in self.symbols:
             self.symbols.update({lexema:token_type})
             
+    # TODO arreglar esta funcion
+    def update_token_value(self, lexema, new_value):
+        """Actualiza el valor de un lexema existente en la tabla."""
+        if lexema in self.symbols:
+            # Convertimos el nuevo valor a string para mantener la consistencia
+            self.symbols[lexema]["value"] = str(new_value)
+        else:
+            print(f"Error: El lexema '{lexema}' no existe en la tabla de símbolos para actualizar.")
+
 
     #def update_token(self, lexema, value):
     #    if lexema in self.symbols:
