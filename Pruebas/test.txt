@@ -3,6 +3,7 @@ int F3 (int W, int Z){
     X = 3I;
     if (X > 0I)
         return (X + 2L);
+        print("algo")
     else{
         X = 2I;
     return (X * 2I);
