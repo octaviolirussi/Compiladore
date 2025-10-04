@@ -12,9 +12,8 @@ class MyLexer(Lexer):
 
 
     # Lista de tokens
-    tokens = { ID, UMINUS, CONST_INT, CONST_FLOAT, NUMBER, GE, LE, GT, LT, EQ, NE
-              , ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
-              ,INT, CV}
+    tokens = { ID, CONST_INT, CONST_FLOAT, GE, LE, EQ, NE, ARROW, STRING, 
+               IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT, INT, CV }
    
     literals = { '+', '-', '*', '/', '=', '>', '<',
                  '(', ')', '{', '}', '_', ';', ',', ';' }
@@ -24,12 +23,9 @@ class MyLexer(Lexer):
     #Ignore new line
     ignore_newline = r'\n+'
 
-
-    # TODO revisar que no haga conflictos con lo de UMINUS
     # Reglas de tokens
     RESERVED    = r'[a-z]+' 
     ID          = r'[A-Z][A-Z0-9%]{0,}'
-    UMINUS       = r'-'
     CONST_INT   = r'\d+I'
     CONST_FLOAT = r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?'
     EQ          = r'=='
@@ -87,8 +83,9 @@ class MyLexer(Lexer):
     @_(r'\d+I')
     def CONST_INT(self,t):
         #Verifico rangos
+        MAX_INT = 32767+1 
         numero = int(t.value[:-1])
-        if (numero >= -2**15 and numero <= 2**15): #2**15-1
+        if (numero >= 0 and numero <= MAX_INT):
             # Agregar a la tabla de simbolos
             t.value = t.value[:-1]
             symbol_Table.add_token(t.value, "CONST_INT")
@@ -101,15 +98,18 @@ class MyLexer(Lexer):
     #CONST_FLOAT
     @_(r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?')
     def CONST_FLOAT(self,t):
-        #Verifico rangos
+        #Verifico rangos positivos
+        
+        MIN_FLOAT_POSITIVO = 1.17549435**(-38) 
+        MAX_FLOAT_POSITIVO = 3.40282347**38 
         if 'F' in t.value.upper():
             partes = t.value.split('F')
             base = float(partes[0])
             exponente = int(partes[1])
-            numero = base * (10 ** exponente)
+            numero = base ** exponente
         else:
             numero = float(t.value)
-        if numero >= 1.17549435**(-38) and numero <= 3.40282347**38:
+        if (numero >= MIN_FLOAT_POSITIVO and numero <= MAX_FLOAT_POSITIVO) or (numero == 0.0):
             # Agregar a la tabla de simbolos
             t.value = t.value.replace('F', 'E')  # cambia "F" por "E"
             symbol_Table.add_token(t.value, "CONST_FLOAT")  

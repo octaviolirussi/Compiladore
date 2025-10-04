@@ -2,13 +2,15 @@ from sly import Parser
 from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 
+UMINUS = 'UMINUS'
+
 class MyParser(Parser):
     tokens = MyLexer.tokens
         
     precedence = (
         ('left', '+', '-'),
         ('left', '*', '/'),
-        ('right', UMINUS),
+        ('right', UMINUS), 
         )
 
 # ===================================== PROGRAMA =====================================================
@@ -182,7 +184,11 @@ class MyParser(Parser):
     
     @_('expr NE expr') # !=
     def expr(self, p):
-        return ('distinto', p.expr0, p.expr1)    
+        return ('distinto', p.expr0, p.expr1)  
+    
+    @_('"-" expr %prec UMINUS')
+    def expr(self, p):
+        return ('uminus', p.expr)  
     
     @_('expr ARROW ID')
     def expr(self, p):
@@ -207,16 +213,15 @@ class MyParser(Parser):
     # Manejo de enteros negativos con verificación de rango
     @_('UMINUS CONST_INT')
     def expr(self, p):
-        signed_value = -int(p.CONST_INT)
-        
         # Rango INT (16 bits): [-32768, 32767]
-        MIN_INT = -32768 
-        
-        if signed_value < MIN_INT:
+        MIN_INT = -32768
+        MAX_INT = 32767 
+        signed_value = -int(p.CONST_INT)
+             
+        if (signed_value < MIN_INT or signed_value > MAX_INT):
             # TODO son errores, no debe seguir ejecutando?
-            msg = f"Error: Constante entera negativa {signed_value} fuera de rango (Línea {self.lineno}). Se usará el límite ({MIN_INT})."
+            msg = f"Error: Constante entera negativa {signed_value} fuera de rango (Línea {self.lineno})."
             self.print_color(msg)
-            final_value = MIN_INT
         else:
             final_value = signed_value
 
@@ -230,8 +235,9 @@ class MyParser(Parser):
         return ('num_float', p.CONST_FLOAT)
     
     # Regla para la negación de CONST_FLOAT (detecta unario)
-    @_('MINUS CONST_FLOAT')
-    def expr(self, p):        
+    @_('UMINUS CONST_FLOAT')
+    def expr(self, p):
+        ########## TODO revisando los rangos acá. Agregar los arreglos de octi 
         # Obtenemos el valor de la magnitud
         try:
             magnitude = float(p.CONST_FLOAT)
