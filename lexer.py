@@ -12,8 +12,9 @@ class MyLexer(Lexer):
 
 
     # Lista de tokens
-    tokens = { ID, CONST_INT, CONST_FLOAT, GE, LE, EQ, NE, ARROW, STRING, 
-               IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT, INT, CV }
+    tokens = { ID, CONST_INT, CONST_FLOAT, GE, LE, EQ, NE
+              , ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
+              ,INT, CV}
    
     literals = { '+', '-', '*', '/', '=', '>', '<',
                  '(', ')', '{', '}', '_', ';', ',', ';' }

@@ -8,10 +8,13 @@ class MyParser(Parser):
     tokens = MyLexer.tokens
         
     precedence = (
-        ('left', '+', '-'),
-        ('left', '*', '/'),
-        ('right', UMINUS), 
-        )
+            ('nonassoc', ELSE),                            # arregla el conflicto del if-else, elige el if 2#                       # comparaciones no se pueden encadenar
+            ('left', '+', '-'),                            # suma y resta son asociativas a izquierda
+            ('left', '*', '/'),                            # multiplicación/división, más fuertes
+            ('right', UMINUS),                             # resuelve el problema de signo negativo
+            ('nonassoc', EQ, NE, '>', LE, '<', GE)         # comparaciones no se pueden encadenar
+    )
+
 
 # ===================================== PROGRAMA =====================================================
 
@@ -60,7 +63,7 @@ class MyParser(Parser):
         return (f"Linea: {p.lineno} --> print_string", p.STRING)
     
     # 1. IF-ELSE statement (Handles single statement or block in both branches)
-    @_('IF "(" expr ")" block ELSE  block ENDIF ";"')
+    @_('IF "(" expr ")" block ELSE block ENDIF ";"')
     def statement(self, p): 
         if_body = p.block0
         else_body = (p.ELSE, p.block1) 
@@ -69,7 +72,7 @@ class MyParser(Parser):
                 p.expr, if_body, else_body, p.ENDIF)
 
     # 2. IF-only statement (Handles single statement or block)
-    @_('IF "(" expr ")" block ENDIF ";"')
+    @_('IF "(" expr ")" block ENDIF ";" %prec ELSE')
     def statement(self, p): 
         return (f"Linea: {p.lineno} --> if_stmt:",p.IF, p.expr, p.block, p.ENDIF)
     
@@ -144,6 +147,10 @@ class MyParser(Parser):
     def arg(self, p):
         return ('arrow', p.expr, p.ID)
     
+    @_('"-" expr %prec UMINUS')
+    def expr(self, p):
+        return ('uminus', p.expr) 
+    
     # ===================================== EXPRESIONES =================================================
 
     @_('expr "+" expr')
@@ -185,10 +192,6 @@ class MyParser(Parser):
     @_('expr NE expr') # !=
     def expr(self, p):
         return ('distinto', p.expr0, p.expr1)  
-    
-    @_('"-" expr %prec UMINUS')
-    def expr(self, p):
-        return ('uminus', p.expr)  
     
     @_('expr ARROW ID')
     def expr(self, p):
