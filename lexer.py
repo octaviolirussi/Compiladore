@@ -2,19 +2,18 @@ from sly import Lexer
 from tablaSimbolos import SymbolTable
 from colorama import Fore, Style
 
-symbol_Table = SymbolTable() 
 
 class MyLexer(Lexer):
-    
 
-    def __init__(self):
+    def __init__(self, symbol_table):
         self.lineno = 1
+        self.symbol_table = symbol_table
 
 
     # Lista de tokens
     tokens = { ID, CONST_INT, CONST_FLOAT, GE, LE, EQ, NE
               , ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
-              ,INT, CV}
+              ,INT, CV, UMINUS}
    
     literals = { '+', '-', '*', '/', '=', '>', '<',
                  '(', ')', '{', '}', '_', ';', ',', ';' }
@@ -76,7 +75,7 @@ class MyLexer(Lexer):
             t.value = t.value[:max_length]
 
         # Agregar a la tabla de simbolos
-        symbol_Table.add_token(t.value, "ID")
+        self.symbol_table.add_token(t.value, "ID")
         t.lineno = self.lineno
         return t
 
@@ -85,16 +84,16 @@ class MyLexer(Lexer):
     def CONST_INT(self,t):
         #Verifico rangos
         MAX_INT = 32767+1 
-        numero = int(t.value[:-1])
-        if (numero >= 0 and numero <= MAX_INT):
+        t.value = t.value[:-1]
+        self.symbol_table.add_token(t.value, "CONST_INT")
+        if (int(t.value) >= 0 and int(t.value) <= MAX_INT):
             # Agregar a la tabla de simbolos
-            t.value = t.value[:-1]
-            symbol_Table.add_token(t.value, "CONST_INT")
             return t
         else:
+            # Lo devuelvo igual para que no corte la ejecución
             msg = f"Warning: Constante entera fuera de rango (linea {self.lineno})"
             self.print_color(msg)
-            return None
+            return t
 
     #CONST_FLOAT
     @_(r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?')
@@ -112,25 +111,27 @@ class MyLexer(Lexer):
             numero = float(t.value)
         if (numero >= MIN_FLOAT_POSITIVO and numero <= MAX_FLOAT_POSITIVO) or (numero == 0.0):
             # Agregar a la tabla de simbolos
-            t.value = t.value.replace('F', 'E')  # cambia "F" por "E"
-            symbol_Table.add_token(t.value, "CONST_FLOAT")  
-            return t
+            pass
         else:
             msg = f"Warning: Constante flotante fuera de rango (linea {self.lineno})"
             self.print_color(msg)
-            return None
+        t.value = t.value.replace('F', 'E')  # cambia "F" por "E"
+        self.symbol_table.add_token(t.value, "CONST_FLOAT")  
+        t.lineno = self.lineno
+        # Lo devuelvo igual para que no corte la ejecución
+        return t
 
     #STRING
     @_(r'"[^"\n]*"')
     def STRING(self,t):
         # Agregar a la tabla de simbolos
-        symbol_Table.add_token(t.value, "STRING")
+        self.symbol_table.add_token(t.value, "STRING")
         return t
 
     #Palabra reservada no encontrada
     @_(r'[a-z]+')
     def RESERVED(self,t):
-        if t.value not in symbol_Table.keywords:
+        if t.value not in self.symbol_table.keywords:
             msg = f"Warning: Palabra reservada {t.value} no encontrada (linea {self.lineno})"
             self.print_color(msg)
             return None

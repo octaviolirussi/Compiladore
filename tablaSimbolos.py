@@ -1,10 +1,11 @@
 from colorama import Fore, Style
 
 class SymbolTable:
-
     
-    symbols = {}
-    keywords = {}
+    def __init__(self):
+        self.symbols = {}  # {lexema_key: {"type": token_type, "value": lexema}}
+        self.keywords = {}
+        self.load_keyword() # Load keywords upon creation
 
     def load_keyword(self):
         self.keywords = {
@@ -26,18 +27,22 @@ class SymbolTable:
     def add_token(self, lexema, token_type=None):
         if lexema not in self.symbols:
             self.symbols.update({lexema:token_type})
-            
+    
     def update_token(self, lexema, new_value):
-        """Actualiza el valor de un lexema existente en la tabla."""
+        new_lexema = str(new_value) 
+        
         if lexema in self.symbols:
-            # Convertimos el nuevo valor a string para mantener la consistencia
-            self.symbols[lexema]["value"] = str(new_value)
+            # Sacar la clave positiva
+            token_type = self.symbols.pop(lexema) 
+            # Insertar la clave negativa
+            self.symbols.update({new_lexema: token_type}) 
         else:
-            print(f"Error: El lexema '{lexema}' no existe en la tabla de símbolos para actualizar.")
-
+            self.print_color(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para actualizar.")
+            
+        
     def get_token(self, lexema):
         return self.symbols.get(lexema, None)
-
+ 
     def show(self):
         result = "Tabla de Símbolos:\n"
         for lexema, token in self.symbols.items():

@@ -2,9 +2,11 @@ from sly import Parser
 from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 
-UMINUS = 'UMINUS'
-
 class MyParser(Parser):
+    
+    def __init__(self, symbol_table):
+        self.symbol_table = symbol_table 
+    
     tokens = MyLexer.tokens
         
     precedence = (
@@ -208,13 +210,8 @@ class MyParser(Parser):
     def expr(self, p):
         return ('var', p.ID)
 
-    @_('CONST_INT')
-    def expr(self, p):
-        
-        return ('num_int', p.CONST_INT)
-    
     # Manejo de enteros negativos con verificación de rango
-    @_('UMINUS CONST_INT')
+    @_('"-" CONST_INT %prec UMINUS')
     def expr(self, p):
         # Rango INT (16 bits): [-32768, 32767]
         MIN_INT = -32768
@@ -228,17 +225,17 @@ class MyParser(Parser):
         else:
             final_value = signed_value
 
-        # 3. Modificación de la Tabla de Símbolos. Registrar el valor negativo.
-        symbol_Table.update_token(p.CONST_INT, str(final_value))
+        # Modificación de la Tabla de Símbolos. Registrar el valor negativo.
+        self.symbol_table.update_token(p.CONST_INT, str(final_value))
         
-        return ('num_int', final_value)
-
-    @_('CONST_FLOAT')
-    def expr(self, p):
-        return ('num_float', p.CONST_FLOAT)
+        return ('num_int', final_value) 
     
+    @_('CONST_INT')
+    def expr(self, p):
+        return ('num_int', p.CONST_INT)
+
     # Regla para la negación de CONST_FLOAT (detecta unario)
-    @_('UMINUS CONST_FLOAT')
+    @_('"-" CONST_FLOAT %prec UMINUS')
     def expr(self, p):
         ########## TODO revisando los rangos acá. Agregar los arreglos de octi 
         # Obtenemos el valor de la magnitud
@@ -260,6 +257,13 @@ class MyParser(Parser):
         else:
             final_value = signed_value
             
-        # Modificación de la Tabla de Símbolos
+        # Modificación de la Tabla de Símbolos. Registrar el valor negativo.
+        self.symbol_table.update_token(p.CONST_FLOAT, str(final_value))
         
         return ('num_float', final_value)
+    
+    
+    @_('CONST_FLOAT')
+    def expr(self, p):
+        return ('num_float', p.CONST_FLOAT)
+    
