@@ -1,18 +1,26 @@
 from sly import Parser
+from tablaSimbolos import SymbolTable
 from lexer import MyLexer
+from colorama import Fore, Style
+
 
 class MyParser(Parser):
-    tokens = MyLexer.tokens
     
+    def __init__(self, symbol_table):
+        self.symbol_table = symbol_table 
+    
+    tokens = MyLexer.tokens
+        
     precedence = (
-        ('nonassoc', ELSE),                            # arregla el conflicto del if-else, elige el if 2#                       # comparaciones no se pueden encadenar
-        ('left', '+', '-'),                            # suma y resta son asociativas a izquierda
-        ('left', '*', '/'),                            # multiplicación/división, más fuertes
-        ('right', UMINUS),                             # resuelve el problema de signo negativo
-        ('nonassoc', EQ, NE, '>', LE, '<', GE)         # comparaciones no se pueden encadenar
+            ('nonassoc', ELSE),                            # arregla el conflicto del if-else, elige el if 2#                       # comparaciones no se pueden encadenar
+            ('left', '+', '-'),                            # suma y resta son asociativas a izquierda
+            ('left', '*', '/'),                            # multiplicación/división, más fuertes
+            ('right', UMINUS),                             # resuelve el problema de signo negativo
+            ('nonassoc', EQ, NE, '>', LE, '<', GE)         # comparaciones no se pueden encadenar
     )
 
-    # ===================================== PROGRAMA =====================================================
+
+# ===================================== PROGRAMA =====================================================
 
     @_('statement_list')
     def program(self, p):
@@ -143,6 +151,10 @@ class MyParser(Parser):
     def arg(self, p):
         return ('arrow', p.expr, p.ID)
     
+    @_('"-" expr %prec UMINUS')
+    def expr(self, p):
+        return ('uminus', p.expr) 
+    
     # ===================================== EXPRESIONES =================================================
 
     @_('expr "+" expr')
@@ -183,9 +195,9 @@ class MyParser(Parser):
     
     @_('expr NE expr') # !=
     def expr(self, p):
-        return ('distinto', p.expr0, p.expr1)   
-
-    @_('"-" expr %prec UMINUS')
+        return ('distinto', p.expr0, p.expr1)  
+    
+    @_('expr ARROW ID')
     def expr(self, p):
         return ('uminus', p.expr) 
     #================================= Tipos =================================================================================================
@@ -199,10 +211,54 @@ class MyParser(Parser):
     def expr(self, p):
         return ('var', p.ID)
 
+    # Manejo de enteros negativos con verificación de rango
+    @_('"-" CONST_INT %prec UMINUS')
+    def expr(self, p):
+        # Rango INT (16 bits): [-32768, 32767]
+        MIN_INT = -32768
+        MAX_INT = 32767 
+        signed_value = -int(p.CONST_INT)
+             
+        if signed_value < MIN_INT:
+            msg = f"Warning: Constante entera negativa {signed_value} fuera de rango (linea {self.lineno}). Se usará el límite ({MIN_INT})."
+            final_value = MIN_INT
+        elif signed_value > MAX_INT: 
+            msg = f"Warning: Constante entera positiva {signed_value} fuera de rango (linea {self.lineno}). Se usará el límite ({MAX_INT})."
+            final_value = MAX_INT
+        else:
+            final_value = signed_value
+
+        # Modificación de la Tabla de Símbolos. Registrar el valor negativo.
+        self.symbol_table.update_token(p.CONST_INT, str(final_value))
+        
+        return ('num_int', final_value) 
+    
     @_('CONST_INT')
     def expr(self, p):
         return ('num_int', p.CONST_INT)
 
+    # Regla para la negación de CONST_FLOAT (detecta unario)
+    @_('"-" CONST_FLOAT %prec UMINUS')
+    def expr(self, p):
+        signed_value = -float(p.CONST_FLOAT)
+        # Rango FLOAT (single precision)
+        MIN_FLOAT_NEGATIVO = -(3.40282347**38)
+        MAX_FLOAT_NEGATIVO = -(1.17549435**-38)
+        
+        if signed_value < MIN_FLOAT_NEGATIVO:
+            msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MIN_FLOAT_NEGATIVO})."
+            final_value = MIN_FLOAT_NEGATIVO
+        elif signed_value > MAX_FLOAT_NEGATIVO:
+            msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MAX_FLOAT_NEGATIVO})."
+            final_value = MAX_FLOAT_NEGATIVO
+        else:
+            final_value = signed_value
+            
+        # Modificación de la Tabla de Símbolos. Registrar el valor negativo.
+        self.symbol_table.update_token(p.CONST_FLOAT, str(final_value))
+        
+        return ('num_float', final_value)
+    
     @_('CONST_FLOAT')
     def expr(self, p):
         return ('num_float', p.CONST_FLOAT)

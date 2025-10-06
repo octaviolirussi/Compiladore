@@ -7,8 +7,8 @@ from pprint import pprint
 symbol_Table = SymbolTable()
 symbol_Table.load_keyword()
 
-lexer = MyLexer()
-parser = MyParser()
+lexer = MyLexer(symbol_Table)
+parser = MyParser(symbol_Table)
 
 # Obtener la carpeta donde está main.py
 base_path = os.path.dirname(os.path.abspath(__file__))
@@ -21,7 +21,8 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 
 # Abrimos el archivo en modo lectura ('r')
 try:
-    with open("Pruebas/test.txt", "r", encoding="utf-8") as f:
+    with open("Pruebas/test_rangos.txt", "r", encoding="utf-8") as f:
+        
         text = f.read()  # lee todo el contenido y muestra los tokens
         print("\nWarnings:\n")
         tokens = list(lexer.tokenize(text))
