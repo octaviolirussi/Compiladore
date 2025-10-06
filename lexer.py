@@ -88,12 +88,13 @@ class MyLexer(Lexer):
         self.symbol_table.add_token(t.value, "CONST_INT")
         if (int(t.value) >= 0 and int(t.value) <= MAX_INT):
             # Agregar a la tabla de simbolos
-            return t
+            pass
         else:
-            # Lo devuelvo igual para que no corte la ejecución
-            msg = f"Warning: Constante entera fuera de rango (linea {self.lineno})"
+            # Pongo el límite para que no corte la ejecución
+            msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
             self.print_color(msg)
-            return t
+            t.value = MAX_INT
+        return t    
 
     #CONST_FLOAT
     @_(r'((\d+\.\d*)|(\d*\.\d+))(F[+-]\d+)?')
@@ -107,18 +108,26 @@ class MyLexer(Lexer):
             base = float(partes[0])
             exponente = int(partes[1])
             numero = base ** exponente
+            
+            t.value = t.value.replace('F', 'e')  # cambia "F" por "e"
         else:
             numero = float(t.value)
-        if (numero >= MIN_FLOAT_POSITIVO and numero <= MAX_FLOAT_POSITIVO) or (numero == 0.0):
-            # Agregar a la tabla de simbolos
-            pass
-        else:
-            msg = f"Warning: Constante flotante fuera de rango (linea {self.lineno})"
+    
+        if numero != 0.0 and numero < MIN_FLOAT_POSITIVO:
+            # Pongo el límite para que no corte la ejecución
+            msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
             self.print_color(msg)
-        t.value = t.value.replace('F', 'E')  # cambia "F" por "E"
+            t.value = MIN_FLOAT_POSITIVO
+            
+        elif numero > MAX_FLOAT_POSITIVO:
+            # Pongo el límite para que no corte la ejecución
+            msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
+            self.print_color(msg)
+            t.value = MAX_FLOAT_POSITIVO
+            
+            
         self.symbol_table.add_token(t.value, "CONST_FLOAT")  
         t.lineno = self.lineno
-        # Lo devuelvo igual para que no corte la ejecución
         return t
 
     #STRING

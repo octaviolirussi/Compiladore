@@ -1,6 +1,8 @@
 from sly import Parser
 from tablaSimbolos import SymbolTable
 from lexer import MyLexer
+from colorama import Fore, Style
+
 
 class MyParser(Parser):
     
@@ -218,10 +220,12 @@ class MyParser(Parser):
         MAX_INT = 32767 
         signed_value = -int(p.CONST_INT)
              
-        if (signed_value < MIN_INT or signed_value > MAX_INT):
-            # TODO son errores, no debe seguir ejecutando?
-            msg = f"Error: Constante entera negativa {signed_value} fuera de rango (Línea {self.lineno})."
-            self.print_color(msg)
+        if signed_value < MIN_INT:
+            msg = f"Warning: Constante entera negativa {signed_value} fuera de rango (linea {self.lineno}). Se usará el límite ({MIN_INT})."
+            final_value = MIN_INT
+        elif signed_value > MAX_INT: 
+            msg = f"Warning: Constante entera positiva {signed_value} fuera de rango (linea {self.lineno}). Se usará el límite ({MAX_INT})."
+            final_value = MAX_INT
         else:
             final_value = signed_value
 
@@ -237,23 +241,17 @@ class MyParser(Parser):
     # Regla para la negación de CONST_FLOAT (detecta unario)
     @_('"-" CONST_FLOAT %prec UMINUS')
     def expr(self, p):
-        ########## TODO revisando los rangos acá. Agregar los arreglos de octi 
-        # Obtenemos el valor de la magnitud
-        try:
-            magnitude = float(p.CONST_FLOAT)
-        except ValueError:
-            # Manejo de error si el valor del token es inválido
-            return ('num_float', 0.0) 
-
-        signed_value = -magnitude
-        
+        signed_value = -float(p.CONST_FLOAT)
         # Rango FLOAT (single precision)
-        MIN_FLOAT = -3.40282347e38
+        MIN_FLOAT_NEGATIVO = -(3.40282347**38)
+        MAX_FLOAT_NEGATIVO = -(1.17549435**-38)
         
-        if signed_value < MIN_FLOAT:
-            msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango (underflow). Se usará el límite ({MIN_FLOAT})."
-            self.print_color(msg)
-            final_value = MIN_FLOAT
+        if signed_value < MIN_FLOAT_NEGATIVO:
+            msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MIN_FLOAT_NEGATIVO})."
+            final_value = MIN_FLOAT_NEGATIVO
+        elif signed_value > MAX_FLOAT_NEGATIVO:
+            msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MAX_FLOAT_NEGATIVO})."
+            final_value = MAX_FLOAT_NEGATIVO
         else:
             final_value = signed_value
             
@@ -261,7 +259,6 @@ class MyParser(Parser):
         self.symbol_table.update_token(p.CONST_FLOAT, str(final_value))
         
         return ('num_float', final_value)
-    
     
     @_('CONST_FLOAT')
     def expr(self, p):
