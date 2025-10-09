@@ -199,8 +199,7 @@ class MyParser(Parser):
     
     @_('expr ARROW ID')
     def expr(self, p):
-        return 'arg', p.expr, p.ID
-
+        return ('uminus', p.expr) 
     #================================= Tipos =================================================================================================
     @_('INT')
     @_('FLOAT')
@@ -217,15 +216,12 @@ class MyParser(Parser):
     def expr(self, p):
         # Rango INT (16 bits): [-32768, 32767]
         MIN_INT = -32768
-        MAX_INT = 32767 
         signed_value = -int(p.CONST_INT)
              
         if signed_value < MIN_INT:
-            msg = f"Warning: Constante entera negativa {signed_value} fuera de rango (linea {self.lineno}). Se usará el límite ({MIN_INT})."
+            msg = f"Warning: Constante entera negativa {signed_value} fuera de rango (linea. Se usará el límite ({MIN_INT})."
+            print(msg)
             final_value = MIN_INT
-        elif signed_value > MAX_INT: 
-            msg = f"Warning: Constante entera positiva {signed_value} fuera de rango (linea {self.lineno}). Se usará el límite ({MAX_INT})."
-            final_value = MAX_INT
         else:
             final_value = signed_value
 
@@ -236,21 +232,30 @@ class MyParser(Parser):
     
     @_('CONST_INT')
     def expr(self, p):
-        return ('num_int', p.CONST_INT)
+        MAX_INT = 32767 
+        value = int(p.CONST_INT)
+        if value > MAX_INT: 
+            msg = f"Warning: Constante entera positiva {value} fuera de rango. Se usará el límite ({MAX_INT})."
+            print(msg)
+            final_value = MAX_INT
+            self.symbol_table.update_token(p.CONST_INT, str(final_value))
+        return ('num_int', str(final_value))
 
     # Regla para la negación de CONST_FLOAT (detecta unario)
     @_('"-" CONST_FLOAT %prec UMINUS')
     def expr(self, p):
         signed_value = -float(p.CONST_FLOAT)
         # Rango FLOAT (single precision)
-        MIN_FLOAT_NEGATIVO = -(3.40282347**38)
-        MAX_FLOAT_NEGATIVO = -(1.17549435**-38)
+        MIN_FLOAT_NEGATIVO = -(3.40282347**38) # Número negativo más lejano al 0
+        MAX_FLOAT_NEGATIVO = -(1.17549435**-38) # Número negativo más cercano al 0
         
         if signed_value < MIN_FLOAT_NEGATIVO:
             msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MIN_FLOAT_NEGATIVO})."
+            print(msg)
             final_value = MIN_FLOAT_NEGATIVO
-        elif signed_value > MAX_FLOAT_NEGATIVO:
+        elif signed_value >= MAX_FLOAT_NEGATIVO and signed_value != 0.0:
             msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MAX_FLOAT_NEGATIVO})."
+            print(msg)
             final_value = MAX_FLOAT_NEGATIVO
         else:
             final_value = signed_value

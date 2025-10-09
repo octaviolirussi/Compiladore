@@ -113,20 +113,20 @@ class MyLexer(Lexer):
         else:
             numero = float(t.value)
     
-        if numero != 0.0 and numero < MIN_FLOAT_POSITIVO:
+        if numero != 0.0 and numero <= MIN_FLOAT_POSITIVO:
             # Pongo el límite para que no corte la ejecución
             msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
             self.print_color(msg)
             t.value = MIN_FLOAT_POSITIVO
             
-        elif numero > MAX_FLOAT_POSITIVO:
+        elif numero >= MAX_FLOAT_POSITIVO:
             # Pongo el límite para que no corte la ejecución
             msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
             self.print_color(msg)
             t.value = MAX_FLOAT_POSITIVO
             
             
-        self.symbol_table.add_token(t.value, "CONST_FLOAT")  
+        self.symbol_table.add_token(str(numero), "CONST_FLOAT")  
         t.lineno = self.lineno
         return t
 
