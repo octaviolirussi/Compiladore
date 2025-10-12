@@ -226,7 +226,8 @@ class MyParser(Parser):
             final_value = signed_value
 
         # Modificación de la Tabla de Símbolos. Registrar el valor negativo.
-        self.symbol_table.update_token(p.CONST_INT, str(final_value))
+        self.symbol_table.add_negative_token(p.CONST_INT, str(final_value))
+        self.symbol_table.delete_token(p.CONST_INT)
         
         return ('num_int', final_value) 
     
@@ -237,9 +238,11 @@ class MyParser(Parser):
         if value > MAX_INT: 
             msg = f"Warning: Constante entera positiva {value} fuera de rango. Se usará el límite ({MAX_INT})."
             print(msg)
-            final_value = MAX_INT
-            self.symbol_table.update_token(p.CONST_INT, str(final_value))
-        return ('num_int', str(final_value))
+            value = MAX_INT
+            self.symbol_table.update_token(p.CONST_INT, str(value))
+            self.symbol_table.delete_token(p.CONST_INT)
+               
+        return ('num_int', str(value))
 
     # Regla para la negación de CONST_FLOAT (detecta unario)
     @_('"-" CONST_FLOAT %prec UMINUS')

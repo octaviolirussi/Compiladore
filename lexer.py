@@ -85,15 +85,15 @@ class MyLexer(Lexer):
         #Verifico rangos
         MAX_INT = 32767+1 
         t.value = t.value[:-1]
-        self.symbol_table.add_token(t.value, "CONST_INT")
         if (int(t.value) >= 0 and int(t.value) <= MAX_INT):
-            # Agregar a la tabla de simbolos
+            self.symbol_table.add_token(t.value, "CONST_INT")
             pass
         else:
             # Pongo el límite para que no corte la ejecución
             msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
             self.print_color(msg)
             t.value = MAX_INT
+            self.symbol_table.add_token(t.value, "CONST_INT")
         return t    
 
     #CONST_FLOAT
