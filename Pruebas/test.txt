@@ -1,15 +1,2 @@
-int F3 (int W, int Z){
-    float X;
-    X = 3I;
-    if (X > 0I)
-        return (X + 2L);
-    else{
-        X = 2I;
-    return (X * 2I);
-    }
-    endif;
-    
-    while (3I > 2I) do{
-    I = I + 1I;
-    }
-}
+MINIMO%NEGATIVO = -1.17549435F-38;
+UNDERFLOW%NEGATIVO = -1.0F-40;

@@ -43,12 +43,11 @@ class SymbolTable:
             # Sacar la clave positiva
             token_type = self.symbols.pop(lexema) 
         else:
-            self.print_color(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para actualizar.")
+            self.print_color(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para eliminar.")
             
-
     def update_token(self, lexema, new_value):
-        self.add_negative_token(lexema, new_value) 
-        pass 
+        # self.add_negative_token(lexema, new_value) 
+        
         new_lexema = str(new_value) 
         
         if lexema in self.symbols:

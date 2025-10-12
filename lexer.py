@@ -87,7 +87,7 @@ class MyLexer(Lexer):
         t.value = t.value[:-1]
         if (int(t.value) >= 0 and int(t.value) <= MAX_INT):
             self.symbol_table.add_token(t.value, "CONST_INT")
-            pass
+            
         else:
             # Pongo el límite para que no corte la ejecución
             msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
@@ -101,32 +101,33 @@ class MyLexer(Lexer):
     def CONST_FLOAT(self,t):
         #Verifico rangos positivos
         
-        MIN_FLOAT_POSITIVO = 1.17549435**(-38) 
-        MAX_FLOAT_POSITIVO = 3.40282347**38 
+        MIN_FLOAT_POSITIVO = 1.17549435e-38
+        MAX_FLOAT_POSITIVO = 3.40282347e38 
         if 'F' in t.value.upper():
-            partes = t.value.split('F')
-            base = float(partes[0])
-            exponente = int(partes[1])
-            numero = base ** exponente
+            temp_value = t.value.replace('F', 'e') 
+            numero = float(temp_value) 
+            t.value = temp_value
             
-            t.value = t.value.replace('F', 'e')  # cambia "F" por "e"
         else:
             numero = float(t.value)
-    
-        if numero != 0.0 and numero <= MIN_FLOAT_POSITIVO:
+
+        if numero != 0.0 and numero < MIN_FLOAT_POSITIVO:
             # Pongo el límite para que no corte la ejecución
-            msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
+            msg = f"Warning: Constante entera {numero} fuera de rango (linea {self.lineno}). Se usará {MIN_FLOAT_POSITIVO}."
             self.print_color(msg)
             t.value = MIN_FLOAT_POSITIVO
+            self.symbol_table.add_token(str(t.value), "CONST_FLOAT") 
             
-        elif numero >= MAX_FLOAT_POSITIVO:
+        elif numero > MAX_FLOAT_POSITIVO:
             # Pongo el límite para que no corte la ejecución
-            msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
+            msg = f"Warning: Constante entera {numero} fuera de rango (linea {self.lineno}). Se usará {MAX_FLOAT_POSITIVO}."
             self.print_color(msg)
-            t.value = MAX_FLOAT_POSITIVO
-            
-            
-        self.symbol_table.add_token(str(numero), "CONST_FLOAT")  
+            t.value = MAX_FLOAT_POSITIVO   
+            self.symbol_table.add_token(str(t.value), "CONST_FLOAT")   
+                   
+        else: 
+            self.symbol_table.add_token(str(t.value), "CONST_FLOAT")  
+        
         t.lineno = self.lineno
         return t
 

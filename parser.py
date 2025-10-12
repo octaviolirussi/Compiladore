@@ -222,13 +222,13 @@ class MyParser(Parser):
             msg = f"Warning: Constante entera negativa {signed_value} fuera de rango (linea. Se usará el límite ({MIN_INT})."
             print(msg)
             final_value = MIN_INT
+            self.symbol_table.delete_token(p.CONST_INT) 
+            self.symbol_table.add_token(str(final_value), "CONST_INT") 
         else:
             final_value = signed_value
-
-        # Modificación de la Tabla de Símbolos. Registrar el valor negativo.
-        self.symbol_table.add_negative_token(p.CONST_INT, str(final_value))
-        self.symbol_table.delete_token(p.CONST_INT)
-        
+            self.symbol_table.delete_token(p.CONST_INT) 
+            self.symbol_table.add_token(str(final_value), "CONST_INT")
+       
         return ('num_int', final_value) 
     
     @_('CONST_INT')
@@ -239,32 +239,41 @@ class MyParser(Parser):
             msg = f"Warning: Constante entera positiva {value} fuera de rango. Se usará el límite ({MAX_INT})."
             print(msg)
             value = MAX_INT
-            self.symbol_table.update_token(p.CONST_INT, str(value))
             self.symbol_table.delete_token(p.CONST_INT)
-               
-        return ('num_int', str(value))
+            self.symbol_table.add_token(str(value), "CONST_INT")
+            
+            return ('num_int', str(value))
+        else:       
+            return ('num_int', str(value))
 
     # Regla para la negación de CONST_FLOAT (detecta unario)
     @_('"-" CONST_FLOAT %prec UMINUS')
     def expr(self, p):
         signed_value = -float(p.CONST_FLOAT)
         # Rango FLOAT (single precision)
-        MIN_FLOAT_NEGATIVO = -(3.40282347**38) # Número negativo más lejano al 0
-        MAX_FLOAT_NEGATIVO = -(1.17549435**-38) # Número negativo más cercano al 0
+        MIN_FLOAT_NEGATIVO = -3.40282347e38 # Número negativo más lejano al 0
+        MAX_FLOAT_NEGATIVO = -1.17549435e-38 # Número negativo más cercano al 0
         
         if signed_value < MIN_FLOAT_NEGATIVO:
             msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MIN_FLOAT_NEGATIVO})."
             print(msg)
             final_value = MIN_FLOAT_NEGATIVO
-        elif signed_value >= MAX_FLOAT_NEGATIVO and signed_value != 0.0:
+            self.symbol_table.delete_token(p.CONST_FLOAT)
+            self.symbol_table.add_token(str(final_value), "CONST_FLOAT")
+
+        elif signed_value > MAX_FLOAT_NEGATIVO and signed_value != 0.0:
             msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MAX_FLOAT_NEGATIVO})."
             print(msg)
             final_value = MAX_FLOAT_NEGATIVO
+            
+            self.symbol_table.delete_token(p.CONST_FLOAT)
+            self.symbol_table.add_token(str(final_value), "CONST_FLOAT")
+            
         else:
             final_value = signed_value
-            
-        # Modificación de la Tabla de Símbolos. Registrar el valor negativo.
-        self.symbol_table.update_token(p.CONST_FLOAT, str(final_value))
+        
+        self.symbol_table.delete_token(p.CONST_FLOAT)
+        self.symbol_table.add_token(str(final_value), "CONST_FLOAT")
         
         return ('num_float', final_value)
     
