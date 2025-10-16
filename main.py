@@ -2,13 +2,16 @@ import os
 from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 from parser import MyParser
-from pprint import pprint
+from errorManager import ErrorManager
+from print import print_ast
 
 symbol_Table = SymbolTable()
 symbol_Table.load_keyword()
 
-lexer = MyLexer()
-parser = MyParser()
+error = ErrorManager()
+
+lexer = MyLexer(symbol_Table,error)
+parser = MyParser(symbol_Table,error)
 
 # Obtener la carpeta donde está main.py
 base_path = os.path.dirname(os.path.abspath(__file__))
@@ -23,9 +26,8 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 try:
     with open("Pruebas/test.txt", "r", encoding="utf-8") as f:
         text = f.read()  # lee todo el contenido y muestra los tokens
-        print("\nWarnings:\n")
         tokens = list(lexer.tokenize(text))
-        
+
         print("\nLexer:\n")
         for tok in tokens:
             print('type=%r, value=%r' % (tok.type, tok.value))
@@ -34,10 +36,18 @@ try:
         tokens_iter = iter(tokens)
         print("\nParser:\n")
         result = parser.parse(tokens_iter)
-        pprint(result)
+        print_ast(result)
 
 except FileNotFoundError:
     print(f"No se encontró el archivo en: poner la ruta despues")
+
+#errores
+print("\nMuestra de Errores:\n")
+if error.has_errors():
+    print("Se encontraron errores:")
+    print(error)
+else:
+    print("Análisis completado sin errores.")
 
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")
