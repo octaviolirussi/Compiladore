@@ -85,7 +85,7 @@ class MyLexer(Lexer):
                 
             else:
                 # Pongo el límite para que no corte la ejecución
-                msg = f"Warning: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
+                msg = f"Error: Constante entera fuera de rango (linea {self.lineno}). Se usará el límite."
                 print(msg)
                 t.value = MAX_INT
                 self.symbol_table.add_token(t.value, "CONST_INT")
@@ -108,14 +108,14 @@ class MyLexer(Lexer):
 
             if numero != 0.0 and numero < MIN_FLOAT_POSITIVO:
                 # Pongo el límite para que no corte la ejecución
-                msg = f"Warning: Constante entera {numero} fuera de rango (linea {self.lineno}). Se usará {MIN_FLOAT_POSITIVO}."
+                msg = f"Error: Constante entera {numero} fuera de rango (linea {self.lineno}). Se usará {MIN_FLOAT_POSITIVO}."
                 print(msg)
                 t.value = MIN_FLOAT_POSITIVO
                 self.symbol_table.add_token(str(t.value), "CONST_FLOAT") 
                 
             elif numero > MAX_FLOAT_POSITIVO:
                 # Pongo el límite para que no corte la ejecución
-                msg = f"Warning: Constante entera {numero} fuera de rango (linea {self.lineno}). Se usará {MAX_FLOAT_POSITIVO}."
+                msg = f"Error: Constante entera {numero} fuera de rango (linea {self.lineno}). Se usará {MAX_FLOAT_POSITIVO}."
                 print(msg)
                 t.value = MAX_FLOAT_POSITIVO   
                 self.symbol_table.add_token(str(t.value), "CONST_FLOAT")   

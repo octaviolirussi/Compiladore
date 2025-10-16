@@ -217,7 +217,7 @@ class MyParser(Parser):
         signed_value = -int(p.CONST_INT)
              
         if signed_value < MIN_INT:
-            msg = f"Warning: Constante entera negativa {signed_value} fuera de rango (linea. Se usará el límite ({MIN_INT})."
+            msg = f"Error: Constante entera negativa {signed_value} fuera de rango (linea. Se usará el límite ({MIN_INT})."
             print(msg)
             final_value = MIN_INT
             self.symbol_table.delete_token(p.CONST_INT) 
@@ -234,7 +234,7 @@ class MyParser(Parser):
         MAX_INT = 32767 
         value = int(p.CONST_INT)
         if value > MAX_INT: 
-            msg = f"Warning: Constante entera positiva {value} fuera de rango. Se usará el límite ({MAX_INT})."
+            msg = f"Error: Constante entera positiva {value} fuera de rango. Se usará el límite ({MAX_INT})."
             print(msg)
             value = MAX_INT
             self.symbol_table.delete_token(p.CONST_INT)
@@ -255,14 +255,14 @@ class MyParser(Parser):
         MAX_FLOAT_NEGATIVO = -1.17549435e-38 # Número negativo más cercano al 0
         
         if signed_value < MIN_FLOAT_NEGATIVO:
-            msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MIN_FLOAT_NEGATIVO})."
+            msg = f"Error: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MIN_FLOAT_NEGATIVO})."
             print(msg)
             final_value = MIN_FLOAT_NEGATIVO
             self.symbol_table.delete_token(p.CONST_FLOAT)
             self.symbol_table.add_token(str(final_value), "CONST_FLOAT")
 
         elif signed_value > MAX_FLOAT_NEGATIVO and signed_value != 0.0:
-            msg = f"Warning: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MAX_FLOAT_NEGATIVO})."
+            msg = f"Error: Constante flotante negativa {signed_value} fuera de rango. Se usará el límite ({MAX_FLOAT_NEGATIVO})."
             print(msg)
             final_value = MAX_FLOAT_NEGATIVO
             

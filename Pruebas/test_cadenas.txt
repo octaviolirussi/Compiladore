@@ -1,6 +1,4 @@
-cadena1 = "Hola Mundo"
-
-123343
+CADENA1 = "Hola Mundo"
 
 CADENA2 = "Esta cadena no termina
 
