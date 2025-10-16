@@ -1,9 +1,8 @@
-from colorama import Fore, Style
-
 class SymbolTable:
     
     def __init__(self):
-        self.symbols = {}  # {lexema_key: {"type": token_type, "value": lexema}}
+        # Estructura de símbolos: {lexema: {"type": "ID" | "CONST_INT" | "CONST_FLOAT", "data_type": "INT" | "FLOAT" | None}}
+        self.symbols = {} 
         self.keywords = {}
         self.load_keyword() # Load keywords upon creation
 
@@ -21,47 +20,69 @@ class SymbolTable:
             "cv" : "CV"
         }
 
-    def print_color(self,msg):
-        print(Fore.YELLOW + msg + Style.RESET_ALL)
-
-    def add_token(self, lexema, token_type=None):
+    def add_token(self, lexema, token_type):
+        """
+        Agrega un lexema. Para constantes, registra el tipo de dato.
+        Para IDs, registra el tipo de token (ID).
+        """
         if lexema not in self.symbols:
-            self.symbols.update({lexema:token_type})
+            entry = {"type": token_type}
+            data_type = None
+
+            if token_type == "CONST_INT":
+                data_type = "INT"
+            elif token_type == "CONST_FLOAT":
+                data_type = "FLOAT"
+
+            entry["data_type"] = data_type
+            self.symbols[lexema] = entry
     
     def add_negative_token(self, positive_lexema, negative_value):
         negative_lexema = str(negative_value)
         
-        token_type = self.symbols.get(positive_lexema)
+        entry = self.symbols.get(positive_lexema)
         
-        if token_type:
-            self.symbols[negative_lexema] = token_type
+        if entry:
+            self.symbols[negative_lexema] = entry.copy()
+            self.symbols[negative_lexema]['value'] = negative_value
         else:
-            self.print_color(f"Warning: El lexema positivo '{positive_lexema}' no existe en la tabla de símbolos para añadir su contraparte negativa.")
+            print(f"Warning: El lexema positivo '{positive_lexema}' no existe en la tabla de símbolos para añadir su contraparte negativa.")
 
     def delete_token(self, lexema):
         if lexema in self.symbols:
-            # Sacar la clave positiva
-            token_type = self.symbols.pop(lexema) 
+            self.symbols.pop(lexema) 
         else:
-            self.print_color(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para eliminar.")
+            print(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para eliminar.")
             
     def update_token(self, lexema, new_value):
-        # self.add_negative_token(lexema, new_value) 
-        
         new_lexema = str(new_value) 
         
         if lexema in self.symbols:
-            token_type = self.symbols.get(lexema)
-            self.symbols.update({new_lexema: token_type}) 
+            entry = self.symbols.pop(lexema) 
+            
+            self.symbols[new_lexema] = entry
         else:
-            self.print_color(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para actualizar.")
-
-        
+            print(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para actualizar.")
+            
     def get_token(self, lexema):
+        """Retorna el diccionario de atributos asociado al lexema."""
         return self.symbols.get(lexema, None)
- 
+    
+    def get_data_type(self, lexema):
+        """Método de conveniencia para obtener el tipo de dato."""
+        entry = self.symbols.get(lexema)
+        if entry:
+            return entry.get("data_type")
+        return None
+
     def show(self):
         result = "Tabla de Símbolos:\n"
-        for lexema, token in self.symbols.items():
-            result += f"{lexema} -> {token}\n"
+        result += "----------------------------------------------\n"
+        result += "{:<15} {:<15} {:<10}\n".format("Lexema", "Type", "Data Type")
+        result += "----------------------------------------------\n"
+        for lexema, entry in self.symbols.items():
+            token_type = entry.get("type", "N/A")
+            data_type = entry.get("data_type", "N/A") if entry.get("data_type") else "N/A"
+            result += "{:<15} {:<15} {:<10}\n".format(lexema, token_type, data_type)
+        result += "----------------------------------------------\n"
         return result

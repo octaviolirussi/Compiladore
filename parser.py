@@ -1,8 +1,6 @@
 from sly import Parser
 from tablaSimbolos import SymbolTable
 from lexer import MyLexer
-from colorama import Fore, Style
-
 
 class MyParser(Parser):
     
@@ -197,9 +195,9 @@ class MyParser(Parser):
     def expr(self, p):
         return ('distinto', p.expr0, p.expr1)  
     
-    @_('expr ARROW ID')
-    def expr(self, p):
-        return ('uminus', p.expr) 
+    # @_('expr ARROW ID')
+    # def expr(self, p):
+    #     return ('uminus', p.expr) 
     #================================= Tipos =================================================================================================
     @_('INT')
     @_('FLOAT')
@@ -243,7 +241,9 @@ class MyParser(Parser):
             self.symbol_table.add_token(str(value), "CONST_INT")
             
             return ('num_int', str(value))
-        else:       
+        else:
+            self.symbol_table.delete_token(p.CONST_INT)
+            self.symbol_table.add_token(str(value), "CONST_INT")       
             return ('num_int', str(value))
 
     # Regla para la negación de CONST_FLOAT (detecta unario)
@@ -279,5 +279,7 @@ class MyParser(Parser):
     
     @_('CONST_FLOAT')
     def expr(self, p):
+        self.symbol_table.delete_token(p.CONST_FLOAT)
+        self.symbol_table.add_token(p.CONST_FLOAT, "CONST_FLOAT")
         return ('num_float', p.CONST_FLOAT)
     

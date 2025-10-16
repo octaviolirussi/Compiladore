@@ -26,8 +26,8 @@ try:
             print("\nWarnings:\n")
             tokens = list(lexer.tokenize(text))
             
-            if lexer.state == 'comment':
-                lexer.eof()
+            # if lexer.state == 'comment':
+            #     lexer.eof()
                 
 
             print("\nLexer:\n")
