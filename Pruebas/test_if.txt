@@ -1,0 +1,30 @@
+if (A > 10I) { 
+    B = 5I;
+    A = B - 5I;    
+} else 
+    B = 2I; 
+endif;
+
+if (A>=10I)
+    B = 5I;
+else
+    B = 2I;
+endif;
+
+if(A<=10I)
+    B = 5I;
+else{
+    B = 5I;
+    A = B - 5I;    
+}
+endif;
+
+if(A<=10I)
+    B = 5I;
+endif;
+
+if(A<=10I){
+    B = 5I;
+    A = B - 5I;
+}
+endif;

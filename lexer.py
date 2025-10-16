@@ -15,7 +15,7 @@ class MyLexer(Lexer):
     # Lista de tokens
     tokens = { ID, CONST_INT, CONST_FLOAT, GE, LE, EQ, NE
               , ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
-              ,INT, CV}
+              ,INT, CV, UMINUS}
    
     literals = { '+', '-', '*', '/', '=', '>', '<',
                  '(', ')', '{', '}', '_', ';', ',', ';' }
@@ -84,6 +84,7 @@ class MyLexer(Lexer):
             t.value = t.value[:max_length]
 
         # Agregar a la tabla de simbolos
+        self.symbol_table.add_token(t.value, "ID")
         self.symbol_table.add_token(t.value, "ID")
         t.lineno = self.lineno
         return t

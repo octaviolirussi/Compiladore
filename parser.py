@@ -1,8 +1,13 @@
 from sly import Parser
+from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 from tablaSimbolos import SymbolTable
 
 class MyParser(Parser):
+    
+    def __init__(self, symbol_table):
+        self.symbol_table = symbol_table 
+    
     tokens = MyLexer.tokens
 
     def __init__(self, symbol_table,error_manager):
@@ -18,7 +23,8 @@ class MyParser(Parser):
         ('nonassoc', EQ, NE, '>', LE, '<', GE)         # comparaciones no se pueden encadenar
     )
 
-    # ===================================== PROGRAMA =====================================================
+
+# ===================================== PROGRAMA =====================================================
 
     @_('statement_list')
     def program(self, p):
