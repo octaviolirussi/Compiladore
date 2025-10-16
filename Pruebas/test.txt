@@ -1,2 +1,7 @@
-MINIMO%NEGATIVO = -1.17549435F-38;
-UNDERFLOW%NEGATIVO = -1.0F-40;
+DEF = 32I;
+
+##ABC = 12I;##
+
+GHI = 456I;
+
+## comentario ##

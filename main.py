@@ -21,24 +21,27 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 
 # Abrimos el archivo en modo lectura ('r')
 try:
-    with open("Pruebas/test_comentarios.txt", "r", encoding="utf-8") as f:
-        
-        text = f.read()  # lee todo el contenido y muestra los tokens
-        print("\nWarnings:\n")
-        tokens = list(lexer.tokenize(text))
-        
-        print("\nLexer:\n")
-        for tok in tokens:
-            print('type=%r, value=%r' % (tok.type, tok.value))
+    with open("Pruebas/test.txt", "r", encoding="utf-8") as f:
+            text = f.read()  # lee todo el contenido y muestra los tokens
+            print("\nWarnings:\n")
+            tokens = list(lexer.tokenize(text))
+            
+            if lexer.state == 'comment':
+                lexer.eof()
+                
 
-        #Muestra el parser
-        tokens_iter = iter(tokens)
-        print("\nParser:\n")
-        result = parser.parse(tokens_iter)
-        pprint(result)
+            print("\nLexer:\n")
+            for tok in tokens:
+                print('type=%r, value=%r' % (tok.type, tok.value))
+
+            #Muestra el parser
+            tokens_iter = iter(tokens)
+            print("\nParser:\n")
+            result = parser.parse(tokens_iter)
+            pprint(result)
 
 except FileNotFoundError:
-    print(f"No se encontró el archivo en: poner la ruta despues")
+    print(f"No se encontró el archivo en: poner la ruta despues") # TODO
 
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")
