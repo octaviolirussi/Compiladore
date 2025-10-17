@@ -253,7 +253,7 @@ class MyParser(Parser):
 
     @_('type ID')
     def param(self, p):
-        return ('param', None, p.type, p.ID)
+        return ('param', p.type, p.ID)
     
     #====================================== BLOCKS ====================================================
 
