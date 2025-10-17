@@ -24,7 +24,7 @@ def print_ast(node, indent=0):
     if isinstance(node, tuple):
         header = node[0]
 
-        # 🔵 Línea normal
+        # Línea normal
         if isinstance(header, str) and header.startswith("Linea"):
             #Error si contiene la palabra "Error"
             if "Error" in header:
@@ -36,7 +36,7 @@ def print_ast(node, indent=0):
                 print_ast(elem, indent + 1)
             return
 
-        # 🌿 Hoja simple tipo ('num_int', '3')
+        # Hoja simple tipo ('num_int', '3')
         if len(node) == 2 and not isinstance(node[1], (list, tuple)):
             tipo, valor = node
             if tipo == "ID" and valor in symbol_Table.keywords:

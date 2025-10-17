@@ -2,7 +2,7 @@ int F3 (int W, int Z){
     float X;
     X = 3I;
     if (X > 0I)
-        return (X + 2L);
+        return (X + 2I);
     else{
         X = 2I;
     return (X * 2I);

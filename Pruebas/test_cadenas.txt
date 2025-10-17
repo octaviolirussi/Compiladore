@@ -1,6 +1,5 @@
-CADENA1 = "Hola Mundo"
+print ("Hola Mundo");
 
-CADENA2 = "Esta cadena no termina
+print("Esta cadena no termina
 
-
-CADENA3 = "OTRA cadena"
+print("OTRA cadena");
