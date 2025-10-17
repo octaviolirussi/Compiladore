@@ -1,9 +1,11 @@
 import os
+import sys
 from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 from parser import MyParser
 from errorManager import ErrorManager
 from print import print_ast
+
 
 symbol_Table = SymbolTable()
 symbol_Table.load_keyword()
@@ -13,18 +15,15 @@ error = ErrorManager()
 lexer = MyLexer(symbol_Table,error)
 parser = MyParser(symbol_Table,error)
 
-# Obtener la carpeta donde está main.py
-base_path = os.path.dirname(os.path.abspath(__file__))
+if len(sys.argv) != 2:
+    print(f"Uso: python {sys.argv[0]} <ruta_del_txt>")
+    sys.exit(1)
 
-# Pedir al usuario el nombre del archivo (por ejemplo: "prueba_2.txt")
-#nombre_archivo = input("Ingresa el nombre del archivo dentro de la carpeta Pruebas: ")
-
-# Construir la ruta al archivo de pruebas
-#file_path = os.path.join(base_path, "Pruebas", nombre_archivo)
+ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
 try:
-    with open("Pruebas/test_rangos.txt", "r", encoding="utf-8") as f:
+    with open(ruta_txt, "r", encoding="utf-8") as f:
         
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
