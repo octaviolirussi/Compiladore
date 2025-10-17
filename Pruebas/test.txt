@@ -1,7 +1,11 @@
-DEF = 32I;
+ADB=-32I;
+CDF = 32I;
 
-##ABC = 12I;##
+GFT = 4.25;
+GGG = -42.2F+1;
+RRR = 42.2F+1 - -23I;
 
-GHI = 456I;
 
-## comentario ##
+ERTY= 0.0;
+RJET= 0.;
+RREWE= .0;

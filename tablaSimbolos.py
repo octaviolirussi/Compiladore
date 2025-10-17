@@ -45,14 +45,11 @@ class SymbolTable:
         if entry:
             self.symbols[negative_lexema] = entry.copy()
             self.symbols[negative_lexema]['value'] = negative_value
-        else:
-            print(f"Warning: El lexema positivo '{positive_lexema}' no existe en la tabla de símbolos para añadir su contraparte negativa.")
 
     def delete_token(self, lexema):
         if lexema in self.symbols:
             self.symbols.pop(lexema) 
-        else:
-            print(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para eliminar.")
+
             
     def update_token(self, lexema, new_value):
         new_lexema = str(new_value) 
@@ -61,8 +58,6 @@ class SymbolTable:
             entry = self.symbols.pop(lexema) 
             
             self.symbols[new_lexema] = entry
-        else:
-            print(f"Warning: El lexema '{lexema}' no existe en la tabla de símbolos para actualizar.")
             
     def get_token(self, lexema):
         """Retorna el diccionario de atributos asociado al lexema."""
