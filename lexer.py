@@ -1,4 +1,4 @@
-from sly import Lexer
+from sly import Lexer 
 from tablaSimbolos import SymbolTable
 from errorManager import ErrorManager
 
@@ -38,17 +38,17 @@ class MyLexer(Lexer):
     ARROW       = r'->'
     STRING      = r'"[^"\n]*"'
 
-    # Palabras reservadas
-    RESERVED['if']     = IF
-    RESERVED['else']   = ELSE
-    RESERVED['endif']  = ENDIF
-    RESERVED['print']  = PRINT
-    RESERVED['return'] = RETURN
-    RESERVED['while']  = WHILE
-    RESERVED['do']     = DO
-    RESERVED['float']  = FLOAT
-    RESERVED['int']    = INT
-    RESERVED['cv']     = CV
+    # Palabras reservadas (se mantiene igual)
+    RESERVED['if']      = IF
+    RESERVED['else']    = ELSE
+    RESERVED['endif']   = ENDIF
+    RESERVED['print']   = PRINT
+    RESERVED['return']  = RETURN
+    RESERVED['while']   = WHILE
+    RESERVED['do']      = DO
+    RESERVED['float']   = FLOAT
+    RESERVED['int']     = INT
+    RESERVED['cv']      = CV
 
     #Track line number
     @_(r'\n+')
@@ -77,7 +77,7 @@ class MyLexer(Lexer):
     def ID(self, t):
         max_length = 20
 
-    # Truncar si excede longitud máxima
+        # Truncar si excede longitud máxima
         if len(t.value) > max_length:
             msg = f"Warning: Identificador '{t.value}' truncado a {max_length} caracteres"
             self.error_manager.add(t.lineno,msg,source="lexer")
@@ -174,4 +174,4 @@ class MyLexer(Lexer):
         msg = f"Warning: Carácter ilegal '{t.value[0]}'"
         self.error_manager.add(t.lineno,msg,source="lexer")
         self.index += 1  # Avanza solo un carácter para continuar
-   
+  

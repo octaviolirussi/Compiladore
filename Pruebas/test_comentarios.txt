@@ -11,3 +11,8 @@ varias lineas ##
 con espacio en el medio ##
 
 Comentario sin apertura ##
+
+Comentario sin cerrar 
+
+if (A > B)
+ print ("mayor");

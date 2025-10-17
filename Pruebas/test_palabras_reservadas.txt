@@ -1,31 +1,22 @@
 if (CONDICION) {
     // CODIGO
-}
-
-else {
+}else {
     // CODIGO
-}
+}endif;
 
-endif
+print("Mensaje");
 
-print("Mensaje")
-
-return
-
-while (CONDICION) {
-    // CODIGO
-}
-
+while (CONDICION)
 do {
     // CODIGO
-} while (CONDICION)
+} 
+
+while (CONDICION)
 
 iF (CONDICION) {
     // CODIGO
-}
-
-ELSE {
+}ELSE {
     // CODIGO
 }
 
-PRINT("Mensaje")
+PRINT("Mensaje");
