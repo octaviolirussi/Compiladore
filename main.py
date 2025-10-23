@@ -4,8 +4,6 @@ from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 from parser import MyParser
 from errorManager import ErrorManager
-from print import print_ast
-
 
 symbol_Table = SymbolTable()
 symbol_Table.load_keyword()
@@ -28,15 +26,13 @@ try:
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
 
-        print("\nLexer:\n")
-        for tok in tokens:
-            print('type=%r, value=%r' % (tok.type, tok.value))
+        # print("\nLexer:\n")
+        # for tok in tokens:
+        #     print('type=%r, value=%r' % (tok.type, tok.value))
 
         #Muestra el parser
         tokens_iter = iter(tokens)
-        print("\nParser:\n")
         result = parser.parse(tokens_iter)
-        print_ast(result)
 
 except FileNotFoundError:
     print(f"No se encontró el archivo en: poner la ruta despues")
