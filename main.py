@@ -15,15 +15,15 @@ error = ErrorManager()
 lexer = MyLexer(symbol_Table,error)
 parser = MyParser(symbol_Table,error)
 
-if len(sys.argv) != 2:
-    print(f"Uso: python {sys.argv[0]} <ruta_del_txt>")
-    sys.exit(1)
+# if len(sys.argv) != 2:
+#     print(f"Uso: python {sys.argv[0]} <ruta_del_txt>")
+#     sys.exit(1)
 
-ruta_txt = sys.argv[1]
+# ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
 try:
-    with open(ruta_txt, "r", encoding="utf-8") as f:
+    with open("Pruebas/test.txt", "r", encoding="utf-8") as f:
         
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
@@ -48,6 +48,8 @@ if error.has_errors():
     print(error)
 else:
     print("Análisis completado sin errores.")
+
+parser.tercetos.mostrar()
 
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")

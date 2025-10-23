@@ -1,7 +1,8 @@
 from sly import Parser
 from tablaSimbolos import SymbolTable
 from lexer import MyLexer
-from tablaSimbolos import SymbolTable
+from tercetos import GeneradorTercetos
+
 
 class MyParser(Parser):
     
@@ -13,7 +14,7 @@ class MyParser(Parser):
     def __init__(self, symbol_table,error_manager):
         self.symbol_table = symbol_table
         self.error_manager = error_manager
-   
+        self.tercetos = GeneradorTercetos()
     
     precedence = (
         ('nonassoc', ELSE),                            # arregla el conflicto del if-else, elige el if 2#                       
@@ -65,6 +66,7 @@ class MyParser(Parser):
     #Asignacion
     @_('ID "=" expr ";"')
     def statement(self, p):
+        self.tercetos.nuevo('=', p.ID, p.expr)
         return (f"Linea {p.lineno} --> assign", p.ID, p.expr)
     
     #error en la expresion de la asignacion
@@ -306,18 +308,22 @@ class MyParser(Parser):
 
     @_('expr "+" expr')
     def expr(self, p):
+        self.tercetos.nuevo('+', p.expr0, p.expr1)
         return ('suma', p.expr0, p.expr1)
 
     @_('expr "-" expr')
     def expr(self, p):
+        self.tercetos.nuevo('-', p.expr0, p.expr1)
         return ('resta', p.expr0, p.expr1)
 
     @_('expr "*" expr')
     def expr(self, p):
+        self.tercetos.nuevo('*', p.expr0, p.expr1)
         return ('multiplicacion', p.expr0, p.expr1)
 
     @_('expr "/" expr')
     def expr(self, p):
+        self.tercetos.nuevo('/', p.expr0, p.expr1)
         return ('division', p.expr0, p.expr1)
     
     @_('expr ">" expr')
