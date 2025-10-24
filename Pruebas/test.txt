@@ -1,10 +1,12 @@
-if(A<=10I){
-    B = 5I;
-    A = B - 5I;
-    if (B < 5I){
-        C = C + 2I;
-    }endif;
-}
-endif;
+while (X < 1I) 
+do{
+    X = 3I;
 
-A = B + C;
+    while (Y < 2I) 
+    do{
+        Y = 2I;
+    };
+    B = 3I + 2I;
+};
+
+A = 3I + 2I;

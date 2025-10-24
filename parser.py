@@ -218,10 +218,18 @@ class MyParser(Parser):
     @_('WHILE "(" expr ")" DO block ";"')
     def statement(self, p):
         # acá salta el programa para volver a evaluar la condición
-        etiqueta_condicion = len(self.tercetos.tercetos)
+        #Capturar el índice inicial de la condición, osea el terceto de la condicion final
+        expr_indice = int(p.expr.strip('[]'))
         
-        # crea la instrucción de salto a la salida. self.tercetos.PENDIENTE indica
-        # que el destino es aún desconocido
+        t_cond = self.tercetos.tercetos[expr_indice]
+    
+        #Esto toma la el primer operando de la condicion while
+        if isinstance(t_cond.op1, str) and t_cond.op1.startswith('['):
+            etiqueta_condicion = int(t_cond.op1.strip('[]'))  # apunta al primer terceto de la condicion
+        else:
+            etiqueta_condicion = expr_indice  # fallback
+
+        # Generar BF pendiente
         salto_a_salida_ref = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
         
         # vuelve a la condición del while
@@ -233,6 +241,8 @@ class MyParser(Parser):
         # Toma la instrucción de salto BF pendiente y rellena su campo PENDIENTE 
         # con la dirección correcta (etiqueta_salida, del paso 5).
         self.tercetos.backpatch([salto_a_salida_ref], etiqueta_salida)
+        
+        self.tercetos.mover_terceto(int(salto_a_salida_ref.strip('[]')),expr_indice+1)
         
     #error en la comparacion del while
     @_('WHILE "(" error ")" DO block ";"')
