@@ -21,21 +21,23 @@ class SymbolTable:
         }
 
     def add_token(self, lexema, token_type):
-        """
-        Agrega un lexema. Para constantes, registra el tipo de dato.
-        Para IDs, registra el tipo de token (ID).
-        """
-        if lexema not in self.symbols:
-            entry = {"type": token_type}
-            data_type = None
+            """
+            Agrega un lexema. Para constantes, registra el tipo de dato y Uso='CONSTANTE'.
+            Para IDs, registra el tipo de token (ID).
+            """
+            if lexema not in self.symbols:
+                entry = {"type": token_type, "Uso": "VARIABLE"} # Por defecto, asumimos variable para ID
+                data_type = None
 
-            if token_type == "CONST_INT":
-                data_type = "INT"
-            elif token_type == "CONST_FLOAT":
-                data_type = "FLOAT"
+                if token_type == "CONST_INT":
+                    data_type = "INT"
+                    entry["Uso"] = "CONSTANTE" # Uso para constantes
+                elif token_type == "CONST_FLOAT":
+                    data_type = "FLOAT"
+                    entry["Uso"] = "CONSTANTE" # Uso para constantes
 
-            entry["data_type"] = data_type
-            self.symbols[lexema] = entry
+                entry["data_type"] = data_type
+                self.symbols[lexema] = entry
     
     def add_negative_token(self, positive_lexema, negative_value):
         negative_lexema = str(negative_value)
@@ -53,7 +55,8 @@ class SymbolTable:
             """
             entry = {
                 "type": "FUNCTION",              
-                "data_type": return_type,        
+                "data_type": return_type,
+                "Uso": "FUNCION",        
                 "parameters": param_list         
             }
             self.symbols[lexema] = entry 
@@ -81,7 +84,10 @@ class SymbolTable:
                                 ('param', 'int', 'Z')
                             ]
                     }'''
-                    self.symbols[param_id] = {"type": "ID", "data_type": param_type}
+                    self.symbols[param_id] = {
+                        "type": "ID", 
+                        "data_type": param_type,
+                        "Uso": "PARAMETRO"}
                     
 
     def delete_token(self, lexema):
@@ -109,15 +115,21 @@ class SymbolTable:
         return None
 
     def show(self):
-        result = "Tabla de Símbolos:\n"
-        result += "----------------------------------------------\n"
-        # Actualiza el formato para mostrar el tipo de token de la función
-        result += "{:<15} {:<15} {:<10}\n".format("Lexema", "Type", "Data Type") 
-        result += "----------------------------------------------\n"
-        for lexema, entry in self.symbols.items():
-            token_type = entry.get("type", "N/A")
-            # Para funciones, mostramos el tipo de retorno
-            data_type = entry.get("data_type", "N/A") if entry.get("data_type") else "N/A"
-            result += "{:<15} {:<15} {:<10}\n".format(lexema, token_type, data_type)
-        result += "----------------------------------------------\n"
-        return result
+            result = "Tabla de Símbolos:\n"
+            # Aumentar la longitud de la línea de separación
+            result += "---------------------------------------------------------\n"
+            
+            # Nuevo encabezado con la columna 'Uso'
+            result += "{:<15} {:<15} {:<10} {:<15}\n".format("Lexema", "Token Type", "Data Type", "Uso") 
+            result += "---------------------------------------------------------\n"
+            
+            for lexema, entry in self.symbols.items():
+                token_type = entry.get("type", "N/A")
+                data_type = entry.get("data_type", "N/A") if entry.get("data_type") else "N/A"
+                uso = entry.get("Uso", "N/A") # Extraer el nuevo atributo 'Uso'
+                
+                # Formatear la nueva fila, incluyendo 'Uso'
+                result += "{:<15} {:<15} {:<10} {:<15}\n".format(lexema, token_type, data_type, uso)
+                
+            result += "---------------------------------------------------------\n"
+            return result

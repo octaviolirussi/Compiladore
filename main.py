@@ -40,7 +40,12 @@ except FileNotFoundError:
 #errores
 print("\nMuestra de Errores:\n")
 if error.has_errors():
-    print("Se encontraron errores:")
+    # Comento el print() porque adentro de error también hay warnings
+    # si no, imprime algo como:
+    # Se encontraron errores:
+    # [parser] Línea 1: Warning: función sin return, se usará valor por defecto 0.0
+    
+    # print("Se encontraron errores:") 
     print(error)
 else:
     print("Análisis completado sin errores.")
