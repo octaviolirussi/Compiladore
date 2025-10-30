@@ -3,7 +3,6 @@ from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 from tercetos import GeneradorTercetos
 
-
 class MyParser(Parser):
     
     tokens = MyLexer.tokens
@@ -14,11 +13,11 @@ class MyParser(Parser):
         self.tercetos = GeneradorTercetos()
     
     precedence = (
-        ('nonassoc', ELSE),                     # para resolver if-else
-        ('nonassoc', EQ, NE, '>', LE, '<', GE), # comparaciones (menor precedencia)
-        ('left', '+', '-'),                     # suma y resta
-        ('left', '*', '/'),                     # multiplicación y división
-        ('right', UMINUS),                      # unario negativo
+        ('nonassoc', ELSE),
+        ('nonassoc', EQ, NE, '>', LE, '<', GE),
+        ('left', '+', '-'),
+        ('left', '*', '/'),
+        ('right', UMINUS),
     )
 
 # ===================================== PROGRAMA =====================================================
@@ -41,8 +40,8 @@ class MyParser(Parser):
     #return
     @_('RETURN "(" expr ")" ";"')
     def statement(self, p):
-        temp = self.tercetos.nuevo('RETURN', p.expr, None)   
-         
+        temp = self.tercetos.nuevo('RETURN', p.expr, None) 
+        
     #error en la expresion del return
     @_('RETURN "(" error ")" ";"')
     def statement(self, p):
@@ -151,7 +150,7 @@ class MyParser(Parser):
         self.tercetos.backpatch([salto_a_else_ref], etiqueta_else) 
         
         # 6. La instrucción actual (final del ELSE) es la etiqueta ENDIF.
-        etiqueta_endif = len(self.tercetos.tercetos)   
+        etiqueta_endif = len(self.tercetos.tercetos) 
         
         # 7. Rellenar el BI (salto_a_endif_ref) para ir a la etiqueta ENDIF.
         self.tercetos.backpatch([salto_a_endif_ref], etiqueta_endif)
@@ -172,7 +171,7 @@ class MyParser(Parser):
 
     # 2. IF-only statement
     @_('IF "(" expr ")" block ENDIF ";" %prec ELSE')
-    def statement(self, p):    
+    def statement(self, p):
         # Generar BF para saltar al ENDIF (sale del bloque si es FALSO).
         # El destino es temporal (PENDIENTE).
         salto_a_endif_ref = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
@@ -198,7 +197,29 @@ class MyParser(Parser):
     #Function statement
     @_('type ID "(" param_list ")" block ";"')
     def statement(self, p):
-        return (f"Linea: {p.lineno} --> func_stmt:", p.type, p.ID,p.param_list,p.block)
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
+        
+        self.tercetos.nuevo('FUNC', p.ID, p.type)
+        if p.type == 'int':
+            msg = "Warning: función sin return, se usará valor por defecto 0"
+            self.error_manager.add(p.lineno, msg, source="parser")
+            default_value = '0'
+            self.symbol_table.add_token('0', 'CONST_INT') # Asegura que '0' está en la TS
+        elif p.type == 'float':
+            msg = "Warning: función sin return, se usará valor por defecto 0.0"
+            self.error_manager.add(p.lineno, msg, source="parser")
+            default_value = '0.0'
+            self.symbol_table.add_token('0.0', 'CONST_FLOAT') # Asegura que '0.0' está en la TS
+        else:
+            # Asumimos 'int' como valor por defecto si hay un tipo inesperado
+            msg = "Warning: función sin return, se usará valor por defecto 0"
+            self.error_manager.add(p.lineno, msg, source="parser")
+            default_value = '0' 
+            self.symbol_table.add_token('0', 'CONST_INT')
+        
+        self.tercetos.nuevo('END_FUNC', p.ID, None)
+        
+        return ('function', p.type, p.ID, p.param_list, p.block)
     
     #error en la expresion de la asignacion
     @_('type ID "(" param_list_error ")" block ";"')
@@ -225,9 +246,9 @@ class MyParser(Parser):
     
         #Esto toma la el primer operando de la condicion while
         if isinstance(t_cond.op1, str) and t_cond.op1.startswith('['):
-            etiqueta_condicion = int(t_cond.op1.strip('[]'))  # apunta al primer terceto de la condicion
+            etiqueta_condicion = int(t_cond.op1.strip('[]')) # apunta al primer terceto de la condicion
         else:
-            etiqueta_condicion = expr_indice  # fallback
+            etiqueta_condicion = expr_indice # fallback
 
         # Generar BF pendiente
         salto_a_salida_ref = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
@@ -287,7 +308,7 @@ class MyParser(Parser):
 
     @_('"{" statement_list "}"')
     def block(self, p):
-        return p.statement_list 
+        return p.statement_list
 
     @_('statement')
     def block(self, p):
@@ -311,7 +332,7 @@ class MyParser(Parser):
     
     
     #======================================== FUNC CALL ===================================================
-#invocacion funcion
+    #invocacion funcion
     @_('ID "(" arg_list ")"')
     def expr(self, p):
         for arg in p.arg_list:
@@ -367,9 +388,9 @@ class MyParser(Parser):
         temp = self.tercetos.nuevo('<', p.expr0, p.expr1)
         return temp
     
-    @_('expr GE expr')  # >=
-    def expr(self, p):  
-        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1)    
+    @_('expr GE expr') # >=
+    def expr(self, p): 
+        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1)
         return temp
     
     @_('expr LE expr') # <=
@@ -377,9 +398,9 @@ class MyParser(Parser):
         temp = self.tercetos.nuevo('<=', p.expr0, p.expr1)
         return temp
     
-    @_('expr EQ expr')  # ==
-    def expr(self, p):  
-        temp = self.tercetos.nuevo('==', p.expr0, p.expr1)  
+    @_('expr EQ expr')# ==
+    def expr(self, p):
+        temp = self.tercetos.nuevo('==', p.expr0, p.expr1)
         return temp
     
     @_('expr NE expr') # !=
@@ -404,25 +425,25 @@ class MyParser(Parser):
         # Rango INT (16 bits): [-32768, 32767]
         MIN_INT = -32768
         signed_value = -int(p.CONST_INT)
-             
+            
         if signed_value < MIN_INT:
             msg = f"Error: Constante entera negativa {signed_value} fuera de rango. Se usará el límite ({MIN_INT})."
             self.error_manager.add(p.lineno, msg, source="parser")
             final_value = MIN_INT
-            self.symbol_table.delete_token(p.CONST_INT) 
-            self.symbol_table.add_token(str(final_value), "CONST_INT") 
+            self.symbol_table.delete_token(p.CONST_INT)
+            self.symbol_table.add_token(str(final_value), "CONST_INT")
         else:
             final_value = signed_value
-            self.symbol_table.delete_token(p.CONST_INT) 
+            self.symbol_table.delete_token(p.CONST_INT)
             self.symbol_table.add_token(str(final_value), "CONST_INT")
-       
-        return (final_value) 
+        
+        return (final_value)
     
     @_('CONST_INT')
     def expr(self, p):
-        MAX_INT = 32767 
+        MAX_INT = 32767
         value = int(p.CONST_INT)
-        if value > MAX_INT: 
+        if value > MAX_INT:
             msg = f"Error: Constante entera positiva {value} fuera de rango. Se usará el límite ({MAX_INT})."
             self.error_manager.add(p.lineno, msg, source="parser")
             value = MAX_INT
@@ -432,7 +453,7 @@ class MyParser(Parser):
             return (str(value))
         else:
             self.symbol_table.delete_token(p.CONST_INT)
-            self.symbol_table.add_token(str(value), "CONST_INT")       
+            self.symbol_table.add_token(str(value), "CONST_INT")
             return (str(value))
 
     # Regla para la negación de CONST_FLOAT (detecta unario)
@@ -472,8 +493,8 @@ class MyParser(Parser):
         self.symbol_table.add_token(p.CONST_FLOAT, "CONST_FLOAT")
         return (p.CONST_FLOAT)
     
-     # ========================================== Manejo general de errores ================================================
-    # Evita que el SLY escriba errores fuera del arbol  
+    # ========================================== Manejo general de errores ================================================
+    # Evita que el SLY escriba errores fuera del arbol  
     def error(self, p):
         if p:
         # Just discard the token and tell the parser it's okay.
