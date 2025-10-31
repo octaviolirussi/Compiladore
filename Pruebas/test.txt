@@ -1,12 +1,18 @@
-while (X < 1I) 
-do{
-    X = 3I;
-
-    while (Y < 2I) 
-    do{
-        Y = 2I;
+if (P - O) {
+    L1=4I;
+    L2=6I;
+    L2=9I;
+ }else{
+    L8=9I;
+    L0=8I;
+    L3=3I;
+    if(L*X){
+        L=2I;
+    }else{
+        S=7I;
+    }endif;
+    while (X>I) do{
+        K=9I;
+        N=7I;
     };
-    B = 3I + 2I;
-};
-
-A = 3I + 2I;
+ }endif;

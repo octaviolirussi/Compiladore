@@ -40,13 +40,12 @@ except FileNotFoundError:
 #errores
 print("\nMuestra de Errores:\n")
 if error.has_errors():
-    print("Se encontraron errores:")
+    print("Se encontraron errores:")    
     print(error)
 else:
     print("Análisis completado sin errores.")
 
 parser.tercetos.mostrar()
-
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")
 print(symbol_Table.keywords)

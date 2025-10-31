@@ -135,27 +135,29 @@ class MyParser(Parser):
     # 1. IF-ELSE statement
     @_('IF "(" expr ")" block ELSE block ENDIF ";"')
     def statement(self, p): 
-        # p.expr es la referencia [N] del terceto que calcula la condición (ej. [0]: (>, A, B)).
-        
-        # Generar BF que sale del IF-bloque al ELSE-bloque.
-        # El destino es temporal (PENDIENTE).
-        salto_a_else_ref = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
-    
-        # Genero BI que sale del IF-bloque al ENDIF.
-        # Este salto garantiza que no ejecutaremos el bloque ELSE si el IF fue verdadero.
-        salto_a_endif_ref = self.tercetos.nuevo('BI', self.tercetos.PENDIENTE, None)
-        
-        # Rellenar el BF (el primer salto) para que salte al inicio del ELSE.
-        etiqueta_else = len(self.tercetos.tercetos) # El índice del terceto que sigue es el inicio del ELSE.
-        print(etiqueta_else) #TODO no salta al else, salta al final de todo el bloque if-else CORREGIR
-        self.tercetos.backpatch([salto_a_else_ref], etiqueta_else) 
-        
-        # 6. La instrucción actual (final del ELSE) es la etiqueta ENDIF.
-        etiqueta_endif = len(self.tercetos.tercetos)   
-        
-        # 7. Rellenar el BI (salto_a_endif_ref) para ir a la etiqueta ENDIF.
-        self.tercetos.backpatch([salto_a_endif_ref], etiqueta_endif)
-        
+
+        # Crear tercetos de control y obtener sus índices
+        index_BF = int(self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE).strip('[]'))
+        index_BI = int(self.tercetos.nuevo('BI', self.tercetos.PENDIENTE, None).strip('[]'))
+        index_end = int(self.tercetos.nuevo('FUERA_DEL_IF', None, None).strip('[]'))
+
+        # Índices auxiliares
+        expr_indice = int(p.expr.strip('[]'))                         # último terceto de la condición
+        index_else_last = (expr_indice + 1) + (len(p.block0) + 1)     # para mover BI a su posicion
+        index_else_first = expr_indice + len(p.block0) + 1            # para hacer backpatch de BF
+
+        # Backpatch del BF → apunta al inicio del bloque ELSE
+        self.tercetos.backpatch([f"[{index_BF}]"], index_else_first)
+
+        # Backpatch del BI → apunta al FUERA_DEL_IF
+        self.tercetos.backpatch([f"[{index_BI}]"], index_end)
+
+        # Mover el BF justo después de la condición
+        self.tercetos.mover_terceto(index_BF, expr_indice + 1)
+
+        # Mover el BI justo antes del bloque ELSE
+        self.tercetos.mover_terceto(index_BI, index_else_last)
+
     #Error en la comparacion del if
     @_('IF "(" error ")" block ELSE block ENDIF ";"')
     def statement(self, p):
@@ -169,6 +171,12 @@ class MyParser(Parser):
         msg = "Error: falta ; al final del endif"
         self.error_manager.add(p.lineno, msg, source="parser")
 
+    @_('IF "(" expr ")" block ELSE block error ";"')
+    def statement(self, p):
+        self.errok()
+        msg = "Error: falta endif al final del if"
+        self.error_manager.add(p.lineno, msg, source="parser")
+
 
     # 2. IF-only statement
     @_('IF "(" expr ")" block ENDIF ";" %prec ELSE')
@@ -176,11 +184,18 @@ class MyParser(Parser):
         # Generar BF para saltar al ENDIF (sale del bloque si es FALSO).
         # El destino es temporal (PENDIENTE).
         salto_a_endif_ref = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
+
+         # 2. Obtener índice del terceto de la condición
+        expr_indice = int(p.expr.strip('[]')) 
                 
         # Rellenar el BF para que salte a la siguiente instrucción (ENDIF).
-        etiqueta_endif = len(self.tercetos.tercetos) # El índice actual es la primera instrucción después del 'if'.
-        print(etiqueta_endif) #TODO hace mal los saltos
+        # El índice actual es la primera instrucción después del 'if'.
+        etiqueta_endif = len(self.tercetos.tercetos) 
         self.tercetos.backpatch([salto_a_endif_ref], etiqueta_endif)
+    
+        self.tercetos.mover_terceto(int(salto_a_endif_ref.strip('[]')),expr_indice+1)
+
+        self.tercetos.nuevo("FIN_IF", None, None)
             
     #Error en la comparacion del if
     @_('IF "(" error ")" block ENDIF ";" %prec ELSE')
@@ -193,6 +208,12 @@ class MyParser(Parser):
     def statement(self, p):
         self.errok()
         msg = "Error: falta ; al final del if"
+        self.error_manager.add(p.lineno, msg, source="parser")
+
+    @_('IF "(" expr ")" block error ";" %prec ELSE')
+    def statement(self, p):
+        self.errok()
+        msg = "Error: falta endif al final del if"
         self.error_manager.add(p.lineno, msg, source="parser")
 
     #Function statement
@@ -219,7 +240,7 @@ class MyParser(Parser):
     def statement(self, p):
         # acá salta el programa para volver a evaluar la condición
         #Capturar el índice inicial de la condición, osea el terceto de la condicion final
-        expr_indice = int(p.expr.strip('[]'))
+        expr_indice = int(p.expr.strip('[]')) 
         
         t_cond = self.tercetos.tercetos[expr_indice]
     
@@ -239,10 +260,11 @@ class MyParser(Parser):
         etiqueta_salida = len(self.tercetos.tercetos)
         
         # Toma la instrucción de salto BF pendiente y rellena su campo PENDIENTE 
-        # con la dirección correcta (etiqueta_salida, del paso 5).
         self.tercetos.backpatch([salto_a_salida_ref], etiqueta_salida)
         
         self.tercetos.mover_terceto(int(salto_a_salida_ref.strip('[]')),expr_indice+1)
+
+        self.tercetos.nuevo("FIN_WHILE", None, None)
         
     #error en la comparacion del while
     @_('WHILE "(" error ")" DO block ";"')
