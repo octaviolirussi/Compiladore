@@ -32,9 +32,18 @@ class MyParser(Parser):
 
         return ('program', p.statement_list) 
     
-    @_('statement_list')
+    @_('error "{" statement_list "}"')
     def program(self, p):
-        return ('stament_list', p.statement_list)
+        self.errok() 
+        lineno = p.error.lineno if p.error else 1 
+        msg = "Error: El programa debe comenzar con la palabra clave PROGRAMA, seguida del cuerpo entre llaves."
+        self.error_manager.add(lineno, msg, source="parser")
+
+        return ('program_error', p.statement_list)
+    
+    # @_('statement_list')
+    # def program(self, p):
+    #     return ('stament_list', p.statement_list)
     
     #====================================== BLOCKS ====================================================
 

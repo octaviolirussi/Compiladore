@@ -18,7 +18,7 @@ class SymbolTable:
             "float": "FLOAT",
             "int" : "INT",
             "cv" : "CV",
-            "PROGRAMA": "PROGRAMA"
+            "program": "PROGRAMA"
         }
 
     def add_token(self, lexema, token_type):

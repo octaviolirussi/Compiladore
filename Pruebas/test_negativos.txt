@@ -1,11 +1,12 @@
-ADB=-32I;
-CDF = 32I;
+PROGRAMA{   ADB=-32I;
+    CDF = 32I;
 
-GFT = 4.25;
-GGG = -42.2F+1;
-RRR = 42.2F+1 + -23I;
+    GFT = 4.25;
+    GGG = -42.2F+1;
+    RRR = 42.2F+1 + -23I;
 
 
-ERTY= 0.0;
-RJET= 0.;
-RREWE= .0;
+    ERTY= 0.0;
+    RJET= 0.;
+    RREWE= .0;
+}
