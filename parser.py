@@ -22,10 +22,42 @@ class MyParser(Parser):
 
 # ===================================== PROGRAMA =====================================================
 
+    @_('PROGRAMA "{" statement_list "}"')
+    def program(self, p):
+        # Se genera un terceto de inicio de programa
+        self.tercetos.nuevo('START_PROGRAM', None)
+        
+        # Se genera el terceto de fin de programa
+        self.tercetos.nuevo('END_PROGRAM', None, None) 
+
+        return ('program', p.statement_list) 
+    
     @_('statement_list')
     def program(self, p):
-        return ('program', p.statement_list)
+        return ('stament_list', p.statement_list)
+    
+    #====================================== BLOCKS ====================================================
 
+    @_('"{" statement_list "}"')
+    def block(self, p):
+        return p.statement_list
+    
+    # @_('error statement_list "}"')
+    # def block(self, p):
+    #     msg = "Error: falta { al inicio del bloque"
+    #     self.error_manager.add(p.lineno, msg, source="parser")
+        
+    # @_('"{" statement_list error')
+    # def block(self, p):
+    #     msg = "Error: falta { al final del bloque"
+    #     self.error_manager.add(p.lineno, msg, source="parser")
+
+    @_('statement')
+    def block(self, p):
+        return [p.statement]
+    
+    #============================================ STATEMENT ===============================================
+ 
     @_('statement_list statement')
     def statement_list(self, p):
         return p.statement_list + [p.statement]
@@ -33,9 +65,6 @@ class MyParser(Parser):
     @_('statement')
     def statement_list(self, p):
         return [p.statement]
-    
-
-    #============================================ STATEMENT ===============================================
 
     #return
     @_('RETURN "(" expr ")" ";"')
@@ -175,7 +204,12 @@ class MyParser(Parser):
         self.errok()
         msg = "Error: falta endif al final del if"
         self.error_manager.add(p.lineno, msg, source="parser")
-
+        
+    # @_('IF "(" expr ")" statement ELSE block ENDIF ";"')
+    # def statement(self, p):
+    #     self.errok()
+    #     msg = "Error: el bloque 'if' debe estar entre llaves {}"
+    #     self.error_manager.add(p.lineno, msg, source="parser")
 
     # 2. IF-only statement
     @_('IF "(" expr ")" block ENDIF ";" %prec ELSE')
@@ -325,16 +359,6 @@ class MyParser(Parser):
     @_('type ID')
     def param(self, p):
         return ('param', p.type, p.ID)
-    
-    #====================================== BLOCKS ====================================================
-
-    @_('"{" statement_list "}"')
-    def block(self, p):
-        return p.statement_list
-
-    @_('statement')
-    def block(self, p):
-        return [p.statement]
     
     #====================================== LISTS ======================================================
 

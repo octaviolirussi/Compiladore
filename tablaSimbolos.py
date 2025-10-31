@@ -17,7 +17,8 @@ class SymbolTable:
             "do" : "DO",
             "float": "FLOAT",
             "int" : "INT",
-            "cv" : "CV"
+            "cv" : "CV",
+            "PROGRAMA": "PROGRAMA"
         }
 
     def add_token(self, lexema, token_type):
@@ -29,7 +30,10 @@ class SymbolTable:
                 entry = {"type": token_type, "Uso": "VARIABLE"} # Por defecto, asumimos variable para ID
                 data_type = None
 
-                if token_type == "CONST_INT":
+                if token_type == "PROGRAMA":
+                    data_type == "FUNCTION"
+                    entry["Uso"] = "PROGRAMA"
+                elif token_type == "CONST_INT":
                     data_type = "INT"
                     entry["Uso"] = "CONSTANTE" # Uso para constantes
                 elif token_type == "CONST_FLOAT":
