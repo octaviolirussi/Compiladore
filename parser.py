@@ -22,7 +22,7 @@ class MyParser(Parser):
 
 # ===================================== PROGRAMA =====================================================
 
-    @_('ID "{" statement_list "}"')
+    @_('PROGRAMA "{" statement_list "}"')
     def program(self, p):
         # Se genera un terceto de inicio de programa
         self.tercetos.nuevo('START_PROGRAM', None)
@@ -53,24 +53,25 @@ class MyParser(Parser):
         msg = "Warning: falta inicio del programa"
         self.error_manager.add(p.lineno, msg, source="parser")
     
-    @_('"{" statement_list "}"')
-    def program(self, p):
+    # ESTA ES LA VERSION ANTERIOR SIN IDENTIFICADOR DEL PROGRAMA
+    # @_('"{" statement_list "}"')
+    # def program(self, p):
+    #     print("hola")
+    #     # Se genera un terceto de inicio de programa
+    #     self.tercetos.nuevo('START_PROGRAM', None)
 
-        # Se genera un terceto de inicio de programa
-        self.tercetos.nuevo('START_PROGRAM', None)
-        
-        # Se genera el terceto de fin de programa
-        self.tercetos.nuevo('END_PROGRAM', None, None)
+    #     # Se genera el terceto de fin de programa
+    #     self.tercetos.nuevo('END_PROGRAM', None, None)
 
-        # Mover el START_PROGRAM (anteúltimo) al inicio (índice 0)
-        index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
-        index_destino = 0
-        self.tercetos.mover_terceto(index_origen, index_destino)
+    #     # Mover el START_PROGRAM (anteúltimo) al inicio (índice 0)
+    #     index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
+    #     index_destino = 0
+    #     self.tercetos.mover_terceto(index_origen, index_destino)
 
-        self.errok()
-        msg = "Warning: falta inicio del programa"
-        self.error_manager.add(p.lineno, msg, source="parser")
-        return ('program', p.statement_list)
+    #     self.errok()
+    #     msg = "Warning: falta inicio del programa"
+    #     self.error_manager.add(p.lineno, msg, source="parser")
+    #     return ('program', p.statement_list)
 
     @_('statement_list statement')
     def statement_list(self, p):

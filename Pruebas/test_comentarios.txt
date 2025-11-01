@@ -1,18 +1,23 @@
-## Esto es un comentario
-que puede ocupar
-varias lineas ##
+PROGRAMA{
+    ## Esto es un comentario
+    que puede ocupar
+    varias lineas ##
+    X = 1I;
+
+    ## Comentario de una sola linea valido ##
+
+    X = X + 2I;
+    
+    ## Comentario de varias lineas 
+
+    con espacio en el medio ##
+
+    Comentario sin apertura ##
+
+    Comentario sin cerrar 
+
+    if (A > B)
+        rint ("mayor");
 
 
-## Comentario de una sola linea valido ##
-
-
-## Comentario de varias lineas 
-
-con espacio en el medio ##
-
-Comentario sin apertura ##
-
-Comentario sin cerrar 
-
-if (A > B)
- print ("mayor");
+}

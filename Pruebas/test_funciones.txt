@@ -1,9 +1,11 @@
-float F4 (cv int W, float Z){
-    Z = W - 1I;
-};
+PROGRAMA{
+    float F4 (cv int W, float Z){
+        Z = W - 1I;
+    };
 
-int F3 (int X, cv float A){
-    W = Z + 1I;
-};
+    int F3 (int X, cv float A){
+        W = Z + 1I;
+    };
+}
 
 

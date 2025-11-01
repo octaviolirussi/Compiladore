@@ -1,22 +1,24 @@
-if (CONDICION) {
-    // CODIGO
-}else {
-    // CODIGO
-}endif;
+PROGRAMA{
+    if (X > 2I) {
+        X = 3I;
+    }else {
+        X = 2I;
+    }endif;
 
-print("Mensaje");
+    print("Mensaje");
 
-while (CONDICION)
-do {
-    // CODIGO
-} 
+    while (X <= 3I)
+    do {
+        X = X + 5I;
+    } 
 
-while (CONDICION)
+    while (X > 3I)
 
-iF (CONDICION) {
-    // CODIGO
-}ELSE {
-    // CODIGO
+    iF (X == 3I) {
+        X = 3I + 2I;
+    }ELSE {
+        X = 3I - 2I;
+    }
+
+    PRINT("Mensaje");
 }
-
-PRINT("Mensaje");

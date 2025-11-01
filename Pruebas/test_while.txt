@@ -1,12 +1,14 @@
-while (X < 1I) 
-do{
-    X = 3I;
-
-    while (Y < 2I) 
+PROGRAMA{
+    while (X < 1I) 
     do{
-        Y = 2I;
-    };
-    B = 3I + 2I;
-};
+        X = 3I;
 
-A = 3I + 2I;
+        while (Y < 2I) 
+        do{
+            Y = 2I;
+        };
+        B = 3I + 2I;
+    };
+
+    A = 3I + 2I;
+}

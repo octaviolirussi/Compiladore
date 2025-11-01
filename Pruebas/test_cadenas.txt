@@ -1,5 +1,7 @@
-print ("Hola Mundo");
+PROGRAMA{
+    print ("Hola Mundo");
 
-print("Esta cadena no termina
+    print("Esta cadena no termina
 
-print("OTRA cadena");
+    print("OTRA cadena");
+}

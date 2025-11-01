@@ -80,7 +80,6 @@ class MyLexer(Lexer):
         if 'PROGRAMA' in t.value:
             t.type = 'PROGRAMA' # Cambiar el tipo de token a PROGRAMA
             self.symbol_table.add_token(t.value, "PROGRAMA")
-            print("programa encontrado")
             return t
     
         # Truncar si excede l ongitud máxima
