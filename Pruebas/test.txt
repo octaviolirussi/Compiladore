@@ -1,19 +1,34 @@
 PROGRAMA {
 
+    while (L > A) do {
+        H=1I;
+        int F1,F2;
+    };
+
     int F1 (int X,float Y){
+        int F1,F2;
         L1=2I;
         L2=4I;
-
-        while (K>L) do {
-            L1 = 0I;
-        
-        };
-
-        if(L1 < 4I){
-            L1=9I;
-            L2=5I;
+        if (Z < S){
+            L1=0I;
+            H2=5I;
+        }else{
+            II=0I;
+            G1=7I;
         }endif;
-
-        return (5I);
+        L6=9I;
+        int F1,F2;
+        float F2(int Z) {
+            while (K > Y) do {
+                II=0I;
+                G1=7I;
+            };
+            D2=0I;
+            J2=2I;
+            return (X);
+        };
+        int F1,F2;
+        P1=8I;
+        return (Y);
     };
 }

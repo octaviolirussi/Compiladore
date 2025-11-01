@@ -34,6 +34,7 @@ class MyParser(Parser):
         index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
         index_destino = 0
         self.tercetos.mover_terceto(index_origen, index_destino)
+        return p.statement_list
     
     @_(' statement_list ')
     def program(self, p):
@@ -67,7 +68,8 @@ class MyParser(Parser):
     #return
     @_('RETURN "(" expr ")" ";"')
     def return_statement(self, p):
-        temp = self.tercetos.nuevo('RETURN', p.expr, None) 
+        idx = self.tercetos.nuevo('RETURN', p.expr, None)
+        return int(idx.strip('[]')) + 1 # índice numérico 
         
     #error en la expresion del return
     @_('RETURN "(" error ")" ";"')
@@ -86,7 +88,8 @@ class MyParser(Parser):
     #Asignacion
     @_('ID "=" expr ";"')
     def statement(self, p):
-        temp = self.tercetos.nuevo('=', p.ID, p.expr)
+        idx = self.tercetos.nuevo('=', p.ID, p.expr)
+        return int(idx.strip('[]')) + 1 # índice numérico
     
     #error en la expresion de la asignacion
     @_('ID "=" error ";"')
@@ -105,8 +108,12 @@ class MyParser(Parser):
     # Declaraciones
     @_('type id_list ";"')
     def statement(self, p):
+        indices = []
         for var in p.id_list:
-            ref = self.tercetos.nuevo('DECL', p.type, var)
+            idx = self.tercetos.nuevo('DECL', p.type, var)
+            indices.append(int(idx.strip('[]')))
+        
+        return indices[0] + 1
     
     #error en la expresion de la asignacion
     @_('type id_list_error ";"')
@@ -125,11 +132,13 @@ class MyParser(Parser):
     #Prints
     @_('PRINT "(" expr ")" ";"')
     def statement(self, p):
-        self.tercetos.nuevo('PRINT', p.expr, None)
+        idx = self.tercetos.nuevo('PRINT', p.expr, None)
+        return int(idx.strip('[]')) + 1 # índice numérico
 
     @_('PRINT "(" STRING ")" ";"')
     def statement(self, p):
-        self.tercetos.nuevo('PRINT', p.STRING, None)
+        idx = self.tercetos.nuevo('PRINT', p.STRING, None)
+        return int(idx.strip('[]')) + 1 # índice numérico
     
     #falta ; al final del print
     @_('PRINT "(" expr ")" error')
@@ -165,7 +174,7 @@ class MyParser(Parser):
         # Crear tercetos de control y obtener sus índices
         index_BF = int(self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE).strip('[]'))
         index_BI = int(self.tercetos.nuevo('BI', self.tercetos.PENDIENTE, None).strip('[]'))
-        index_end = int(self.tercetos.nuevo('FUERA_DEL_IF', None, None).strip('[]'))
+        index_end = int(self.tercetos.nuevo('FIN_IF_ELSE', None, None).strip('[]'))
 
         # Índices auxiliares
         expr_indice = int(p.expr.strip('[]'))                         # último terceto de la condición
@@ -183,6 +192,8 @@ class MyParser(Parser):
 
         # Mover el BI justo antes del bloque ELSE
         self.tercetos.mover_terceto(index_BI, index_else_last)
+
+        return expr_indice  # índice numérico
 
     #Error en la comparacion del if
     @_('IF "(" error ")" block ELSE block ENDIF ";"')
@@ -208,7 +219,7 @@ class MyParser(Parser):
     @_('IF "(" expr ")" block ENDIF ";" %prec ELSE')
     def statement(self, p):
         
-        #Cramos el terceto BF y obtenemos su indice
+        #Creamos el terceto BF y obtenemos su indice
         index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
 
         #Indices auxiliares
@@ -223,6 +234,8 @@ class MyParser(Parser):
 
         #Etiqueta de fin del if
         self.tercetos.nuevo("FIN_IF", None, None)
+
+        return expr_indice  # índice numérico
             
     #Error en la comparacion del if
     @_('IF "(" error ")" block ENDIF ";" %prec ELSE')
@@ -250,18 +263,21 @@ class MyParser(Parser):
     def statement(self, p):
         self.symbol_table.add_function(p.ID, p.type, p.param_list)
         
-        self.tercetos.nuevo('FUNC', p.ID, p.type)
+        index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type)
                 
+        #Movemos el terceto FUNC al inicio
+        self.tercetos.mover_terceto(int(index_FUNC.strip('[]')),p.statement_list[0] -1)   
+
         self.tercetos.nuevo('END_FUNC', p.ID, None)
+
+        return p.statement_list[0] + 1
         
-        return ('function', p.type, p.ID, p.param_list, p.statement_list, p.return_statement)
     
     #Function statement sin return
     @_('type ID "(" param_list ")" block ";"')
     def statement(self, p):
         self.symbol_table.add_function(p.ID, p.type, p.param_list)
-        
-        self.tercetos.nuevo('FUNC', p.ID, p.type)
+
         if p.type == 'int':
             msg = "Warning: función sin return, se usará valor por defecto 0"
             self.error_manager.add(p.lineno, msg, source="parser")
@@ -278,10 +294,18 @@ class MyParser(Parser):
             self.error_manager.add(p.lineno, msg, source="parser")
             default_value = '0' 
             self.symbol_table.add_token('0', 'CONST_INT')
-        
+
+        #agrego tercetos
+        index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type)
+        self.tercetos.nuevo('RETURN',default_value,None)
         self.tercetos.nuevo('END_FUNC', p.ID, None)
+
+        #Movemos el terceto FUNC al inicio
+        self.tercetos.mover_terceto(int(index_FUNC.strip('[]')),p.block[0]-1)
+
+        return p.block[0] + 1
         
-        return ('function', p.type, p.ID, p.param_list, p.block)
+        
     
     #error en la expresion de la asignacion
     @_('type ID "(" param_list_error ")" block ";"')
@@ -327,6 +351,8 @@ class MyParser(Parser):
         self.tercetos.mover_terceto(int(index_BF.strip('[]')),expr_indice+1)
 
         self.tercetos.nuevo("FIN_WHILE", None, None)
+
+        return expr_indice + 1  # índice numérico
         
     #error en la comparacion del while
     @_('WHILE "(" error ")" DO block ";"')

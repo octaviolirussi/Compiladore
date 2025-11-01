@@ -74,6 +74,8 @@ class GeneradorTercetos:
                         elif idx == indice_origen:
                             setattr(terceto, attr, f"[{indice_destino}]")
 
+    
+
     def mostrar(self):
         print("\n=== CÓDIGO INTERMEDIO (TERCETOS) ===")
         for i, t in enumerate(self.tercetos):
