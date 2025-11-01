@@ -1,18 +1,18 @@
-if (P - O) {
-    L1=4I;
-    L2=6I;
-    L2=9I;
- }else{
-    L8=9I;
-    L0=8I;
-    L3=3I;
-    if(L*X){
-        L=2I;
-    }else{
-        S=7I;
-    }endif;
-    while (X>I) do{
-        K=9I;
-        N=7I;
-    };
- }endif;
+PROGRAM {
+
+int F1 (int X,float Y){
+    L1=2I;
+    L2=4I;
+};
+
+while (K>L) do {
+    L1=0I;
+    return (O);
+};
+
+if(L1 < 4I){
+    L1=9I;
+    L2=5I;
+}endif;
+
+}

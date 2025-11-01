@@ -22,8 +22,54 @@ class MyParser(Parser):
 
 # ===================================== PROGRAMA =====================================================
 
-    @_('statement_list')
+    @_('ID "{" statement_list "}"')
     def program(self, p):
+        # Se genera un terceto de inicio de programa
+        self.tercetos.nuevo('START_PROGRAM', None)
+        
+        # Se genera el terceto de fin de programa
+        self.tercetos.nuevo('END_PROGRAM', None, None)
+
+        # Mover el START_PROGRAM (anteúltimo) al inicio (índice 0)
+        index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
+        index_destino = 0
+        self.tercetos.mover_terceto(index_origen, index_destino)
+    
+    @_(' statement_list ')
+    def program(self, p):
+        
+        # Se genera un terceto de inicio de programa
+        self.tercetos.nuevo('START_PROGRAM', None)
+        
+        # Se genera el terceto de fin de programa
+        self.tercetos.nuevo('END_PROGRAM', None, None)
+
+        # Mover el START_PROGRAM (anteúltimo) al inicio (índice 0)
+        index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
+        index_destino = 0
+        self.tercetos.mover_terceto(index_origen, index_destino)
+
+        self.errok()
+        msg = "Warning: falta inicio del programa"
+        self.error_manager.add(p.lineno, msg, source="parser")
+    
+    @_('"{" statement_list "}"')
+    def program(self, p):
+
+        # Se genera un terceto de inicio de programa
+        self.tercetos.nuevo('START_PROGRAM', None)
+        
+        # Se genera el terceto de fin de programa
+        self.tercetos.nuevo('END_PROGRAM', None, None)
+
+        # Mover el START_PROGRAM (anteúltimo) al inicio (índice 0)
+        index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
+        index_destino = 0
+        self.tercetos.mover_terceto(index_origen, index_destino)
+
+        self.errok()
+        msg = "Warning: falta inicio del programa"
+        self.error_manager.add(p.lineno, msg, source="parser")
         return ('program', p.statement_list)
 
     @_('statement_list statement')
@@ -170,6 +216,7 @@ class MyParser(Parser):
         msg = "Error: falta ; al final del endif"
         self.error_manager.add(p.lineno, msg, source="parser")
 
+    #Falta el endif
     @_('IF "(" expr ")" block ELSE block error ";"')
     def statement(self, p):
         self.errok()
@@ -180,20 +227,21 @@ class MyParser(Parser):
     # 2. IF-only statement
     @_('IF "(" expr ")" block ENDIF ";" %prec ELSE')
     def statement(self, p):
-        # Generar BF para saltar al ENDIF (sale del bloque si es FALSO).
-        # El destino es temporal (PENDIENTE).
-        salto_a_endif_ref = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
+        
+        #Cramos el terceto BF y obtenemos su indice
+        index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
 
-         # 2. Obtener índice del terceto de la condición
-        expr_indice = int(p.expr.strip('[]')) 
-                
-        # Rellenar el BF para que salte a la siguiente instrucción (ENDIF).
-        # El índice actual es la primera instrucción después del 'if'.
-        etiqueta_endif = len(self.tercetos.tercetos) 
-        self.tercetos.backpatch([salto_a_endif_ref], etiqueta_endif)
+        #Indices auxiliares
+        expr_indice = int(p.expr.strip('[]'))       #ultimo terceto de la condicion
+        index_endif = len(self.tercetos.tercetos)   #instruccion endif
+        
+        # Backpatch del BF → apunta al final del if
+        self.tercetos.backpatch([index_BF], index_endif)
     
-        self.tercetos.mover_terceto(int(salto_a_endif_ref.strip('[]')),expr_indice+1)
+        #Movemos el terceto BF luego de la condicion del if
+        self.tercetos.mover_terceto(int(index_BF.strip('[]')),expr_indice+1)
 
+        #Etiqueta de fin del if
         self.tercetos.nuevo("FIN_IF", None, None)
             
     #Error en la comparacion del if
@@ -209,6 +257,7 @@ class MyParser(Parser):
         msg = "Error: falta ; al final del if"
         self.error_manager.add(p.lineno, msg, source="parser")
 
+    #Falta el endif
     @_('IF "(" expr ")" block error ";" %prec ELSE')
     def statement(self, p):
         self.errok()
@@ -259,7 +308,7 @@ class MyParser(Parser):
     #While statement
     @_('WHILE "(" expr ")" DO block ";"')
     def statement(self, p):
-        # acá salta el programa para volver a evaluar la condición
+        
         #Capturar el índice inicial de la condición, osea el terceto de la condicion final
         expr_indice = int(p.expr.strip('[]')) 
         
@@ -269,21 +318,21 @@ class MyParser(Parser):
         if isinstance(t_cond.op1, str) and t_cond.op1.startswith('['):
             etiqueta_condicion = int(t_cond.op1.strip('[]')) # apunta al primer terceto de la condicion
         else:
-            etiqueta_condicion = expr_indice # fallback
+            etiqueta_condicion = expr_indice 
 
         # Generar BF pendiente
-        salto_a_salida_ref = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
+        index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
         
-        # vuelve a la condición del while
+        # Genera BI que salte al primer operando de la condicion del while
         self.tercetos.nuevo('BI', f"[{etiqueta_condicion}]", None)
         
         # índice del primer terceto después del bucle.
-        etiqueta_salida = len(self.tercetos.tercetos)
+        index_end_while = len(self.tercetos.tercetos)
         
         # Toma la instrucción de salto BF pendiente y rellena su campo PENDIENTE 
-        self.tercetos.backpatch([salto_a_salida_ref], etiqueta_salida)
+        self.tercetos.backpatch([index_BF], index_end_while)
         
-        self.tercetos.mover_terceto(int(salto_a_salida_ref.strip('[]')),expr_indice+1)
+        self.tercetos.mover_terceto(int(index_BF.strip('[]')),expr_indice+1)
 
         self.tercetos.nuevo("FIN_WHILE", None, None)
         
@@ -299,6 +348,13 @@ class MyParser(Parser):
     def statement(self, p):
         self.errok()
         msg = "Error: falta ; al final del while"
+        self.error_manager.add(p.lineno, msg, source="parser")
+
+    #falta do
+    @_('WHILE "(" expr ")" error block ";"')
+    def statement(self, p):
+        self.errok()
+        msg = "Error: falta el do despues del while"
         self.error_manager.add(p.lineno, msg, source="parser")
     
     #====================================== FUNCTION ===================================================
@@ -331,6 +387,13 @@ class MyParser(Parser):
     @_('"{" statement_list "}"')
     def block(self, p):
         return p.statement_list
+    
+    # Captura errores dentro del bloque
+    @_('"{" error "}"')
+    def block(self, p):
+        self.errok()
+        msg = "Error dentro del bloque"
+        self.error_manager.add(p.lineno, msg, source="parser")
 
     @_('statement')
     def block(self, p):
