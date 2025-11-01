@@ -52,26 +52,6 @@ class MyParser(Parser):
         self.errok()
         msg = "Warning: falta inicio del programa"
         self.error_manager.add(p.lineno, msg, source="parser")
-    
-    # ESTA ES LA VERSION ANTERIOR SIN IDENTIFICADOR DEL PROGRAMA
-    # @_('"{" statement_list "}"')
-    # def program(self, p):
-    #     print("hola")
-    #     # Se genera un terceto de inicio de programa
-    #     self.tercetos.nuevo('START_PROGRAM', None)
-
-    #     # Se genera el terceto de fin de programa
-    #     self.tercetos.nuevo('END_PROGRAM', None, None)
-
-    #     # Mover el START_PROGRAM (anteúltimo) al inicio (índice 0)
-    #     index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
-    #     index_destino = 0
-    #     self.tercetos.mover_terceto(index_origen, index_destino)
-
-    #     self.errok()
-    #     msg = "Warning: falta inicio del programa"
-    #     self.error_manager.add(p.lineno, msg, source="parser")
-    #     return ('program', p.statement_list)
 
     @_('statement_list statement')
     def statement_list(self, p):
@@ -86,7 +66,7 @@ class MyParser(Parser):
 
     #return
     @_('RETURN "(" expr ")" ";"')
-    def statement(self, p):
+    def return_statement(self, p):
         temp = self.tercetos.nuevo('RETURN', p.expr, None) 
         
     #error en la expresion del return
@@ -223,12 +203,6 @@ class MyParser(Parser):
         self.errok()
         msg = "Error: falta endif al final del if"
         self.error_manager.add(p.lineno, msg, source="parser")
-        
-    # @_('IF "(" expr ")" statement ELSE block ENDIF ";"')
-    # def statement(self, p):
-    #     self.errok()
-    #     msg = "Error: el bloque 'if' debe estar entre llaves {}"
-    #     self.error_manager.add(p.lineno, msg, source="parser")
 
     # 2. IF-only statement
     @_('IF "(" expr ")" block ENDIF ";" %prec ELSE')
@@ -270,7 +244,19 @@ class MyParser(Parser):
         msg = "Error: falta endif al final del if"
         self.error_manager.add(p.lineno, msg, source="parser")
 
+    #====================================== FUNCTION ===================================================
     #Function statement
+    @_('type ID "(" param_list ")" "{" statement_list return_statement  "}" ";"')
+    def statement(self, p):
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
+        
+        self.tercetos.nuevo('FUNC', p.ID, p.type)
+                
+        self.tercetos.nuevo('END_FUNC', p.ID, None)
+        
+        return ('function', p.type, p.ID, p.param_list, p.statement_list, p.return_statement)
+    
+    #Function statement sin return
     @_('type ID "(" param_list ")" block ";"')
     def statement(self, p):
         self.symbol_table.add_function(p.ID, p.type, p.param_list)

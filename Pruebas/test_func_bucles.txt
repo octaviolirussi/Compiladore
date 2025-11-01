@@ -1,0 +1,19 @@
+PROGRAMA {
+
+    int F1 (int X,float Y){
+        L1=2I;
+        L2=4I;
+        return (5I);
+    }; 
+
+    while (K>L) do {
+        L1 = 0I;
+        
+    };
+
+    if(L1 < 4I){
+        L1=9I;
+        L2=5I;
+    }endif;
+
+}
