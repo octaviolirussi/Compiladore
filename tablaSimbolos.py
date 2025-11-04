@@ -39,6 +39,9 @@ class SymbolTable:
                 elif token_type == "CONST_FLOAT":
                     data_type = "FLOAT"
                     entry["Uso"] = "CONSTANTE" # Uso para constantes
+                elif token_type == "STRING": 
+                    data_type = "STRING"
+                    entry["Uso"] = "CONSTANTE"
 
                 entry["data_type"] = data_type
                 self.symbols[lexema] = entry
@@ -54,9 +57,11 @@ class SymbolTable:
             
     def add_function(self, lexema, return_type, param_list):
             """
-            Agrega la función y registra sus parámetros.
+            Agrega la función y registra sus parámetros, incluyendo el nombre de la función a la que pertenecen
             La función usa 'param_list' que es una lista de tuplas de parámetros.
+            def add_function(self, lexema, return_type, param_list):
             """
+                  
             entry = {
                 "type": "FUNCTION",              
                 "data_type": return_type,
@@ -64,21 +69,19 @@ class SymbolTable:
                 "parameters": param_list         
             }
             self.symbols[lexema] = entry 
+            # Registrar la función
             
             for param in param_list:
                 # La tupla de parámetro puede ser:
                 # ('param', <tipo>, <ID>) O ('param', <CV>, <tipo>, <ID>)
                 
                 # Obtener el nombre (ID) y el tipo de dato del parámetro
-                param_id = param[-1]    # Siempre es el último elemento
-                
+                param_id = param[-1]    # Siempre es el último elemento             
                 # El tipo está en la penúltima posición si no hay 'CV', o antepenúltima si hay 'CV'
                 # Dada la estructura: ('param', type, ID) o ('param', CV, type, ID)
-                # El tipo es param[-2]
                 param_type = param[-2]  
 
                 # Registrar el parámetro como ID en la tabla.
-                # TODO ACA SEGURO HAYA QUE VER LO DE LOS AMBITOS
                 if param_id not in self.symbols or self.symbols[param_id].get("type") == "ID":
                     '''"F3": {
                             "type": "FUNCTION",
@@ -91,7 +94,9 @@ class SymbolTable:
                     self.symbols[param_id] = {
                         "type": "ID", 
                         "data_type": param_type,
-                        "Uso": "PARAMETRO"}
+                        "Uso": "PARAMETRO",
+                        "Funcion_Pertenencia": lexema
+                    }
                     
 
     def delete_token(self, lexema):
@@ -117,23 +122,34 @@ class SymbolTable:
         if entry:
             return entry.get("data_type")
         return None
+    
+    def update_variable_type(self, lexema, data_type):
+        """Actualiza el tipo de dato de un ID existente (usado para declaraciones)."""
+        if lexema in self.symbols:
+            upper_type = data_type.upper() 
+            
+            if self.symbols[lexema].get("Uso") in ["VARIABLE", "N/A"]:
+                 self.symbols[lexema]["data_type"] = upper_type
 
     def show(self):
-            result = "Tabla de Símbolos:\n"
-            # Aumentar la longitud de la línea de separación
-            result += "---------------------------------------------------------\n"
+        result = "Tabla de Símbolos:\n"
+        # Aumentar la longitud de la línea de separación
+        result += "-------------------------------------------------------------------------------------\n"
+        
+        # Nuevo encabezado con la columna 'Uso' y 'Función Pertenencia'
+        result += "{:<15} {:<15} {:<10} {:<15} {:<20}\n".format("Lexema", "Token Type", "Data Type", "Uso", "Función Pertenencia") 
+        result += "-------------------------------------------------------------------------------------\n"
+        
+        for lexema, entry in self.symbols.items():
+            token_type = entry.get("type", "N/A")
+            data_type = entry.get("data_type", "N/A") if entry.get("data_type") else "N/A"
+            uso = entry.get("Uso", "N/A")
             
-            # Nuevo encabezado con la columna 'Uso'
-            result += "{:<15} {:<15} {:<10} {:<15}\n".format("Lexema", "Token Type", "Data Type", "Uso") 
-            result += "---------------------------------------------------------\n"
+            # Obtener el nuevo campo. Si no existe, usamos "N/A" o "N/A"
+            pertenencia = entry.get("Funcion_Pertenencia", "N/A")
             
-            for lexema, entry in self.symbols.items():
-                token_type = entry.get("type", "N/A")
-                data_type = entry.get("data_type", "N/A") if entry.get("data_type") else "N/A"
-                uso = entry.get("Uso", "N/A") # Extraer el nuevo atributo 'Uso'
-                
-                # Formatear la nueva fila, incluyendo 'Uso'
-                result += "{:<15} {:<15} {:<10} {:<15}\n".format(lexema, token_type, data_type, uso)
-                
-            result += "---------------------------------------------------------\n"
-            return result
+            # Formatear la nueva fila, incluyendo 'Uso' y 'Función Pertenencia'
+            result += "{:<15} {:<15} {:<10} {:<15} {:<20}\n".format(lexema, token_type, data_type, uso, pertenencia)
+            
+        result += "-------------------------------------------------------------------------------------\n"
+        return result

@@ -20,6 +20,25 @@ class MyParser(Parser):
         ('right', UMINUS),
     )
 
+    def get_type_of_value(self, value):
+        """
+        Determina el tipo de dato ('INT', 'FLOAT', etc.) de un operando:
+        ID, CONSTANTE, o índice de terceto ([T#]).
+        """
+        # si es un índice de un terceto
+        if isinstance(value, str) and value.startswith('[') and value.endswith(']'):
+            terceto_index = int(value.strip('[]'))
+            return self.tercetos.get_result_type(terceto_index) 
+
+        # es un ID o una constante
+        elif isinstance(value, (str, float, int)):
+            value_str = str(value) 
+            
+            entry = self.symbol_table.get_token(value_str)
+            if entry:
+                return entry.get("data_type", None)
+        return None
+    
 # ===================================== PROGRAMA =====================================================
 
     @_('PROGRAMA "{" statement_list "}"')
@@ -61,7 +80,6 @@ class MyParser(Parser):
     @_('statement')
     def statement_list(self, p):
         return [p.statement]
-    
 
     #============================================ STATEMENT ===============================================
 
@@ -88,8 +106,38 @@ class MyParser(Parser):
     #Asignacion
     @_('ID "=" expr ";"')
     def statement(self, p):
-        idx = self.tercetos.nuevo('=', p.ID, p.expr)
-        return int(idx.strip('[]')) + 1 # índice numérico
+        id_destino = p.ID
+        expr_origen = p.expr
+        
+        type_destino = self.get_type_of_value(id_destino) # Tipo de la variable (ID)
+        type_origen = self.get_type_of_value(expr_origen) # Tipo del resultado (expr, que puede ser un CALL)
+        
+        type_destino_norm = type_destino.upper() if type_destino else None
+        type_origen_norm = type_origen.upper() if type_origen else None
+        
+        if type_destino_norm is None or type_origen_norm is None:
+            msg = f"Error semántico: Tipo desconocido en la asignación '{id_destino} = ...'."
+            if type_destino_norm is None:
+                id_entry = self.symbol_table.get_token(id_destino)
+                if not id_entry or id_entry.get("Uso") == "N/A":
+                    msg = f"Error semántico: Variable '{id_destino}' no declarada."
+                    
+            self.error_manager.add(p.lineno, msg, source="parser")
+            idx = self.tercetos.nuevo('=', id_destino, expr_origen)
+            return int(idx.strip('[]')) + 1
+
+        final_expr_origen = expr_origen 
+        
+        if type_origen_norm == 'INT' and type_destino_norm == 'FLOAT':
+            new_temp = self.tercetos.nuevo('CONV_I_F', expr_origen, None, 'FLOAT')
+            final_expr_origen = new_temp
+            
+        elif type_origen_norm != type_destino_norm:
+            msg = f"Error semántico: Asignación incompatible. No se puede asignar '{type_origen_norm}' a la variable '{id_destino}' de tipo '{type_destino_norm}'."
+            self.error_manager.add(p.lineno, msg, source="parser")
+            
+        idx = self.tercetos.nuevo('=', id_destino, final_expr_origen)
+        return int(idx.strip('[]')) + 1
     
     #error en la expresion de la asignacion
     @_('ID "=" error ";"')
@@ -109,7 +157,10 @@ class MyParser(Parser):
     @_('type id_list ";"')
     def statement(self, p):
         indices = []
+        declaration_type = p.type
         for var in p.id_list:
+            self.symbol_table.update_variable_type(var, declaration_type)
+            
             idx = self.tercetos.nuevo('DECL', p.type, var)
             indices.append(int(idx.strip('[]')))
         
@@ -271,7 +322,6 @@ class MyParser(Parser):
         self.tercetos.nuevo('END_FUNC', p.ID, None)
 
         return p.statement_list[0] + 1
-        
     
     #Function statement sin return
     @_('type ID "(" param_list ")" block ";"')
@@ -305,8 +355,6 @@ class MyParser(Parser):
 
         return p.block[0] + 1
         
-        
-    
     #error en la expresion de la asignacion
     @_('type ID "(" param_list_error ")" block ";"')
     def statement(self, p):
@@ -438,11 +486,97 @@ class MyParser(Parser):
     #invocacion funcion
     @_('ID "(" arg_list ")"')
     def expr(self, p):
-        for arg in p.arg_list:
-            if arg[0] == 'arrow':
-                self.tercetos.nuevo('->', arg[1], arg[2])
-    
-        temp = self.tercetos.nuevo('CALL', p.ID, len(p.arg_list))
+        func_id = p.ID
+        args_reales = p.arg_list
+        func_entry = self.symbol_table.get_token(func_id)
+        
+        # 1. Validaciones iniciales (existencia, uso, etc. — omitidas por brevedad)
+        if not func_entry or func_entry.get("Uso") != "FUNCION":
+            # ... (código de error)
+            self.errok()
+            return None
+        
+        params_formales_def = func_entry.get("parameters", [])
+        
+        # Mapeo de la definición formal: {ID_param_formal: Tipo_param_formal}
+        formal_map = {param[-1]: param[-2].upper() for param in params_formales_def} 
+        
+        # 2. Validación de cantidad de argumentos (y verificación de nombres)
+        if len(args_reales) != len(params_formales_def):
+            msg = f"Error: La función '{func_id}' espera {len(params_formales_def)} argumentos, pero se proporcionaron {len(args_reales)}."
+            self.error_manager.add(p.lineno, msg, source="parser")
+            self.errok()
+            return None
+            
+        # Crear una lista de argumentos procesados que coincida con el ORDEN FORMAL
+        processed_args = [None] * len(params_formales_def)
+        arg_names_used = set()
+        
+        # Mapear los argumentos reales a su posición en el ORDEN FORMAL
+        for arg_real in args_reales:
+            # arg_real es ('arrow', expr, ID_formal)
+            
+            # Extraemos el nombre del parámetro formal que se está especificando:
+            formal_name = arg_real[2] 
+            
+            if formal_name not in formal_map:
+                msg = f"Error: El parámetro formal '{formal_name}' no existe en la definición de la función '{func_id}'."
+                self.error_manager.add(p.lineno, msg, source="parser")
+                self.errok()
+                return None # Fallo grave, detenemos
+                
+            if formal_name in arg_names_used:
+                msg = f"Error: El parámetro formal '{formal_name}' fue especificado múltiples veces en la llamada a '{func_id}'."
+                self.error_manager.add(p.lineno, msg, source="parser")
+                self.errok()
+                return None
+            
+            arg_names_used.add(formal_name)
+            
+            # Encontramos la posición del parámetro formal en la definición:
+            # El índice 'i' aquí es la posición ORDENADA (0, 1, 2...) que debe tener el argumento
+            i = next(j for j, param_def in enumerate(params_formales_def) if param_def[-1] == formal_name)
+            
+            # 3. Lógica de Tipos (Mantenemos la validación semántica)
+            
+            param_formal_type = formal_map[formal_name] # Tipo esperado ('INT' o 'FLOAT')
+            arg_real_value = arg_real[1] # El valor de la expresión
+            arg_real_type = self.get_type_of_value(arg_real_value)
+            
+            final_arg_value = arg_real_value
+
+            if arg_real_type is None:
+                # ... (código de error de argumento desconocido)
+                self.errok()
+                continue
+
+            # Coerción: INT a FLOAT (Segura)
+            if arg_real_type == 'INT' and param_formal_type == 'FLOAT':
+                new_temp = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT')
+                final_arg_value = new_temp
+                
+            # Incompatibilidad de Tipos
+            elif arg_real_type != param_formal_type:
+                msg = f"Error: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
+                self.error_manager.add(p.lineno, msg, source="parser")
+                # Mantenemos el valor original
+                
+            # 4. Almacenamiento en la posición ORDENADA
+            # Almacenamos el argumento procesado (con posible coerción) en la posición 'i'
+            processed_args[i] = ('arrow', final_arg_value, formal_name)
+
+        # 5. Generar tercetos '->' y 'CALL' en el ORDEN FORMAL
+        # Es crucial generar los tercetos '->' y 'CALL' en el orden en que fueron DEFINIDOS (orden formal)
+        
+        for arg in processed_args:
+            # Generar terceto '->' para el paso de argumentos por referencia
+            if arg: # El argumento no debe ser None
+                op1_val = arg[1] # El ID/Terceto con el valor
+                op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
+                self.tercetos.nuevo('->', op1_val, op2_val) 
+            
+        call_result_type = func_entry.get("data_type")
+        temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper())
         return temp
 
     # Lista de argumentos
@@ -463,52 +597,91 @@ class MyParser(Parser):
 
     @_('expr "+" expr')
     def expr(self, p):
-        temp = self.tercetos.nuevo('+', p.expr0, p.expr1)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+
+        temp = self.tercetos.nuevo('+', p.expr0, p.expr1, result_type)
         return temp
 
     @_('expr "-" expr')
     def expr(self, p):
-        temp = self.tercetos.nuevo('-', p.expr0, p.expr1)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+
+        temp = self.tercetos.nuevo('-', p.expr0, p.expr1, result_type)
         return temp
 
     @_('expr "*" expr')
     def expr(self, p):
-        temp = self.tercetos.nuevo('*', p.expr0, p.expr1)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+
+        temp = self.tercetos.nuevo('*', p.expr0, p.expr1, result_type)
         return temp
 
     @_('expr "/" expr')
     def expr(self, p):
-        temp = self.tercetos.nuevo('/', p.expr0, p.expr1)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+
+        temp = self.tercetos.nuevo('/', p.expr0, p.expr1, result_type)
         return temp
     
     @_('expr ">" expr')
     def expr(self, p):
-        temp = self.tercetos.nuevo('>', p.expr0, p.expr1)
+        # El resultado de una comparación es siempre booleano, representado como INT (1/0)
+        result_type = 'INT' 
+        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT')
         return temp
     
     @_('expr "<" expr')
     def expr(self, p):
-        temp = self.tercetos.nuevo('<', p.expr0, p.expr1)
+        result_type = 'INT' 
+        temp = self.tercetos.nuevo('<', p.expr0, p.expr1, 'INT')
         return temp
     
     @_('expr GE expr') # >=
     def expr(self, p): 
-        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1)
+        result_type = 'INT' 
+        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1, 'INT')
         return temp
     
     @_('expr LE expr') # <=
     def expr(self, p):
-        temp = self.tercetos.nuevo('<=', p.expr0, p.expr1)
+        result_type = 'INT' 
+        temp = self.tercetos.nuevo('<=', p.expr0, p.expr1, 'INT')
         return temp
     
     @_('expr EQ expr')# ==
     def expr(self, p):
-        temp = self.tercetos.nuevo('==', p.expr0, p.expr1)
+        result_type = 'INT' 
+        temp = self.tercetos.nuevo('==', p.expr0, p.expr1, 'INT')
         return temp
     
     @_('expr NE expr') # !=
     def expr(self, p):
-        temp = self.tercetos.nuevo('!=', p.expr0, p.expr1)
+        result_type = 'INT' 
+        temp = self.tercetos.nuevo('!=', p.expr0, p.expr1, 'INT')
         return temp 
 
     #================================= Tipos =================================================================================================
