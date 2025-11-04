@@ -193,7 +193,7 @@ class MyParser(Parser):
         # Mover el BI justo antes del bloque ELSE
         self.tercetos.mover_terceto(index_BI, index_else_last)
 
-        return expr_indice  # índice numérico
+        return expr_indice + 1 # índice numérico
 
     #Error en la comparacion del if
     @_('IF "(" error ")" block ELSE block ENDIF ";"')
