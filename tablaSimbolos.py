@@ -99,6 +99,34 @@ class SymbolTable:
                         "Modificador": modificador
                     }
                     
+    # ---------------- Agregar scope ----------------
+    def add_scope(self, lexema, data_type=None, uso="VARIABLE", scope="G"):
+        self.symbols[lexema] = {
+            "type": "ID",
+            "data_type": data_type,
+            "Uso": uso,
+            "Scope": scope
+        }
+
+    def actualizar_scope_bloque_automatica(self, nombre_funcion, lista_tercetos, indice_inicio, indice_fin=None):
+        """
+        Agrega el scope de la función solo a las variables declaradas dentro de este bloque.
+        Variables usadas dentro de funciones anidadas no cambian su scope.
+        """
+        if indice_fin is None:
+            indice_fin = len(lista_tercetos)
+        
+        for i in range(indice_inicio, indice_fin):
+            terceto = lista_tercetos[i]
+
+            # Solo procesamos tercetos de declaración
+            if terceto.operador == 'DECL':
+                val = terceto.op2  # op2 guarda el nombre de la variable declarada
+                token = self.get_token(val)
+                if token and token['Uso'] == 'VARIABLE':
+                    # Concatenamos el nombre de la función al scope existente
+                    current_scope = token.get('Scope', 'G')
+                    token['Scope'] = f"{nombre_funcion}:{current_scope}"
 
     def delete_token(self, lexema):
         if lexema in self.symbols:
@@ -133,23 +161,24 @@ class SymbolTable:
                  self.symbols[lexema]["data_type"] = upper_type
 
     def show(self):
-        result = "Tabla de Símbolos:\n"
-        # Aumentar la longitud de la línea de separación
-        result += "-----------------------------------------------------------------------------------------------------\n"
-        
-        # Nuevo encabezado con la columna 'Modificador'
-        result += "{:<15} {:<15} {:<10} {:<15} {:<20} {:<15}\n".format("Lexema", "Token Type", "Data Type", "Uso", "Función Pertenencia", "Modificador") 
-        result += "-----------------------------------------------------------------------------------------------------\n"
-        
-        for lexema, entry in self.symbols.items():
-            token_type = entry.get("type", "N/A")
-            data_type = entry.get("data_type", "N/A") if entry.get("data_type") else "N/A"
-            uso = entry.get("Uso", "N/A")
-            pertenencia = entry.get("Funcion_Pertenencia", "N/A")
-            modificador = entry.get("Modificador", "N/A") # Extraer el nuevo atributo
+            result = "Tabla de Símbolos:\n"
+            # Aumentar la longitud de la línea de separación
+            result += "-----------------------------------------------------------------------------------------------------\n"
             
-            # Formatear la nueva fila, incluyendo 'Uso' y 'Función Pertenencia'
-            result += "{:<15} {:<15} {:<10} {:<15} {:<20} {:<15}\n".format(lexema, token_type, data_type, uso, pertenencia, modificador)
+            # Nuevo encabezado con la columna 'Modificador'
+            result += "{:<15} {:<15} {:<10} {:<15} {:<20} {:<15} {:15}\n".format("Lexema", "Token Type", "Data Type", "Uso", "Función Pertenencia", "Modificador", "Scope") 
+            result += "-----------------------------------------------------------------------------------------------------\n"
             
-        result += "-----------------------------------------------------------------------------------------------------\n"
-        return result
+            for lexema, entry in self.symbols.items():
+                token_type = entry.get("type", "N/A")
+                data_type = entry.get("data_type", "N/A") if entry.get("data_type") else "N/A"
+                uso = entry.get("Uso", "N/A")
+                pertenencia = entry.get("Funcion_Pertenencia", "N/A")
+                modificador = entry.get("Modificador", "N/A") 
+                scope = entry.get("Scope", "N/A")
+                
+                # Formatear la nueva fila, incluyendo 'Uso' y 'Función Pertenencia'
+                result += "{:<15} {:<15} {:<10} {:<15} {:<20} {:<15} {:15}\n".format(lexema, token_type, data_type, uso, pertenencia, modificador,scope)
+                
+            result += "-----------------------------------------------------------------------------------------------------\n"
+            return result

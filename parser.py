@@ -160,6 +160,7 @@ class MyParser(Parser):
         declaration_type = p.type
         for var in p.id_list:
             self.symbol_table.update_variable_type(var, declaration_type)
+            self.symbol_table.add_scope(var, data_type=p.type, uso= "VARIABLE", scope = "G")
             
             idx = self.tercetos.nuevo('DECL', p.type, var)
             indices.append(int(idx.strip('[]')))
@@ -319,7 +320,10 @@ class MyParser(Parser):
         #Movemos el terceto FUNC al inicio
         self.tercetos.mover_terceto(int(index_FUNC.strip('[]')),p.statement_list[0] -1)   
 
-        self.tercetos.nuevo('END_FUNC', p.ID, None)
+        index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
+
+        #agrega ambito a las variables de la funcion
+        self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.statement_list[0] -1, int(index_end.strip('[]')))
 
         return p.statement_list[0] + 1
     
@@ -348,10 +352,14 @@ class MyParser(Parser):
         #agrego tercetos
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type)
         self.tercetos.nuevo('RETURN',default_value,None)
-        self.tercetos.nuevo('END_FUNC', p.ID, None)
+        index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
 
         #Movemos el terceto FUNC al inicio
         self.tercetos.mover_terceto(int(index_FUNC.strip('[]')),p.block[0]-1)
+
+        #cambiamos el ambito de las variables dentro de la funcion
+        self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.block[0] -1, int(index_end.strip('[]')))
+
 
         return p.block[0] + 1
         
@@ -492,7 +500,9 @@ class MyParser(Parser):
         
         # 1. Validaciones iniciales (existencia, uso, etc. — omitidas por brevedad)
         if not func_entry or func_entry.get("Uso") != "FUNCION":
-            # ... (código de error)
+            msg = f"Error: La función '{func_id}' no está declarada."
+            self.error_manager.add(p.lineno, msg, source="parser")            
+            
             self.errok()
             return None
         
@@ -546,7 +556,8 @@ class MyParser(Parser):
             final_arg_value = arg_real_value
 
             if arg_real_type is None:
-                # ... (código de error de argumento desconocido)
+                msg = f"Error: No se pudo determinar el tipo del argumento para el parámetro formal '{formal_name}' en la función '{func_id}'."
+                self.error_manager.add(p.lineno, msg, source="parser")
                 self.errok()
                 continue
 
@@ -556,7 +567,8 @@ class MyParser(Parser):
                 final_arg_value = new_temp
                 
             # Incompatibilidad de Tipos
-            elif arg_real_type != param_formal_type:
+            elif arg_real_type.upper() != param_formal_type:
+                
                 msg = f"Error: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
                 self.error_manager.add(p.lineno, msg, source="parser")
                 # Mantenemos el valor original
