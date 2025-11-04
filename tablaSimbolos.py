@@ -4,7 +4,7 @@ class SymbolTable:
         # Estructura de símbolos: {lexema: {"type": "ID" | "CONST_INT" | "CONST_FLOAT", "data_type": "INT" | "FLOAT" | None}}
         self.symbols = {} 
         self.keywords = {}
-        self.load_keyword() # Load keywords upon creation
+        self.load_keyword()
 
     def load_keyword(self):
         self.keywords = {
@@ -81,21 +81,22 @@ class SymbolTable:
                 # Dada la estructura: ('param', type, ID) o ('param', CV, type, ID)
                 param_type = param[-2]  
 
+                # Determinar si el modificador 'CV' está presente:
+                # Si la tupla tiene 4 elementos, el modificador está en la posición 1.
+                # ('param', 'CV', 'int', 'W') -> len=4, param[1]='CV'
+                # ('param', 'int', 'W') -> len=3
+                modificador = "N/A"
+                if len(param) == 4 and param[1] == 'cv':
+                    modificador = 'CV'
+                    
                 # Registrar el parámetro como ID en la tabla.
                 if param_id not in self.symbols or self.symbols[param_id].get("type") == "ID":
-                    '''"F3": {
-                            "type": "FUNCTION",
-                            "data_type": "int",
-                            "parameters": [
-                                ('param', 'int', 'W'), 
-                                ('param', 'int', 'Z')
-                            ]
-                    }'''
                     self.symbols[param_id] = {
                         "type": "ID", 
                         "data_type": param_type,
                         "Uso": "PARAMETRO",
-                        "Funcion_Pertenencia": lexema
+                        "Funcion_Pertenencia": lexema,
+                        "Modificador": modificador
                     }
                     
 
@@ -134,22 +135,21 @@ class SymbolTable:
     def show(self):
         result = "Tabla de Símbolos:\n"
         # Aumentar la longitud de la línea de separación
-        result += "-------------------------------------------------------------------------------------\n"
+        result += "-----------------------------------------------------------------------------------------------------\n"
         
-        # Nuevo encabezado con la columna 'Uso' y 'Función Pertenencia'
-        result += "{:<15} {:<15} {:<10} {:<15} {:<20}\n".format("Lexema", "Token Type", "Data Type", "Uso", "Función Pertenencia") 
-        result += "-------------------------------------------------------------------------------------\n"
+        # Nuevo encabezado con la columna 'Modificador'
+        result += "{:<15} {:<15} {:<10} {:<15} {:<20} {:<15}\n".format("Lexema", "Token Type", "Data Type", "Uso", "Función Pertenencia", "Modificador") 
+        result += "-----------------------------------------------------------------------------------------------------\n"
         
         for lexema, entry in self.symbols.items():
             token_type = entry.get("type", "N/A")
             data_type = entry.get("data_type", "N/A") if entry.get("data_type") else "N/A"
             uso = entry.get("Uso", "N/A")
-            
-            # Obtener el nuevo campo. Si no existe, usamos "N/A" o "N/A"
             pertenencia = entry.get("Funcion_Pertenencia", "N/A")
+            modificador = entry.get("Modificador", "N/A") # Extraer el nuevo atributo
             
             # Formatear la nueva fila, incluyendo 'Uso' y 'Función Pertenencia'
-            result += "{:<15} {:<15} {:<10} {:<15} {:<20}\n".format(lexema, token_type, data_type, uso, pertenencia)
+            result += "{:<15} {:<15} {:<10} {:<15} {:<20} {:<15}\n".format(lexema, token_type, data_type, uso, pertenencia, modificador)
             
-        result += "-------------------------------------------------------------------------------------\n"
+        result += "-----------------------------------------------------------------------------------------------------\n"
         return result
