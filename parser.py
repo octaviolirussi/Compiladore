@@ -546,7 +546,6 @@ class MyParser(Parser):
                 return None
             
             arg_names_used.add(formal_name)
-            print(arg_names_used)
             
             # Encontramos la posición del parámetro formal en la definición:
             # El índice 'i' aquí es la posición ORDENADA (0, 1, 2...) que debe tener el argumento
