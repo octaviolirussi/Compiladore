@@ -64,7 +64,7 @@ class SymbolTable:
                   
             entry = {
                 "type": "FUNCTION",              
-                "data_type": return_type,
+                "data_type": return_type.upper(),
                 "Uso": "FUNCION",        
                 "parameters": param_list         
             }

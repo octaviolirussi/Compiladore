@@ -9,8 +9,8 @@ PROGRAMA{
     };
 
     int F3 (int X, cv float J){
-        int W;
         int Z;
+        int W;
         W = Z + 1I;
 
     };

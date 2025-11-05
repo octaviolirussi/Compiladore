@@ -19,7 +19,16 @@ class MyParser(Parser):
         ('left', '*', '/'),
         ('right', UMINUS),
     )
-
+    
+    def conversion (self, type0, type1):
+        ''' la conversión será del tipo entero al tipo de punto flotante. si alguno de los dos es float, el resultado es float'''
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+            
+        return result_type
+    
     def get_type_of_value(self, value):
         """
         Determina el tipo de dato ('INT', 'FLOAT', etc.) de un operando:
@@ -360,7 +369,6 @@ class MyParser(Parser):
         #cambiamos el ambito de las variables dentro de la funcion
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.block[0] -1, int(index_end.strip('[]')))
 
-
         return p.block[0] + 1
         
     #error en la expresion de la asignacion
@@ -489,7 +497,6 @@ class MyParser(Parser):
     def id_list_error(self, p):
         return None
     
-    
     #======================================== FUNC CALL ===================================================
     #invocacion funcion
     @_('ID "(" arg_list ")"')
@@ -498,7 +505,6 @@ class MyParser(Parser):
         args_reales = p.arg_list
         func_entry = self.symbol_table.get_token(func_id)
         
-        # 1. Validaciones iniciales (existencia, uso, etc. — omitidas por brevedad)
         if not func_entry or func_entry.get("Uso") != "FUNCION":
             msg = f"Error: La función '{func_id}' no está declarada."
             self.error_manager.add(p.lineno, msg, source="parser")            
@@ -510,7 +516,6 @@ class MyParser(Parser):
         
         # Mapeo de la definición formal: {ID_param_formal: Tipo_param_formal}
         formal_map = {param[-1]: param[-2].upper() for param in params_formales_def} 
-        
         # 2. Validación de cantidad de argumentos (y verificación de nombres)
         if len(args_reales) != len(params_formales_def):
             msg = f"Error: La función '{func_id}' espera {len(params_formales_def)} argumentos, pero se proporcionaron {len(args_reales)}."
@@ -525,7 +530,6 @@ class MyParser(Parser):
         # Mapear los argumentos reales a su posición en el ORDEN FORMAL
         for arg_real in args_reales:
             # arg_real es ('arrow', expr, ID_formal)
-            
             # Extraemos el nombre del parámetro formal que se está especificando:
             formal_name = arg_real[2] 
             
@@ -542,6 +546,7 @@ class MyParser(Parser):
                 return None
             
             arg_names_used.add(formal_name)
+            print(arg_names_used)
             
             # Encontramos la posición del parámetro formal en la definición:
             # El índice 'i' aquí es la posición ORDENADA (0, 1, 2...) que debe tener el argumento
@@ -561,14 +566,12 @@ class MyParser(Parser):
                 self.errok()
                 continue
 
-            # Coerción: INT a FLOAT (Segura)
-            if arg_real_type == 'INT' and param_formal_type == 'FLOAT':
+            if arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT':
                 new_temp = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT')
                 final_arg_value = new_temp
                 
             # Incompatibilidad de Tipos
             elif arg_real_type.upper() != param_formal_type:
-                
                 msg = f"Error: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
                 self.error_manager.add(p.lineno, msg, source="parser")
                 # Mantenemos el valor original
@@ -609,53 +612,29 @@ class MyParser(Parser):
 
     @_('expr "+" expr')
     def expr(self, p):
-        type0 = self.get_type_of_value(p.expr0)
-        type1 = self.get_type_of_value(p.expr1)
-
-        if type0 == 'FLOAT' or type1 == 'FLOAT':
-            result_type = 'FLOAT'
-        else:
-            result_type = 'INT'
+        result_type = self.conversion(self.get_type_of_value(p.expr0), self.get_type_of_value(p.expr1))
 
         temp = self.tercetos.nuevo('+', p.expr0, p.expr1, result_type)
         return temp
 
     @_('expr "-" expr')
     def expr(self, p):
-        type0 = self.get_type_of_value(p.expr0)
-        type1 = self.get_type_of_value(p.expr1)
-
-        if type0 == 'FLOAT' or type1 == 'FLOAT':
-            result_type = 'FLOAT'
-        else:
-            result_type = 'INT'
+        result_type = self.conversion(self.get_type_of_value(p.expr0), self.get_type_of_value(p.expr1))
 
         temp = self.tercetos.nuevo('-', p.expr0, p.expr1, result_type)
         return temp
 
     @_('expr "*" expr')
     def expr(self, p):
-        type0 = self.get_type_of_value(p.expr0)
-        type1 = self.get_type_of_value(p.expr1)
-
-        if type0 == 'FLOAT' or type1 == 'FLOAT':
-            result_type = 'FLOAT'
-        else:
-            result_type = 'INT'
+        result_type = self.conversion(self.get_type_of_value(p.expr0), self.get_type_of_value(p.expr1))
 
         temp = self.tercetos.nuevo('*', p.expr0, p.expr1, result_type)
         return temp
 
     @_('expr "/" expr')
     def expr(self, p):
-        type0 = self.get_type_of_value(p.expr0)
-        type1 = self.get_type_of_value(p.expr1)
-
-        if type0 == 'FLOAT' or type1 == 'FLOAT':
-            result_type = 'FLOAT'
-        else:
-            result_type = 'INT'
-
+        result_type = self.conversion(self.get_type_of_value(p.expr0), self.get_type_of_value(p.expr1))
+    
         temp = self.tercetos.nuevo('/', p.expr0, p.expr1, result_type)
         return temp
     
