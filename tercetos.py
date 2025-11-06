@@ -35,6 +35,21 @@ class GeneradorTercetos:
             return self.tercetos[index].result_type 
         return None # Índice fuera de rango
 
+    def get_result_type(self, index):
+        """
+            Retorna el tipo de dato del resultado del terceto en el índice dado.
+            Esto es usado por el parser para la comprobación de tipos.
+        """
+        if isinstance(index, str):
+            try:
+                index = int(index.strip('[]'))
+            except ValueError:
+                return None # No es un índice válido
+                
+        if 0 <= index < len(self.tercetos):
+            return self.tercetos[index].result_type 
+        return None # Índice fuera de rango
+    
     def backpatch(self, lista_indices_ref, destino_indice):
         """
         Rellena el campo de destino (op2) de los tercetos listados.

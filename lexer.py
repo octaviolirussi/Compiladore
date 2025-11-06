@@ -2,10 +2,8 @@ from sly import Lexer
 from tablaSimbolos import SymbolTable
 from errorManager import ErrorManager
 
-
 class MyLexer(Lexer):
     
-
     def __init__(self,symbol_table,error_manager):
         self.lineno = 1
         self.symbol_table = symbol_table
@@ -82,7 +80,7 @@ class MyLexer(Lexer):
             self.symbol_table.add_token(t.value, "PROGRAMA")
             return t
     
-        # Truncar si excede l ongitud máxima
+        # Truncar si excede longitud máxima
         if len(t.value) > max_length:
             msg = f"Warning: Identificador '{t.value}' truncado a {max_length} caracteres"
             self.error_manager.add(t.lineno,msg,source="lexer")
@@ -92,7 +90,6 @@ class MyLexer(Lexer):
         self.symbol_table.add_token(t.value, "ID")
         t.lineno = self.lineno
         return t
-
 
     #STRING
     @_(r'"[^"\n]*"')

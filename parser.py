@@ -81,7 +81,6 @@ class MyParser(Parser):
     @_('statement')
     def statement_list(self, p):
         return [p.statement]
-    
 
     #============================================ STATEMENT ===============================================
 
@@ -161,6 +160,7 @@ class MyParser(Parser):
     @_('type id_list ";"')
     def statement(self, p):
         indices = []
+        declaration_type = p.type
         declaration_type = p.type
         for var in p.id_list:
             self.symbol_table.update_variable_type(var, declaration_type)
@@ -346,7 +346,6 @@ class MyParser(Parser):
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
-        
     
     #Function statement sin return
     @_('type ID "(" param_list ")" block ";"')
@@ -374,9 +373,13 @@ class MyParser(Parser):
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type)
         self.tercetos.nuevo('RETURN',default_value,None)
         index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
+        index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
 
         #Movemos el terceto FUNC al inicio
         self.tercetos.mover_terceto(int(index_FUNC.strip('[]')),p.block[0]-1)
+
+        #cambiamos el ambito de las variables dentro de la funcion
+        self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.block[0] -1, int(index_end.strip('[]')))
 
         #cambiamos el ambito de las variables dentro de la funcion
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.block[0] -1, int(index_end.strip('[]')))
@@ -532,7 +535,6 @@ class MyParser(Parser):
     @_('id_list "," error')
     def id_list_error(self, p):
         return None
-    
     
     #======================================== FUNC CALL ===================================================
     #invocacion funcion
@@ -705,6 +707,9 @@ class MyParser(Parser):
     
     @_('expr ">" expr')
     def expr(self, p):
+        # El resultado de una comparación es siempre booleano, representado como INT (1/0)
+        result_type = 'INT' 
+        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT')
         # El resultado de una comparación es siempre booleano, representado como INT (1/0)
         result_type = 'INT' 
         temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT')
