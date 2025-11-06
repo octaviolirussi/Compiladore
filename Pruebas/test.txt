@@ -1,20 +1,15 @@
 PROGRAMA{
     int L3;
     int L2;
+    int X;
     L3=2I;
     L2=3I;
-    int F4 (int W, float Z){
+    int F4 (int W, cv float Z){
+
         L1=2I;
         Z = W - 1I + 3I;
+        return (L1);
     };
 
-    L2=F4(2I->W,3I->Z);
-    L3=1I;
-
-    int F4 (int W, float Z){
-        L1=2I;
-        Z = W - 1I + 3I;
-    };
-
-    L3= L2 + L3;
+    X = F4(L2 -> W, L3 -> Z);
 }

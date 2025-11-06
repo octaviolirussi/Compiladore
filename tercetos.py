@@ -9,8 +9,7 @@ class Terceto:
         return f"({self.operador}, {self.op1}, {self.op2}, TIPO={self.result_type})"
 
 class GeneradorTercetos:
-    # Constante para marcar que el destino de un salto es desconocido.
-    PENDIENTE = '?' 
+    PENDIENTE = '?' # Constante para marcar que el destino de un salto es desconocido.
     
     def __init__(self):
         self.tercetos = []

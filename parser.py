@@ -251,7 +251,7 @@ class MyParser(Parser):
         self.tercetos.mover_terceto(index_BF, expr_indice + 1)
 
         # Mover el BI justo antes del bloque ELSE
-        self.symbol_table.mover_terceto(index_BI, index_else_last)
+        self.tercetos.mover_terceto(index_BI, index_else_last)
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return expr_indice + 1 # índice numérico
