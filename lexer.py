@@ -90,7 +90,6 @@ class MyLexer(Lexer):
 
         # Agregar a la tabla de simbolos
         self.symbol_table.add_token(t.value, "ID")
-        self.symbol_table.add_token(t.value, "ID")
         t.lineno = self.lineno
         return t
 

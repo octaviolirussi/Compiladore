@@ -5,7 +5,7 @@ from lexer import MyLexer
 from parser import MyParser
 from errorManager import ErrorManager
 
-symbol_Table = SymbolTable()
+symbol_Table = SymbolTable( )
 symbol_Table.load_keyword()
 
 error = ErrorManager()
@@ -45,6 +45,7 @@ if error.has_errors():
 else:
     print("Análisis completado sin errores.")
 
+symbol_Table.eliminar_variables_no_declaradas()
 parser.tercetos.mostrar()
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")
