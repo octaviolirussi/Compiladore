@@ -1,9 +1,10 @@
 class SymbolTable:
     
-    def __init__(self):
+    def __init__(self,error_manager):
         # Estructura: {id: {...datos...}}
         self.symbols = {}
         self.keywords = {}
+        self.error_manager = error_manager
         self.next_id = 1
         self.load_keyword()
 
@@ -120,6 +121,7 @@ class SymbolTable:
             return
         if indice_fin is None:
             indice_fin = len(lista_tercetos)
+
         for i in range(indice_inicio, indice_fin):
             terceto = lista_tercetos[i]
             if terceto.operador == 'DECL':
@@ -128,7 +130,12 @@ class SymbolTable:
                 for token in tokens:
                     if token["Uso"] == "VARIABLE":
                         current_scope = token.get("Scope", "G")
-                        token["Scope"] = f"{nombre_funcion}:{current_scope}"
+                        
+                        # Dividir en partes y eliminar duplicados
+                        parts = current_scope.split(':')
+                        if nombre_funcion not in parts:
+                            parts.insert(0, nombre_funcion)  # agregamos al inicio
+                        token["Scope"] = ':'.join(parts)
 
     # ---------------------- UTILIDADES ----------------------
     def delete_token(self, lexema):
@@ -168,22 +175,96 @@ class SymbolTable:
         entry = self.get_token(lexema)
         return entry["data_type"] if entry else None
     
-    def eliminar_variables_no_declaradas(self):
-        """Elimina tokens tipo ID, uso VARIABLE, que tengan 'N/A' en el campo Scope (en cualquier parte)."""
-        ids_a_eliminar = []
+    def eliminar(self, tercetos=None):
+        """
+        Elimina:
+        1. Variables tipo ID, uso VARIABLE, que tengan 'N/A' en Scope.
+        2. Constantes duplicadas (deja solo una).
+        3. Variables duplicadas (mismo Lexema y Scope).
+        4. Variables tipo ID duplicadas por Lexema (aunque tengan Scope distinto).
+        
+        Guarda en self.duplicadas_scope entradas completas (ID_original, ID_eliminado, entry_original, entry_eliminado)
+        para que la verificación posterior tenga toda la información.
 
-        for sym_id, entry in self.symbols.items():
+        Adicional: guarda todas las variables tipo ID sin duplicados en self.variables_list
+        con toda su información.
+        """
+        ids_a_eliminar = []
+        self.duplicadas_scope = []       # lista final con detalles completos
+        self.variables_list = {}         # dict para variables únicas: clave=(lexema,scope), valor=entry completo
+        vistos_constantes = {}
+        vistos_variables_scope = {}      # para duplicados por Lexema+Scope
+        vistos_lexema = {}               # para duplicados solo por Lexema
+
+        for sym_id, entry in list(self.symbols.items()):
             tipo = entry.get("type")
             uso = entry.get("Uso")
+            lexema = entry.get("Lexema")
             scope = entry.get("Scope")
 
-            # Verifica si es una variable ID con 'N/A' en el scope
-            if tipo == "ID" and uso == "VARIABLE" and scope and "N/A" in str(scope).upper():
+            # --- 1. Variables sin scope válido ---
+            if tipo == "ID" and uso == "VARIABLE" and (not scope or "N/A" in str(scope).upper()):
                 ids_a_eliminar.append(sym_id)
+                continue
 
-        # Eliminar los símbolos luego de recorrer (para evitar modificar el diccionario durante la iteración)
+            # --- 2. Constantes duplicadas ---
+            if (tipo and tipo.startswith("CONST")) or (uso and uso.upper() == "CONSTANTE"):
+                if lexema in vistos_constantes:
+                    ids_a_eliminar.append(sym_id)
+                else:
+                    vistos_constantes[lexema] = sym_id
+                continue
+
+            # --- 3. Variables duplicadas por Lexema+Scope ---
+            if tipo == "ID" and uso and uso.upper() == "VARIABLE":
+                clave_scope = (lexema, scope)
+                if clave_scope not in self.variables_list:
+                    self.variables_list[clave_scope] = entry.copy()
+
+                if clave_scope in vistos_variables_scope:
+                    id_original = vistos_variables_scope[clave_scope]
+                    entry_original = self.symbols[id_original].copy()
+                    entry_eliminado = entry.copy()
+                    self.duplicadas_scope.append({
+                        "Lexema": lexema,
+                        "Scope": scope,
+                        "ID_original": id_original,
+                        "ID_eliminado": sym_id,
+                        "entry_original": entry_original,
+                        "entry_eliminado": entry_eliminado
+                    })
+                    ids_a_eliminar.append(sym_id)
+                else:
+                    vistos_variables_scope[clave_scope] = sym_id
+
+                # --- 4. Variables duplicadas solo por Lexema ---
+                if lexema in vistos_lexema:
+                    id_original = vistos_lexema[lexema]
+                    entry_original = self.symbols[id_original].copy()
+                    entry_eliminado = entry.copy()
+                    self.duplicadas_scope.append({
+                        "Lexema": lexema,
+                        "Scope": scope,
+                        "ID_original": id_original,
+                        "ID_eliminado": sym_id,
+                        "entry_original": entry_original,
+                        "entry_eliminado": entry_eliminado
+                    })
+                    ids_a_eliminar.append(sym_id)
+                else:
+                    vistos_lexema[lexema] = sym_id
+
+        # Eliminar marcadas
         for sym_id in ids_a_eliminar:
             self.symbols.pop(sym_id, None)
+
+        # Convertir dict a lista ordenada
+        self.variables_list = list(self.variables_list.values())
+
+        self.verificacion_scope(tercetos,self.variables_list)
+        self.validar_variables(tercetos)
+        self.verificar_funciones(tercetos)
+
 
     # ---------------------- MOSTRAR TABLA ----------------------
     def show(self):
@@ -208,3 +289,273 @@ class SymbolTable:
 
         result += "-" * 120 + "\n"
         return result
+
+    def verificacion_scope(self, tercetos, variables_list):
+        """
+        Verifica scopes de variables y funciones según los tercetos y la lista de variables tipo ID.
+        Copia correctamente type y data_type desde los registros originales antes de eliminar.
+        """
+        nuevas_entradas = []
+
+        # Diccionario rápido por Lexema para obtener la info original
+        variables_dict = {v["Lexema"]: v for v in variables_list}
+
+        scope_stack = ["G"]
+        current_scope = "G"
+        declaradas_por_scope = {"G": set()}
+
+        # --- Paso 0: preparar mapping de type/data_type de la tabla actual ---
+        type_mapping = {}
+        for sym_id, entry in self.symbols.items():
+            lex = entry.get("Lexema")
+            type_mapping[lex] = {"type": entry.get("type", "ID"), "data_type": entry.get("data_type", "N/A")}
+
+        # Recorremos los tercetos
+        for idx, t in enumerate(tercetos):
+            op = getattr(t, "operador", None)
+
+            # --- FUNC: entramos a nuevo scope ---
+            if op == "FUNC":
+                func_name = str(t.op1)
+                parent_scope = scope_stack[-1]
+                current_scope = f"{func_name}:{parent_scope}" if parent_scope != "G" else func_name
+                scope_stack.append(current_scope)
+
+                # Tomar type y data_type desde type_mapping o default
+                type_info = type_mapping.get(func_name, {"type": "FUNCTION", "data_type": "N/A"})
+                entry_func = {
+                    "ID": self.next_id,
+                    "Lexema": func_name,
+                    "type": type_info.get("type", "FUNCTION"),
+                    "data_type": type_info.get("data_type", "N/A"),
+                    "Uso": "FUNCION",
+                    "Funcion_Pertenencia": parent_scope if parent_scope != "G" else "N/A",
+                    "Modificador": "N/A",
+                    "Scope": current_scope
+                }
+                nuevas_entradas.append(entry_func)
+                self.next_id += 1
+                declaradas_por_scope[current_scope] = set()
+                continue
+
+            # --- END_FUNC: salimos de scope ---
+            if op == "END_FUNC":
+                if len(scope_stack) > 1:
+                    scope_stack.pop()
+                current_scope = scope_stack[-1]
+                continue
+
+            # --- DECL: declaración de variable ---
+            if op == "DECL":
+                lexema = str(t.op2)
+                scope_actual = current_scope
+
+                # Revisar si fue declarada en este scope o ancestors
+                is_redeclarada = False
+                for scope in scope_stack:
+                    if lexema in declaradas_por_scope.get(scope, set()):
+                        is_redeclarada = True
+                        msg = f"ERROR: Variable '{lexema}' redeclarada en scope '{scope}'"
+                        self.error_manager.add(t.lineno, msg, source="Scope")
+                        break
+
+                if not is_redeclarada:
+                    declaradas_por_scope.setdefault(scope_actual, set()).add(lexema)
+                    # Tomar type y data_type del mapping o de variables_list
+                    type_info = type_mapping.get(lexema, {"type": "ID", "data_type": "N/A"})
+                    entry_var = {
+                        "ID": self.next_id,
+                        "Lexema": lexema,
+                        "type": type_info.get("type", "ID"),
+                        "data_type": type_info.get("data_type", "N/A"),
+                        "Uso": "VARIABLE",
+                        "Funcion_Pertenencia": current_scope.split(":")[1] if ":" in current_scope else "N/A",
+                        "Modificador": "N/A",
+                        "Scope": current_scope
+                    }
+                    nuevas_entradas.append(entry_var)
+                    self.next_id += 1
+
+        # --- Paso 1: eliminar registros viejos de las variables que estamos procesando ---
+        lexemas_a_eliminar = [v["Lexema"] for v in variables_list]
+        ids_a_eliminar = [sym_id for sym_id, e in self.symbols.items() if e.get("Lexema") in lexemas_a_eliminar]
+        for sym_id in ids_a_eliminar:
+            self.symbols.pop(sym_id, None)
+
+        # --- Paso 2: agregar nuevas entradas ---
+        for entry in nuevas_entradas:
+            self.symbols[entry["ID"]] = entry
+
+        #elimino funciones repetidas
+        ids_a_eliminar = []
+        for sym_id, entry in list(self.symbols.items()):
+            if entry.get("Uso", "").upper() == "FUNCION" and entry.get("Scope", "").upper() == "N/A":
+                ids_a_eliminar.append(sym_id)
+
+        for sym_id in ids_a_eliminar:
+            del self.symbols[sym_id]
+
+    def validar_variables(self, tercetos):
+        """
+        Valida el uso de variables en los tercetos:
+        - Se ignoran DECL, PARAMETRO, CONST y referencias a otros tercetos.
+        - Solo verifica IDs tipo VARIABLE según la tabla de símbolos.
+        - current_scope indica el scope actual.
+        - Una variable global (scope G) es accesible desde cualquier scope.
+        """
+        errores = []
+
+        scope_stack = ["G"]
+        current_scope = "G"
+
+        def norm_scope(s):
+            return str(s).strip() if s else ""
+
+        def is_child_scope(parent, child):
+            """True si 'child' es descendiente de 'parent'."""
+            if parent == child:
+                return False
+            p_parts = parent.split(":")
+            c_parts = child.split(":")
+            return all(p in c_parts for p in p_parts) and len(c_parts) > len(p_parts)
+
+        for idx, t in enumerate(tercetos):
+            op = getattr(t, "operador", None)
+
+            # Manejo de FUNC y END_FUNC
+            if op == "FUNC":
+                func_name = str(t.op1)
+                parent_scope = scope_stack[-1]
+                current_scope = f"{func_name}:{parent_scope}" if parent_scope != "G" else func_name
+                scope_stack.append(current_scope)
+                continue
+            elif op == "END_FUNC":
+                if len(scope_stack) > 1:
+                    scope_stack.pop()
+                current_scope = scope_stack[-1]
+                continue
+
+            # Ignorar DECL
+            if op == "DECL":
+                continue
+
+            # Filtrar solo IDs tipo VARIABLE
+            lexemas_variables = [
+                e.get("Lexema") for e in self.symbols.values()
+                if e.get("Uso", "").upper() == "VARIABLE"
+            ]
+
+            lexema = getattr(t, "op1", None)
+            if lexema not in lexemas_variables:
+                continue  # ignorar literales, parámetros, referencias a tercetos
+
+            # Buscar todas las apariciones en la tabla de símbolos
+            posibles = [
+                e for e in self.symbols.values()
+                if e.get("Lexema") == lexema and e.get("Uso", "").upper() == "VARIABLE"
+            ]
+
+            if not posibles:
+                continue
+
+            # Verificar si alguna es accesible
+            uso_valido = False
+            for e in posibles:
+                scope_var = norm_scope(e.get("Scope"))
+                # Variables globales siempre accesibles
+                if scope_var == "G":
+                    uso_valido = True
+                    break
+                # Variables locales: accesible en su scope o scope hijo
+                if current_scope == scope_var or is_child_scope(scope_var, current_scope):
+                    uso_valido = True
+                    break
+
+            if not uso_valido:
+                msg = f"ERROR: Variable '{lexema}' no accesible desde scope '{current_scope}'."
+                self.error_manager.add(t.lineno, msg, source="Scope")
+
+        # Mostrar resultados
+        print("--- Validación de uso de variables ---")
+        for e in errores:
+            print(e)
+
+    def verificar_funciones(self, tercetos):
+        """
+        Verifica funciones y parámetros:
+        - Funciones globales no pueden repetirse.
+        - Funciones internas pueden repetirse si están en distintos scopes padres.
+        - Parámetros solo pueden usarse dentro de su función de pertenencia.
+        - Ignora tercetos con operador '->'.
+        """
+        scope_stack = ["G"]
+        funciones_globales = set()  # nombres de funciones globales ya declaradas
+
+        def norm_scope(s):
+            return str(s).strip() if s else ""
+
+        for idx, t in enumerate(tercetos):
+            op = getattr(t, "operador", None)
+
+            # --- Ignorar tercetos con '->' ---
+            if op == "->":
+                continue
+
+            # --- Funciones ---
+            if op == "FUNC":
+                func_name = str(t.op1)
+                parent_scope = scope_stack[-1]
+
+                if parent_scope == "G":
+                    # Función global: verificar duplicada
+                    if func_name in funciones_globales:
+                        msg = f"ERROR: Función global '{func_name}' ya declarada (terceto {idx})."
+                        self.error_manager.add(t.lineno, msg, source="Scope")
+                    else:
+                        funciones_globales.add(func_name)
+                else:
+                    # Función interna: duplicada solo en mismo parent_scope
+                    duplicada = any(
+                        e.get("Lexema") == func_name and
+                        e.get("Uso", "").upper() == "FUNCION" and
+                        norm_scope(e.get("Scope")) == parent_scope
+                        for e in self.symbols.values()
+                    )
+                    if duplicada:
+                        msg = f"ERROR: Función '{func_name}' ya declarada en el scope '{parent_scope}' (terceto {idx})."
+                        self.error_manager.add(t.lineno, msg, source="Scope")
+
+                # Registrar scope para variables internas
+                internal_scope = f"{func_name}:{parent_scope}" if parent_scope != "G" else func_name
+                scope_stack.append(internal_scope)
+
+            elif op == "END_FUNC":
+                if len(scope_stack) > 1:
+                    scope_stack.pop()
+
+            # --- Verificación de parámetros ---
+            if op != "DECL":
+                for attr in ["op1", "op2", "op3"]:
+                    val = getattr(t, attr, None)
+                    if not val:
+                        continue
+                    val_str = str(val)
+                    # Buscar todos los parámetros con ese lexema
+                    parametros = [
+                        e for e in self.symbols.values()
+                        if e.get("Lexema") == val_str and e.get("Uso", "").upper() == "PARAMETRO"
+                    ]
+                    if not parametros:
+                        continue  # no es parámetro, ignora
+
+                    valido = False
+                    for p in parametros:
+                        funcion_pert = p.get("Funcion_Pertenencia")
+                        # El parámetro es válido si la función de pertenencia está dentro del current_scope
+                        # current_scope = lista de scopes concatenados
+                        if any(funcion_pert == s.split(":")[0] or funcion_pert == s for s in scope_stack):
+                            valido = True
+                            break
+                    if not valido:
+                        msg = f"ERROR: Parámetro '{val}' fuera de su función declarada."
+                        self.error_manager.add(t.lineno, msg, source="Scope")

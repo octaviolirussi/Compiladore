@@ -5,11 +5,11 @@ from lexer import MyLexer
 from parser import MyParser
 from errorManager import ErrorManager
 
-symbol_Table = SymbolTable( )
-symbol_Table.load_keyword()
 
 error = ErrorManager()
 
+symbol_Table = SymbolTable(error)
+symbol_Table.load_keyword()
 lexer = MyLexer(symbol_Table,error)
 parser = MyParser(symbol_Table,error)
 
@@ -37,6 +37,12 @@ try:
 except FileNotFoundError:
     print(f"No se encontró el archivo en: poner la ruta despues")
 
+
+symbol_Table.eliminar(parser.tercetos.tercetos)
+parser.tercetos.mostrar()
+parser.tercetos.actualizar_scope()
+
+
 #errores
 print("\nMuestra de Errores:\n")
 if error.has_errors():
@@ -45,8 +51,6 @@ if error.has_errors():
 else:
     print("Análisis completado sin errores.")
 
-symbol_Table.eliminar_variables_no_declaradas()
-parser.tercetos.mostrar()
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")
 print(symbol_Table.keywords)
