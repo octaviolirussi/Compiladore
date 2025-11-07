@@ -75,10 +75,6 @@ class MyLexer(Lexer):
     def ID(self, t):
         max_length = 20
 
-        if 'PROGRAMA' in t.value:
-            t.type = 'PROGRAMA' # Cambiar el tipo de token a PROGRAMA
-            self.symbol_table.add_token(t.value, "PROGRAMA")
-            return t
     
         # Truncar si excede longitud máxima
         if len(t.value) > max_length:
