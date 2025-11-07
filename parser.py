@@ -10,8 +10,9 @@ class MyParser(Parser):
     def __init__(self, symbol_table,error_manager):
         self.symbol_table = symbol_table
         self.error_manager = error_manager
-        self.tercetos = GeneradorTercetos()
+        self.tercetos = GeneradorTercetos(symbol_table,error_manager)
         self.tercetos_antes = 0
+
     
     precedence = (
         ('nonassoc', ELSE),
@@ -45,10 +46,10 @@ class MyParser(Parser):
     @_('PROGRAMA "{" statement_list "}"')
     def program(self, p):
         # Se genera un terceto de inicio de programa
-        self.tercetos.nuevo('START_PROGRAM', None)
+        self.tercetos.nuevo('START_PROGRAM', None, lineno=p.lineno)
         
         # Se genera el terceto de fin de programa
-        self.tercetos.nuevo('END_PROGRAM', None, None)
+        self.tercetos.nuevo('END_PROGRAM', None, None,lineno=p.lineno)
 
         # Mover el START_PROGRAM (anteúltimo) al inicio (índice 0)
         index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
@@ -60,10 +61,10 @@ class MyParser(Parser):
     def program(self, p):
         
         # Se genera un terceto de inicio de programa
-        self.tercetos.nuevo('START_PROGRAM', None)
+        self.tercetos.nuevo('START_PROGRAM', None,lineno=p.lineno)
         
         # Se genera el terceto de fin de programa
-        self.tercetos.nuevo('END_PROGRAM', None, None)
+        self.tercetos.nuevo('END_PROGRAM', None, None,lineno=p.lineno)
 
         # Mover el START_PROGRAM (anteúltimo) al inicio (índice 0)
         index_origen = len(self.tercetos.tercetos) - 2  # anteúltimo
@@ -87,7 +88,7 @@ class MyParser(Parser):
     #return
     @_('RETURN "(" expr ")" ";"')
     def return_statement(self, p):
-        idx = self.tercetos.nuevo('RETURN', p.expr, None)
+        idx = self.tercetos.nuevo('RETURN', p.expr, None,lineno=p.lineno)
         self.tercetos_antes = len(self.tercetos.tercetos)
         return int(idx.strip('[]')) + 1 # índice numérico 
         
@@ -125,20 +126,20 @@ class MyParser(Parser):
                     msg = f"Error semántico: Variable '{id_destino}' no declarada."
                     
             self.error_manager.add(p.lineno, msg, source="parser")
-            idx = self.tercetos.nuevo('=', id_destino, expr_origen)
+            idx = self.tercetos.nuevo('=', id_destino, expr_origen,lineno=p.lineno)
             return int(idx.strip('[]')) + 1
 
         final_expr_origen = expr_origen 
         
         if type_origen_norm == 'INT' and type_destino_norm == 'FLOAT':
-            new_temp = self.tercetos.nuevo('CONV_I_F', expr_origen, None, 'FLOAT')
+            new_temp = self.tercetos.nuevo('CONV_I_F', expr_origen, None, 'FLOAT',lineno=p.lineno)
             final_expr_origen = new_temp
             
         elif type_origen_norm != type_destino_norm:
             msg = f"Error semántico: Asignación incompatible. No se puede asignar '{type_origen_norm}' a la variable '{id_destino}' de tipo '{type_destino_norm}'."
             self.error_manager.add(p.lineno, msg, source="parser")
             
-        idx = self.tercetos.nuevo('=', id_destino, final_expr_origen)
+        idx = self.tercetos.nuevo('=', id_destino, final_expr_origen,lineno=p.lineno)
         self.tercetos_antes = len(self.tercetos.tercetos)
         return int(idx.strip('[]')) + 1
     
@@ -166,7 +167,7 @@ class MyParser(Parser):
             self.symbol_table.update_variable_type(var, declaration_type)
             self.symbol_table.add_scope(var, data_type=p.type, uso="VARIABLE", scope="G")
             
-            idx = self.tercetos.nuevo('DECL', p.type, var)
+            idx = self.tercetos.nuevo('DECL', p.type, var,lineno=p.lineno)
             indices.append(int(idx.strip('[]')))
         
         self.tercetos_antes = len(self.tercetos.tercetos)
@@ -189,13 +190,13 @@ class MyParser(Parser):
     #Prints
     @_('PRINT "(" expr ")" ";"')
     def statement(self, p):
-        idx = self.tercetos.nuevo('PRINT', p.expr, None)
+        idx = self.tercetos.nuevo('PRINT', p.expr, None,lineno=p.lineno)
         self.tercetos_antes = len(self.tercetos.tercetos)
         return int(idx.strip('[]')) + 1 # índice numérico
 
     @_('PRINT "(" STRING ")" ";"')
     def statement(self, p):
-        idx = self.tercetos.nuevo('PRINT', p.STRING, None)
+        idx = self.tercetos.nuevo('PRINT', p.STRING, None,lineno=p.lineno)
         self.tercetos_antes = len(self.tercetos.tercetos)
         return int(idx.strip('[]')) + 1 # índice numérico
     
@@ -280,7 +281,7 @@ class MyParser(Parser):
     def statement(self, p):
         
         #Creamos el terceto BF y obtenemos su indice
-        index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
+        index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE,lineno=p.lineno)
 
         #Indices auxiliares
         expr_indice = int(p.expr.strip('[]'))       #ultimo terceto de la condicion
@@ -293,7 +294,7 @@ class MyParser(Parser):
         self.tercetos.mover_terceto(int(index_BF.strip('[]')),expr_indice+1)
 
         #Etiqueta de fin del if
-        self.tercetos.nuevo("FIN_IF", None, None)
+        self.tercetos.nuevo("FIN_IF", None, None,lineno=p.lineno)
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return expr_indice  # índice numérico
@@ -391,8 +392,16 @@ class MyParser(Parser):
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
+    
+    #Function statement solo return
+    @_('type ID "(" param_list ")" "{" return_statement  "}" ";"')
+    def statement(self, p):
 
-    # Function statement sin return
+        index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type,lineno=p.lineno)
+        self.tercetos.mover_terceto(int(index_FUNC.strip('[]')),int(index_FUNC.strip('[]'))-1)
+        self.tercetos.nuevo('END_FUNC', p.ID, None,lineno=p.lineno)
+    
+    #Function statement sin return
     @_('type ID "(" param_list ")" block ";"')
     def statement(self, p):
         func_id = p.ID
@@ -458,13 +467,8 @@ class MyParser(Parser):
 
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, target_start_index - 1, int(index_end.strip('[]')))
 
-        if func_entry and func_entry.get("Uso") == "FUNCION":
-            msg = f"Error: La función '{func_id}' ya fue declarada previamente."
-            self.error_manager.add(p.lineno, msg, source="parser")
-            # Elimina desde FUNC (que ahora incluye copias) hasta END_FUNC.
-            del self.tercetos.tercetos[target_start_index - 1:int(index_end.strip('[]')) + 1]
-        else:
-            self.symbol_table.add_function(p.ID, p.type, p.param_list)
+
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return self.tercetos_antes + 1
@@ -499,10 +503,10 @@ class MyParser(Parser):
             etiqueta_condicion = expr_indice 
 
         # Generar BF pendiente
-        index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE)
+        index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE,lineno=p.lineno)
         
         # Genera BI que salte al primer operando de la condicion del while
-        self.tercetos.nuevo('BI', f"[{etiqueta_condicion}]", None)
+        self.tercetos.nuevo('BI', f"[{etiqueta_condicion}]", None,lineno=p.lineno)
         
         # índice del primer terceto después del bucle.
         index_end_while = len(self.tercetos.tercetos)
@@ -512,7 +516,7 @@ class MyParser(Parser):
         
         self.tercetos.mover_terceto(int(index_BF.strip('[]')),expr_indice+1)
 
-        self.tercetos.nuevo("FIN_WHILE", None, None)
+        self.tercetos.nuevo("FIN_WHILE", None, None,lineno=p.lineno)
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return expr_indice + 1  # índice numérico
@@ -667,10 +671,16 @@ class MyParser(Parser):
                 self.errok()
                 continue
 
-            if arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT': # conversión de INT a FLOAT
-                final_arg_value = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT')
+            # Coerción: INT a FLOAT (Segura)
+            if arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT':
+                new_temp = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT',lineno=p.lineno)
+                final_arg_value = new_temp
                 
-            elif arg_real_type.upper() != param_formal_type: # Incompatibilidad de Tipos
+            # Incompatibilidad de Tipos
+            elif arg_real_type.upper() != param_formal_type:
+                
+            # Incompatibilidad de Tipos
+            elif arg_real_type.upper() != param_formal_type:
                 msg = f"Error: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
                 self.error_manager.add(p.lineno, msg, source="parser")
                 
@@ -682,10 +692,10 @@ class MyParser(Parser):
             if arg: 
                 op1_val = arg[1] # El ID/Terceto con el valor
                 op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
-                self.tercetos.nuevo('->', op1_val, op2_val) 
+                self.tercetos.nuevo('->', op1_val, op2_val,lineno=p.lineno) 
             
-        call_result_type = func_entry.get("data_type") # Tipo de retorno de la función
-        temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper())
+        call_result_type = func_entry.get("data_type")
+        temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper(),lineno=p.lineno)
         self.tercetos_antes = len(self.tercetos.tercetos)
         return temp # índice del terceto CALL
 
@@ -715,7 +725,7 @@ class MyParser(Parser):
         else:
             result_type = 'INT'
 
-        temp = self.tercetos.nuevo('+', p.expr0, p.expr1, result_type)
+        temp = self.tercetos.nuevo('+', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp 
 
     @_('expr "-" expr')
@@ -728,7 +738,7 @@ class MyParser(Parser):
         else:
             result_type = 'INT'
 
-        temp = self.tercetos.nuevo('-', p.expr0, p.expr1, result_type)
+        temp = self.tercetos.nuevo('-', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp 
 
     @_('expr "*" expr')
@@ -741,7 +751,7 @@ class MyParser(Parser):
         else:
             result_type = 'INT'
 
-        temp = self.tercetos.nuevo('*', p.expr0, p.expr1, result_type)
+        temp = self.tercetos.nuevo('*', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
 
     @_('expr "/" expr')
@@ -754,42 +764,42 @@ class MyParser(Parser):
         else:
             result_type = 'INT'
 
-        temp = self.tercetos.nuevo('/', p.expr0, p.expr1, result_type)
+        temp = self.tercetos.nuevo('/', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
     
     @_('expr ">" expr')
     def expr(self, p):
         # El resultado de una comparación es siempre booleano, representado como INT (1/0)
         result_type = 'INT' 
-        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT')
+        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         # El resultado de una comparación es siempre booleano, representado como INT (1/0)
         result_type = 'INT' 
-        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT')
+        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr "<" expr')
     def expr(self, p):
-        temp = self.tercetos.nuevo('<', p.expr0, p.expr1, 'INT')
+        temp = self.tercetos.nuevo('<', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr GE expr') # >=
     def expr(self, p):  
-        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1, 'INT')
+        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr LE expr') # <=
     def expr(self, p): 
-        temp = self.tercetos.nuevo('<=', p.expr0, p.expr1, 'INT')
+        temp = self.tercetos.nuevo('<=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr EQ expr')# ==
     def expr(self, p): 
-        temp = self.tercetos.nuevo('==', p.expr0, p.expr1, 'INT')
+        temp = self.tercetos.nuevo('==', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr NE expr') # !=
     def expr(self, p): 
-        temp = self.tercetos.nuevo('!=', p.expr0, p.expr1, 'INT')
+        temp = self.tercetos.nuevo('!=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
 
     #================================= Tipos =================================================================================================
