@@ -1,4 +1,4 @@
-NDFKJFNKDSF%231{
+3{
     int A;
     int B;
     float C;

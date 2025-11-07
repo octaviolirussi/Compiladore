@@ -60,7 +60,7 @@ class MyParser(Parser):
         self.tercetos.mover_terceto(index_origen, index_destino)
         return p.statement_list
     
-    @_(' statement_list ')
+    @_(' "{" statement_list "}"')
     def program(self, p):
         
         # Se genera un terceto de inicio de programa
