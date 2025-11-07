@@ -475,11 +475,6 @@ class SymbolTable:
                 msg = f"ERROR: Variable '{lexema}' no accesible desde scope '{current_scope}'."
                 self.error_manager.add(t.lineno, msg, source="Scope")
 
-        # Mostrar resultados
-        print("--- Validación de uso de variables ---")
-        for e in errores:
-            print(e)
-
     def verificar_funciones(self, tercetos):
         """
         Verifica funciones y parámetros:

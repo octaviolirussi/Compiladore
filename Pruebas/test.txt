@@ -1,11 +1,15 @@
 PROGRAMA{
-    int L3;
-    int L2;
-    int F4 (int W, cv float Z, int A){
-            
-        L1=2I;
-        Z = W - 1I + 3I;
+    int X,Y,A,B;
+    while (X < 1I) 
+    do{
+        X = 3I;
+
+        while (Y < 2I) 
+        do{
+            Y = 2I;
+        };
+        B = 3I + 2I;
     };
 
-    X = F4(L2 -> W, L3 -> Z, L2 -> A);
+    A = 3I + 2I;
 }

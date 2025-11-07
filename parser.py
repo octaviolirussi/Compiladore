@@ -324,8 +324,6 @@ class MyParser(Parser):
     @_('type ID "(" param_list ")" "{" statement_list return_statement "}" ";"')
     def statement(self, p):
         func_id = p.ID
-        
-        self.symbol_table.add_function(p.ID, p.type, p.param_list)
 
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type) # Generar terceto FUNC (en la posición temporal)
 
@@ -383,6 +381,8 @@ class MyParser(Parser):
         # Los nuevos tercetos de copia (COPY_VALOR/R) quedan ahora inmediatamente después de FUNC.
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.statement_list[0] -1, int(index_end.strip('[]')))
 
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
+
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
     
@@ -398,8 +398,6 @@ class MyParser(Parser):
     @_('type ID "(" param_list ")" block ";"')
     def statement(self, p):
         func_id = p.ID
-        
-        self.symbol_table.add_function(p.ID, p.type, p.param_list)
 
         # Validación de tipo y valor por defecto
         if p.type == 'int':
@@ -440,13 +438,15 @@ class MyParser(Parser):
                     terceto_op = 'COPY_VALOR_R' 
                     op2 = None 
                     
-                self.tercetos.nuevo(terceto_op, formal_id, op2)
                 # Generamos el terceto: [T#] (OP, ID_formal, Modificador/None)
                 index_cv = self.tercetos.nuevo(terceto_op, formal_id, op2)
                 # Guarda el resultado en el diccionario usando el ID del parámetro como clave
                 indices_cv[formal_id] = int(index_cv.strip('[]'))
                 
-                
+
+        #GENERAR TERCETO RETURN
+        self.tercetos.nuevo('RETURN', default_value, None)        
+
         # GENERACIÓN DE TERCETOS DE COPIA DE RETORNO (RETURN_PARAM)
         if not func_entry or func_entry.get("Uso") != "FUNCION":
             for param in params_formales:
@@ -456,8 +456,7 @@ class MyParser(Parser):
                 if modificador != 'cv':
                     self.tercetos.nuevo('RETURN_PARAM', formal_id, None)        
         
-        # Generar tercetos de cierre (RETURN y END_FUNC)
-        self.tercetos.nuevo('RETURN', default_value, None)
+        # Generar tercetos de cierre (END_FUNC)
         index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
         
         if p.block and len(p.block) > 0:
@@ -472,9 +471,11 @@ class MyParser(Parser):
             if formal_id in indices_cv:
                 index_cv = indices_cv[formal_id]
                 # Mover cada terceto COPY_VALOR/COPY_VALOR_R justo después de FUNC
-                self.tercetos.mover_terceto(index_cv,  p.statement_list[0])
+                self.tercetos.mover_terceto(index_cv,  p.block[0])
 
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, target_start_index - 1, int(index_end.strip('[]')))
+
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return self.tercetos_antes + 1
