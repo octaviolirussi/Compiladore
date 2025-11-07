@@ -150,7 +150,7 @@ class GeneradorTercetos:
                         # Si estoy dentro de una función, verifico que coincida con al menos una pertenencia
                         if self.funcion_actual and self.funcion_actual not in param_funcs:
                             msg = f"Error: parámetro '{op}' pertenece a {param_funcs} pero se usa en {self.funcion_actual}"
-                            self.error_manager.add(t.lineno, msg, source="Scope")
+                            #self.error_manager.add(t.lineno, msg, source="Scope")
 
 
     def _buscar_parametro(self, nombre):

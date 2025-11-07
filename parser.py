@@ -125,7 +125,7 @@ class MyParser(Parser):
                 if not id_entry or id_entry.get("Uso") == "N/A":
                     msg = f"Error semántico: Variable '{id_destino}' no declarada."
                     
-            self.error_manager.add(p.lineno, msg, source="parser")
+            #self.error_manager.add(p.lineno, msg, source="parser")
             idx = self.tercetos.nuevo('=', id_destino, expr_origen,lineno=p.lineno)
             return int(idx.strip('[]')) + 1
 

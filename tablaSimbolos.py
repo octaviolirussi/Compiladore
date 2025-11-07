@@ -262,6 +262,7 @@ class SymbolTable:
         self.variables_list = list(self.variables_list.values())
 
         self.verificacion_scope(tercetos,self.variables_list)
+        self.verifico_existencia(tercetos)
         self.validar_variables(tercetos)
         self.verificar_funciones(tercetos)
 
@@ -295,6 +296,7 @@ class SymbolTable:
         Verifica scopes de variables y funciones según los tercetos y la lista de variables tipo ID.
         Copia correctamente type y data_type desde los registros originales antes de eliminar.
         """
+
         nuevas_entradas = []
 
         # Diccionario rápido por Lexema para obtener la info original
@@ -378,7 +380,13 @@ class SymbolTable:
 
         # --- Paso 1: eliminar registros viejos de las variables que estamos procesando ---
         lexemas_a_eliminar = [v["Lexema"] for v in variables_list]
-        ids_a_eliminar = [sym_id for sym_id, e in self.symbols.items() if e.get("Lexema") in lexemas_a_eliminar]
+
+        ids_a_eliminar = [
+            sym_id
+            for sym_id, e in self.symbols.items()
+            if e.get("Lexema") in lexemas_a_eliminar and e.get("Uso", "").upper() == "VARIABLE"
+        ]
+
         for sym_id in ids_a_eliminar:
             self.symbols.pop(sym_id, None)
 
@@ -397,11 +405,12 @@ class SymbolTable:
 
     def validar_variables(self, tercetos):
         """
-        Valida el uso de variables en los tercetos:
+        Valida el uso de variables y parámetros en los tercetos:
         - Se ignoran DECL, PARAMETRO, CONST y referencias a otros tercetos.
-        - Solo verifica IDs tipo VARIABLE según la tabla de símbolos.
+        - Verifica IDs tipo VARIABLE o PARAMETRO según la tabla de símbolos.
         - current_scope indica el scope actual.
-        - Una variable global (scope G) es accesible desde cualquier scope.
+        - Variables globales son accesibles desde cualquier scope.
+        - Parámetros son accesibles solo dentro de su función de pertenencia.
         """
         errores = []
 
@@ -435,44 +444,54 @@ class SymbolTable:
                 current_scope = scope_stack[-1]
                 continue
 
-            # Ignorar DECL
+            # Ignorar declaraciones
             if op == "DECL":
                 continue
 
-            # Filtrar solo IDs tipo VARIABLE
-            lexemas_variables = [
+            # Obtener posibles lexemas (VARIABLE o PARAMETRO)
+            lexemas_validos = [
                 e.get("Lexema") for e in self.symbols.values()
-                if e.get("Uso", "").upper() == "VARIABLE"
+                if e.get("Uso", "").upper() in ("VARIABLE", "PARAMETRO")
             ]
 
             lexema = getattr(t, "op1", None)
-            if lexema not in lexemas_variables:
-                continue  # ignorar literales, parámetros, referencias a tercetos
+            if lexema not in lexemas_validos:
+                continue  # ignorar literales, constantes, referencias, etc.
 
-            # Buscar todas las apariciones en la tabla de símbolos
+            # Buscar coincidencias en la tabla de símbolos
             posibles = [
                 e for e in self.symbols.values()
-                if e.get("Lexema") == lexema and e.get("Uso", "").upper() == "VARIABLE"
+                if e.get("Lexema") == lexema and e.get("Uso", "").upper() in ("VARIABLE", "PARAMETRO")
             ]
 
             if not posibles:
                 continue
 
-            # Verificar si alguna es accesible
+            # Verificar accesibilidad
             uso_valido = False
             for e in posibles:
                 scope_var = norm_scope(e.get("Scope"))
+                uso = e.get("Uso", "").upper()
+
                 # Variables globales siempre accesibles
-                if scope_var == "G":
-                    uso_valido = True
-                    break
-                # Variables locales: accesible en su scope o scope hijo
-                if current_scope == scope_var or is_child_scope(scope_var, current_scope):
+                if uso == "VARIABLE" and scope_var == "G":
                     uso_valido = True
                     break
 
+                # Variables locales accesibles en su scope o descendientes
+                if uso == "VARIABLE" and (current_scope == scope_var or is_child_scope(scope_var, current_scope)):
+                    uso_valido = True
+                    break
+
+                # Parámetros accesibles solo dentro de su función de pertenencia
+                if uso == "PARAMETRO":
+                    func_pert = e.get("Funcion_Pertenencia")
+                    if func_pert and (func_pert == current_scope or current_scope.startswith(func_pert)):
+                        uso_valido = True
+                        break
+
             if not uso_valido:
-                msg = f"ERROR: Variable '{lexema}' no accesible desde scope '{current_scope}'."
+                msg = f"ERROR: Variable o parámetro '{lexema}' no accesible desde scope '{current_scope}'."
                 self.error_manager.add(t.lineno, msg, source="Scope")
 
     def verificar_funciones(self, tercetos):
@@ -482,6 +501,7 @@ class SymbolTable:
         - Funciones internas pueden repetirse si están en distintos scopes padres.
         - Parámetros solo pueden usarse dentro de su función de pertenencia.
         - Ignora tercetos con operador '->'.
+        - Si un nombre de parámetro es redefinido como variable en un scope interno, no se considera error.
         """
         scope_stack = ["G"]
         funciones_globales = set()  # nombres de funciones globales ya declaradas
@@ -496,20 +516,20 @@ class SymbolTable:
             if op == "->":
                 continue
 
-            # --- Funciones ---
+            # --- Declaración de función ---
             if op == "FUNC":
                 func_name = str(t.op1)
                 parent_scope = scope_stack[-1]
 
                 if parent_scope == "G":
-                    # Función global: verificar duplicada
+                    # Función global duplicada
                     if func_name in funciones_globales:
                         msg = f"ERROR: Función global '{func_name}' ya declarada (terceto {idx})."
                         self.error_manager.add(t.lineno, msg, source="Scope")
                     else:
                         funciones_globales.add(func_name)
                 else:
-                    # Función interna: duplicada solo en mismo parent_scope
+                    # Función interna duplicada en el mismo parent_scope
                     duplicada = any(
                         e.get("Lexema") == func_name and
                         e.get("Uso", "").upper() == "FUNCION" and
@@ -520,7 +540,7 @@ class SymbolTable:
                         msg = f"ERROR: Función '{func_name}' ya declarada en el scope '{parent_scope}' (terceto {idx})."
                         self.error_manager.add(t.lineno, msg, source="Scope")
 
-                # Registrar scope para variables internas
+                # Agregar nuevo scope
                 internal_scope = f"{func_name}:{parent_scope}" if parent_scope != "G" else func_name
                 scope_stack.append(internal_scope)
 
@@ -534,23 +554,72 @@ class SymbolTable:
                     val = getattr(t, attr, None)
                     if not val:
                         continue
+
                     val_str = str(val)
-                    # Buscar todos los parámetros con ese lexema
+
+                    # Buscar parámetros con ese lexema
                     parametros = [
                         e for e in self.symbols.values()
                         if e.get("Lexema") == val_str and e.get("Uso", "").upper() == "PARAMETRO"
                     ]
                     if not parametros:
-                        continue  # no es parámetro, ignora
+                        continue  # no es parámetro, ignorar
 
+                    # Buscar si hay una variable local con ese nombre (oculta el parámetro)
+                    variable_local = any(
+                        e.get("Lexema") == val_str and
+                        e.get("Uso", "").upper() == "VARIABLE" and
+                        any(s in norm_scope(e.get("Scope")) for s in scope_stack)
+                        for e in self.symbols.values()
+                    )
+                    if variable_local:
+                        continue  # hay una variable local con ese nombre, no es error
+
+                    # Verificar que el parámetro se use dentro de su función de pertenencia
                     valido = False
                     for p in parametros:
                         funcion_pert = p.get("Funcion_Pertenencia")
-                        # El parámetro es válido si la función de pertenencia está dentro del current_scope
-                        # current_scope = lista de scopes concatenados
                         if any(funcion_pert == s.split(":")[0] or funcion_pert == s for s in scope_stack):
                             valido = True
                             break
+
                     if not valido:
-                        msg = f"ERROR: Parámetro '{val}' fuera de su función declarada."
+                        msg = f"ERROR: Parámetro '{val_str}' usado fuera de su función '{parametros[0].get('Funcion_Pertenencia')}'."
+                        self.error_manager.add(t.lineno, msg, source="Scope")
+
+
+    def verifico_existencia(self, tercetos):
+        """
+        Verifica que los identificadores usados en los tercetos existan en la tabla de símbolos.
+        Regla:
+        - Si el valor contiene letras mayúsculas (ej: 'U', 'W', 'Z', 'ABC'),
+            se considera un posible identificador (variable o parámetro).
+        - Si no existe en la tabla de símbolos con uso VARIABLE o PARAMETRO → error.
+        - Ignora valores con corchetes (p.ej. [9]) o que no sean cadenas.
+        """
+        for idx, t in enumerate(tercetos):
+            op = getattr(t, "operador", None)
+            if op == "->":  # ignorar redirecciones
+                continue
+
+            for attr in ["op1", "op2", "op3"]:
+                val = getattr(t, attr, None)
+                if not val or not isinstance(val, str):
+                    continue
+
+                # Ignorar valores tipo [9] o constantes numéricas
+                if "[" in val or "]" in val or val.replace('.', '', 1).isdigit():
+                    continue
+
+                # Solo analizamos lexemas que tienen al menos una mayúscula (ej: U, W, Z)
+                if any(c.isupper() for c in val):
+                    # Buscar en la tabla de símbolos si existe como VARIABLE o PARAMETRO
+                    existe = any(
+                        e.get("Lexema") == val and
+                        e.get("Uso", "").upper() in ("VARIABLE", "PARAMETRO", "FUNCION")
+                        for e in self.symbols.values()
+                    )
+
+                    if not existe:
+                        msg = f"ERROR: Identificador '{val}' no está declarado."
                         self.error_manager.add(t.lineno, msg, source="Scope")
