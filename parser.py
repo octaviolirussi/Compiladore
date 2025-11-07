@@ -89,7 +89,6 @@ class MyParser(Parser):
     def return_statement(self, p):
         idx = self.tercetos.nuevo('RETURN', p.expr, None)
         self.tercetos_antes = len(self.tercetos.tercetos)
-        print("Return generado:", p.expr) #-------------------------------------------------------------------------------------------------
         return int(idx.strip('[]')) + 1 # índice numérico 
         
     #error en la expresion del return
@@ -333,11 +332,11 @@ class MyParser(Parser):
         func_entry = self.symbol_table.get_token(func_id, uso_preferido="FUNCION")
         
         if not func_entry or func_entry.get("Uso") != "FUNCION":
+            indices_cv = {}
             for param in params_formales:
                 # param: ('param', modificador, tipo, ID_formal)
                 modificador = param[1]
                 formal_id = param[-1]
-                print(modificador, formal_id)
                 
                 if modificador == 'cv':
                     # Copia Valor: Solo copia al inicio. El operando 2 es el modificador 'CV'.
@@ -349,7 +348,10 @@ class MyParser(Parser):
                     op2 = None # Usamos None para indicar el default
                     
                 # Generamos el terceto: [T#] (OP, ID_formal, Modificador/None)
-                self.tercetos.nuevo(terceto_op, formal_id, op2)
+                index_cv = self.tercetos.nuevo(terceto_op, formal_id, op2)
+
+                # Guarda el resultado en el diccionario usando el ID del parámetro como clave
+                indices_cv[formal_id] = int(index_cv.strip('[]'))
                 
         # GENERACIÓN DE TERCETOS DE COPIA DE RETORNO (RETURN_PARAM)
         if not func_entry or func_entry.get("Uso") != "FUNCION":
@@ -364,6 +366,12 @@ class MyParser(Parser):
         # Mover FUNC (antepenúltimo, ya que los tercetos de copia están justo después) al inicio del cuerpo
         # p.statement_list[0] es el índice del primer statement del cuerpo
         self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), p.statement_list[0] - 1)
+        for param in params_formales:
+            formal_id = param[-1]
+            if formal_id in indices_cv:
+                index_cv = indices_cv[formal_id]
+                # Mover cada terceto COPY_VALOR/COPY_VALOR_R justo después de FUNC
+                self.tercetos.mover_terceto(index_cv,  p.statement_list[0])
         
         # Generar terceto END_FUNC
         index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
