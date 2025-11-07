@@ -10,8 +10,8 @@ symbol_Table.load_keyword()
 
 error = ErrorManager()
 
-lexer = MyLexer(symbol_Table,error)
-parser = MyParser(symbol_Table,error)
+lexer = MyLexer(symbol_Table, error)
+parser = MyParser(symbol_Table, error)
 
 # if len(sys.argv) != 2:
 #     print(f"Uso: python {sys.argv[0]} <ruta_del_txt>")

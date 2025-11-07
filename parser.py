@@ -7,10 +7,10 @@ class MyParser(Parser):
     
     tokens = MyLexer.tokens
 
-    def __init__(self, symbol_table,error_manager):
+    def __init__(self, symbol_table, error_manager):
         self.symbol_table = symbol_table
         self.error_manager = error_manager
-        self.tercetos = GeneradorTercetos(symbol_table,error_manager)
+        self.tercetos = GeneradorTercetos(symbol_table, error_manager)
         self.tercetos_antes = 0
 
     
@@ -321,7 +321,7 @@ class MyParser(Parser):
 
     #====================================== FUNCTION ===================================================
     # Function statement
-    @_('type ID "(" param_list ")" "{" statement_list return_statement "}" ";"') #TODO: nunca entra a esta regla
+    @_('type ID "(" param_list ")" "{" statement_list return_statement "}" ";"')
     def statement(self, p):
         func_id = p.ID
         
@@ -383,8 +383,6 @@ class MyParser(Parser):
         # Los nuevos tercetos de copia (COPY_VALOR/R) quedan ahora inmediatamente después de FUNC.
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.statement_list[0] -1, int(index_end.strip('[]')))
 
-
-
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
     
@@ -430,6 +428,7 @@ class MyParser(Parser):
 
         # GENERACIÓN DE TERCETOS DE COPIA DE ARGUMENTOS
         if not func_entry or func_entry.get("Uso") != "FUNCION":
+            indices_cv = {}
             for param in params_formales:
                 modificador = param[1]
                 formal_id = param[-1]
@@ -442,6 +441,11 @@ class MyParser(Parser):
                     op2 = None 
                     
                 self.tercetos.nuevo(terceto_op, formal_id, op2)
+                # Generamos el terceto: [T#] (OP, ID_formal, Modificador/None)
+                index_cv = self.tercetos.nuevo(terceto_op, formal_id, op2)
+                # Guarda el resultado en el diccionario usando el ID del parámetro como clave
+                indices_cv[formal_id] = int(index_cv.strip('[]'))
+                
                 
         # GENERACIÓN DE TERCETOS DE COPIA DE RETORNO (RETURN_PARAM)
         if not func_entry or func_entry.get("Uso") != "FUNCION":
@@ -462,15 +466,18 @@ class MyParser(Parser):
             target_start_index = int(index_FUNC.strip('[]'))
             
         self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), target_start_index - 1)
+        
+        for param in params_formales:
+            formal_id = param[-1]
+            if formal_id in indices_cv:
+                index_cv = indices_cv[formal_id]
+                # Mover cada terceto COPY_VALOR/COPY_VALOR_R justo después de FUNC
+                self.tercetos.mover_terceto(index_cv,  p.statement_list[0])
 
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, target_start_index - 1, int(index_end.strip('[]')))
 
-
-
         self.tercetos_antes = len(self.tercetos.tercetos)
         return self.tercetos_antes + 1
-        
-        
     
     #error en la expresion de la asignacion
     @_('type ID "(" param_list_error ")" block ";"')
