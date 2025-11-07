@@ -325,6 +325,8 @@ class MyParser(Parser):
     def statement(self, p):
         func_id = p.ID
         
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
+
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type) # Generar terceto FUNC (en la posición temporal)
 
         params_formales = p.param_list # lista de parámetros formales
@@ -381,14 +383,7 @@ class MyParser(Parser):
         # Los nuevos tercetos de copia (COPY_VALOR/R) quedan ahora inmediatamente después de FUNC.
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.statement_list[0] -1, int(index_end.strip('[]')))
 
-        # Re-validación de re-declaración (si se encontró la función solo después de revisar la TS)
-        if func_entry and func_entry.get("Uso") == "FUNCION":
-            msg = f"Error: La función '{func_id}' ya fue declarada previamente."
-            self.error_manager.add(p.lineno, msg, source="parser")
-            # Elimina el terceto FUNC, los tercetos COPY_ARG, el cuerpo y END_FUNC
-            del self.tercetos.tercetos[p.statement_list[0]-1:int(index_end.strip('[]')) + 1]
-        else:
-            self.symbol_table.add_function(p.ID, p.type, p.param_list)
+
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
@@ -405,6 +400,8 @@ class MyParser(Parser):
     @_('type ID "(" param_list ")" block ";"')
     def statement(self, p):
         func_id = p.ID
+        
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
 
         # Validación de tipo y valor por defecto
         if p.type == 'int':
@@ -418,6 +415,7 @@ class MyParser(Parser):
             default_value = '0.0'
             self.symbol_table.add_token('0.0', 'CONST_FLOAT')
         else:
+            # Asumimos 'int' como valor por defecto si hay un tipo inesperado
             msg = "Warning: función sin return, se usará valor por defecto 0"
             self.error_manager.add(p.lineno, msg, source="parser")
             default_value = '0' 
@@ -468,10 +466,11 @@ class MyParser(Parser):
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, target_start_index - 1, int(index_end.strip('[]')))
 
 
-        self.symbol_table.add_function(p.ID, p.type, p.param_list)
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return self.tercetos_antes + 1
+        
+        
     
     #error en la expresion de la asignacion
     @_('type ID "(" param_list_error ")" block ";"')
@@ -640,6 +639,7 @@ class MyParser(Parser):
         
         for arg_real in args_reales: # arg_real es ('arrow', expr, ID_formal)
             
+            # Extraemos el nombre del parámetro formal que se está especificando:
             formal_name = arg_real[2] 
             
             if formal_name not in formal_map: 
@@ -675,14 +675,12 @@ class MyParser(Parser):
             if arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT':
                 new_temp = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT',lineno=p.lineno)
                 final_arg_value = new_temp
-                
-            # Incompatibilidad de Tipos
-            elif arg_real_type.upper() != param_formal_type:
-                
+                                
             # Incompatibilidad de Tipos
             elif arg_real_type.upper() != param_formal_type:
                 msg = f"Error: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
                 self.error_manager.add(p.lineno, msg, source="parser")
+                # Mantenemos el valor original
                 
             # Almacenamos el argumento en la posición 'i' (ordenado según la definición formal)
             processed_args[i] = ('arrow', final_arg_value, formal_name)
