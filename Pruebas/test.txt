@@ -5,13 +5,16 @@ INICIO%PROGRAMA{
     float D;
 
     float F4 (cv int W, float Z){
+        float Z;
         Z = W - 1I;
+        return (Z);
     };
 
-    float F3 (int X, cv float J){
+    int F3 (int X, cv float J){
         int Z;
         int W;
         W = Z + 1I;
-        return (W);
     };
+
+    return(A);
 }
