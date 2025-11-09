@@ -1,4 +1,5 @@
 class SymbolTable:
+    '''almacenar y gestionar toda la información relevante sobre los identificadores (variables, constantes, funciones, etc.) encontrados en el código fuente del programa, además de realizar validaciones de reglas de visibilidad (scope) y existencia.'''
     
     def __init__(self,error_manager):
         # Estructura: {id: {...datos...}}
@@ -65,6 +66,7 @@ class SymbolTable:
 
     # ---------------------- FUNCIONES Y PARÁMETROS ----------------------
     def add_function(self, lexema, return_type, param_list):
+        '''Registra una nueva función, incluyendo su tipo de retorno, y luego itera sobre la lista de parámetros para registrarlos individualmente con su tipo de dato y su Modificador (CV)'''
         
         func_entry = {
             "ID": self.next_id,
@@ -144,6 +146,8 @@ class SymbolTable:
             del self.symbols[key]
 
     def update_variable_type(self, lexema, data_type):
+        '''Utilizado en el análisis semántico para asignar un tipo de dato concreto (INT, FLOAT) a una variable 
+        después de que su declaración ha sido parseada.'''
         for entry in self.symbols.values():
             if entry["Lexema"] == lexema and entry["Uso"] in ["VARIABLE", "N/A"]:
                 entry["data_type"] = data_type.upper()
@@ -266,7 +270,6 @@ class SymbolTable:
         self.validar_variables(tercetos)
         self.verificar_funciones(tercetos)
 
-
     # ---------------------- MOSTRAR TABLA ----------------------
     def show(self):
         result = "Tabla de Símbolos:\n"
@@ -315,7 +318,6 @@ class SymbolTable:
         # Recorremos los tercetos
         for idx, t in enumerate(tercetos):
             op = getattr(t, "operador", None)
-
             # --- FUNC: entramos a nuevo scope ---
             if op == "FUNC":
                 func_name = str(t.op1)

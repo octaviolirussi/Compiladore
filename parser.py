@@ -40,6 +40,50 @@ class MyParser(Parser):
             if entry:
                 return entry.get("data_type", None)
         return None
+    
+    def verifica_return(self, ID, type, start_index, end_index):
+        """
+        Verifica que la función tenga un RETURN adecuado.
+        """
+        tiene_return = False
+        
+        # Recorremos el rango de índices del cuerpo de la función
+        for i in range(start_index, end_index):
+            terceto = self.tercetos.tercetos[i] 
+            print("terceto:", terceto)
+            
+            if terceto.operador == 'RETURN':
+                print("encontró un return")
+                return_type = self.get_type_of_value(terceto.op1)
+                print("return_type:", return_type)
+                expected_type = type
+                print("expected_type:", expected_type)
+                
+                if return_type != expected_type:
+                    msg = f"Error semántico: Tipo de retorno incompatible en función '{ID}'. Se esperaba '{expected_type}', pero se obtuvo '{return_type}'."
+                    self.error_manager.add(terceto.lineno, msg, source="parser")
+                
+                tiene_return = True
+                break 
+
+        if not tiene_return: # Lógica de inserción del RETURN por defecto
+            print("no encontró return")
+            msg = f"Warning: La función '{ID}' no tiene una instrucción RETURN. Return por defecto 0."
+            self.error_manager.add(0, msg, source="parser")
+            # # Validación de tipo y valor por defecto
+            # if expected_type == 'int':
+            #     default_value = '0'
+            #     self.symbol_table.add_token('0', 'CONST_INT')
+            # elif expected_type == 'float':
+            #     default_value = '0.0'
+            #     self.symbol_table.add_token('0.0', 'CONST_FLOAT')
+            
+            # msg = f"Warning: función sin return, se usará valor por defecto {default_value}."
+            # self.error_manager.add(p.lineno, msg, source="parser")
+            
+            # 2. Generar RETURN(valor_defecto, None)
+            # 3. Moverlo a justo antes de END_FUNC (índice 'end_index')
+            pass
 
 # ===================================== PROGRAMA =====================================================
 
@@ -379,16 +423,17 @@ class MyParser(Parser):
         
         # Generar terceto END_FUNC
         index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
-
+        
         # Agrega ámbito a las variables de la función
         # Los nuevos tercetos de copia (COPY_VALOR/R) quedan ahora inmediatamente después de FUNC.
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.statement_list[0] -1, int(index_end.strip('[]')))
 
         self.symbol_table.add_function(p.ID, p.type, p.param_list)
-
+        
+        self.verifica_return(p.ID, p.type, p.statement_list[0], int(index_end.strip('[]')))
+        
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
-    
     
     #error en la expresion de la asignacion
     @_('type ID "(" param_list_error ")" block ";"')

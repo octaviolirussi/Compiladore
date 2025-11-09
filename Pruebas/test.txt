@@ -1,37 +1,17 @@
-3{
+INICIO%PROGRAMA{
     int A;
     int B;
     float C;
     float D;
 
     float F4 (cv int W, float Z){
-        int O;
-        Z = 1I;
-        W = 2I + 5I;
-        J = 2I;
-        int F1(int T){
-            T = D;
-            if (2I > 3I){
-                T = 3I + 0I;
-                T = T + 1I;
-                J = T;
-            }endif;
-            L = T;
-        };
-        L = 2I + 5I;
+        Z = W - 1I;
     };
 
-    int F3 (int X, cv float J){
+    float F3 (int X, cv float J){
         int Z;
         int W;
-        int L;
-        O = 3I;
-        U = 0I;
         W = Z + 1I;
-        C = D+A;
+        return (W);
     };
-
-   
 }
-
-

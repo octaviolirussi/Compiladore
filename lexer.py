@@ -11,7 +11,7 @@ class MyLexer(Lexer):
 
 
     # Lista de tokens
-    tokens = { PROGRAMA, ID, CONST_INT, CONST_FLOAT, GE, LE, EQ, NE
+    tokens = { ID, CONST_INT, CONST_FLOAT, GE, LE, EQ, NE
               , ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
               ,INT, CV}
    
