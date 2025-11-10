@@ -13,29 +13,26 @@ symbol_Table.load_keyword()
 lexer = MyLexer(symbol_Table,error)
 parser = MyParser(symbol_Table,error)
 
-# if len(sys.argv) != 2:
-#     print(f"Uso: python {sys.argv[0]} <ruta_del_txt>")
-#     sys.exit(1)
+if len(sys.argv) != 2:
+    print(f"Uso: python {sys.argv[0]} <ruta_del_txt>")
+    sys.exit(1)
 
-# ruta_txt = sys.argv[1]
+ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
 try:
-    with open("Pruebas/test.txt", "r", encoding="utf-8") as f:
+    with open(ruta_txt, "r", encoding="utf-8") as f:
         
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
 
-        # print("\nLexer:\n")
-        # for tok in tokens:
-        #     print('type=%r, value=%r' % (tok.type, tok.value))
 
         #Muestra el parser
         tokens_iter = iter(tokens)
         result = parser.parse(tokens_iter)
 
 except FileNotFoundError:
-    print(f"No se encontró el archivo en: poner la ruta despues")
+    print(f"No se encontró el archivo en: {ruta_txt}")
 
 
 symbol_Table.eliminar(parser.tercetos.tercetos)

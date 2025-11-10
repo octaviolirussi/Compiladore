@@ -612,6 +612,11 @@ class SymbolTable:
                 # Ignorar valores tipo [9] o constantes numéricas
                 if "[" in val or "]" in val or val.replace('.', '', 1).isdigit():
                     continue
+                
+                if any(c.isupper() for c in val):
+                    # Ignorar cadenas entre comillas dobles
+                    if val.startswith('"') and val.endswith('"'):
+                        continue
 
                 # Solo analizamos lexemas que tienen al menos una mayúscula (ej: U, W, Z)
                 if any(c.isupper() for c in val):

@@ -731,11 +731,8 @@ class MyParser(Parser):
         # El resultado de una comparación es siempre booleano, representado como INT (1/0)
         result_type = 'INT' 
         temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
-        # El resultado de una comparación es siempre booleano, representado como INT (1/0)
-        result_type = 'INT' 
-        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
-    
+
     @_('expr "<" expr')
     def expr(self, p):
         temp = self.tercetos.nuevo('<', p.expr0, p.expr1, 'INT',lineno=p.lineno)

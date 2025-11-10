@@ -1,10 +1,14 @@
 PROGRAMA1
-{    if (A > 10I) { 
+{    
+    int A;
+    int B;
+    
+    if (A > 10I) { 
         B = 5I;
         A = B - 5I;    
-    } else 
+    } else{ 
         B = 2I; 
-    endif;
+    }endif;
 
     if (A>=10I)
         B = 5I;
