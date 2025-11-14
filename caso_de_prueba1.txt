@@ -1,0 +1,48 @@
+INICIO%PROGRAMA{
+    int A;
+    int B;
+    float C;
+    float D;
+
+    float F1 (cv int W, float Z){
+        int R;
+        R = W - 1I;
+        return (R);
+    };
+
+    int F2 (int X, cv float J){
+        int Z;
+        int W;
+        W = Z + 1I;
+
+        if(Z<=10I){
+            W = 5I;
+            W = W + 2I - 1I;
+        }endif;
+    };
+    
+    int F3 (float W, int Z){
+        int K, L;
+        float J;
+        K = W - 1I + 3I;
+        return (K);
+
+        L = 3I;
+        J = 2I;
+
+        int F4 (int W, float Z){
+            int J;
+            S = 2I;
+            J = D + 3I;
+            return (J);
+        };
+        K = F4(L -> W, L -> Z);
+
+        return (K + L);
+    };
+
+    A = F3(2I->W,2I->Z);
+    C = F3(2I->W,2I->Z);
+
+    return(A);
+}

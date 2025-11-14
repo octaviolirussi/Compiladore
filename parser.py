@@ -280,7 +280,7 @@ class MyParser(Parser):
 
         # Índices auxiliares
         expr_indice = int(p.expr.strip('[]'))                         # último terceto de la condición
-        index_else_last = (expr_indice + 1) + (len(p.block0) + 1)     # para mover BI a su posicion
+        index_else_last = (expr_indice + 1) + (len(p.block0))     # para mover BI a su posicion
         index_else_first = expr_indice + len(p.block0) + 1            # para hacer backpatch de BF
 
         # Backpatch del BF → apunta al inicio del bloque ELSE
