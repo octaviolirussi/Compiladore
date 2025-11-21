@@ -1,20 +1,20 @@
 INICIO%PROGRAMA{
-    int A;
-    int B;
-    float C;
-    float D;
 
-    float F4 (cv int W, float Z){
-        float Z;
-        Z = W - 1I;
-        return (Z);
+    float F1 (int A){
+        int C;
+        A = 2I + 2I;
+        int F2(int B){
+            B = 8I * 2I;
+            B = 0I;
+            int F3(int C){
+                C = 8I * 2I;
+                C = 0I;
+                return (C);
+            };
+            return (B);
+        };
+        A = 3I;
+        return (A);
     };
 
-    int F3 (int X, cv float J){
-        int Z;
-        int W;
-        W = Z + 1I;
-    };
-
-    return(A);
 }

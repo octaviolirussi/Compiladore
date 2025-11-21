@@ -80,6 +80,17 @@ class GeneradorTercetos:
             else:
                 pass 
 
+    def backpatch2(self, terceto, indice):
+        """
+        Asigna un nuevo valor al op2 del terceto recibido.
+        'indice' puede ser un número o una referencia tipo '[5]'.
+        """
+        # Si llega un número, lo convertimos a referencia "[n]"
+        if isinstance(indice, int):
+            indice = f"[{indice}]"
+
+        terceto.op2 = indice
+
     #FUNCION PARA MOVER UN TERCETO (BF)
     def mover_terceto(self, indice_origen, indice_destino):
         """
