@@ -36,9 +36,9 @@ except FileNotFoundError:
 
 
 symbol_Table.eliminar(parser.tercetos.tercetos)
-parser.tercetos.mostrar()
 parser.tercetos.actualizar_scope()
-
+symbol_Table.correccion_scope(parser.tercetos.tercetos)
+parser.tercetos.mostrar()
 
 #errores
 print("\nMuestra de Errores:\n")
@@ -53,3 +53,5 @@ print("\nTabla de palabras reservadas:\n")
 print(symbol_Table.keywords)
 print("\n")
 print(symbol_Table.show())
+
+

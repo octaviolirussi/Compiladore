@@ -1,20 +1,26 @@
 INICIO%PROGRAMA{
+int O;
+int Y;
 
-    float F1 (int A){
-        int C;
-        A = 2I + 2I;
-        int F2(int B){
-            B = 8I * 2I;
-            B = 0I;
-            int F3(int C){
-                C = 8I * 2I;
-                C = 0I;
-                return (C);
+float F2(int B,int J){
+            int L;
+            float F3(float A){
+                A=2I;
+                return(A);
+                float F8(float A){
+                    int Y;
+                    A=2I;
+                    return(A);
+                };
             };
-            return (B);
+            B=2I;
+            return(B);
         };
-        A = 3I;
-        return (A);
+
+    int F5(int U){
+        int J;
+        U=2I;
+        return(U);
     };
 
 }

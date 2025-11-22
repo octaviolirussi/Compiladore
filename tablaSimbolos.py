@@ -269,6 +269,7 @@ class SymbolTable:
         self.verifico_existencia(tercetos)
         self.validar_variables(tercetos)
         self.verificar_funciones(tercetos)
+        self.verificacion_parametros(tercetos)
 
     # ---------------------- MOSTRAR TABLA ----------------------
     def show(self):
@@ -349,23 +350,19 @@ class SymbolTable:
                 current_scope = scope_stack[-1]
                 continue
 
-            # --- DECL: declaración de variable ---
             if op == "DECL":
                 lexema = str(t.op2)
                 scope_actual = current_scope
 
-                # Revisar si fue declarada en este scope o ancestors
-                is_redeclarada = False
-                for scope in scope_stack:
-                    if lexema in declaradas_por_scope.get(scope, set()):
-                        is_redeclarada = True
-                        msg = f"ERROR: Variable '{lexema}' redeclarada en scope '{scope}'"
-                        self.error_manager.add(t.lineno, msg, source="Scope")
-                        break
-
-                if not is_redeclarada:
+                # SOLO verificar redeclaración en el scope actual
+                if lexema in declaradas_por_scope.get(scope_actual, set()):
+                    msg = f"ERROR: Variable '{lexema}' redeclarada en el scope '{scope_actual}'"
+                    self.error_manager.add(t.lineno, msg, source="Scope")
+                else:
+                    # registrar declaración en el scope actual
                     declaradas_por_scope.setdefault(scope_actual, set()).add(lexema)
-                    # Tomar type y data_type del mapping o de variables_list
+
+                    # crear entrada de variable
                     type_info = type_mapping.get(lexema, {"type": "ID", "data_type": "N/A"})
                     entry_var = {
                         "ID": self.next_id,
@@ -526,7 +523,7 @@ class SymbolTable:
                 if parent_scope == "G":
                     # Función global duplicada
                     if func_name in funciones_globales:
-                        msg = f"ERROR: Función global '{func_name}' ya declarada (terceto {idx})."
+                        msg = f"ERROR: Función global '{func_name}' ya declarada."
                         self.error_manager.add(t.lineno, msg, source="Scope")
                     else:
                         funciones_globales.add(func_name)
@@ -539,7 +536,7 @@ class SymbolTable:
                         for e in self.symbols.values()
                     )
                     if duplicada:
-                        msg = f"ERROR: Función '{func_name}' ya declarada en el scope '{parent_scope}' (terceto {idx})."
+                        msg = f"ERROR: Función '{func_name}' ya declarada en el scope '{parent_scope}'."
                         self.error_manager.add(t.lineno, msg, source="Scope")
 
                 # Agregar nuevo scope
@@ -630,3 +627,91 @@ class SymbolTable:
                     if not existe:
                         msg = f"ERROR: Identificador '{val}' no está declarado."
                         self.error_manager.add(t.lineno, msg, source="Scope")
+
+    def verificacion_parametros(self, tercetos):
+        "evita que se declaren variables con el mismo nombre de los parametros"
+        # --- armo func_info 
+        func_info = {}
+
+        for _, entry in self.symbols.items():
+            if entry["Uso"] == "FUNCION":
+                nombre = entry["Lexema"]
+                func_info[nombre] = []
+
+        for _, entry in self.symbols.items():
+            if entry["Uso"] == "PARAMETRO":
+                pertenencia = entry["Funcion_Pertenencia"]
+                func_info[pertenencia].append(entry["Lexema"])
+
+        # --- ahora recorro función por función ---
+        while func_info:
+            func_name = next(iter(func_info))  # agarro primera función pendiente
+            params = func_info[func_name]
+
+            # 1. Buscar inicio de la función
+            start_idx = None
+            for idx, t in enumerate(tercetos):
+                if t.operador == "FUNC" and str(t.op1) == func_name:
+                    start_idx = idx
+                    break
+
+            if start_idx is None:
+                func_info.pop(func_name)
+                continue
+
+            # 2. Mostrar cuerpo de la función
+            nesting = 0   # controla funciones internas
+            i = start_idx
+
+            while i < len(tercetos):
+
+                t = tercetos[i]
+
+                # si encuentra la misma función, sube nesting (solo el primero vale nesting=0)
+                if t.operador == "FUNC":
+                    if i == start_idx:
+                        pass
+                    else:
+                        nesting += 1  # función interna → ignorar
+                elif t.operador == "END_FUNC":
+                    if nesting == 0:
+                        #print(f"Fin función: terceto {i} → {t}")
+                        break
+                    else:
+                        nesting -= 1
+
+                # mostrar solo si estamos en la función principal (nesting == 0)
+                if nesting == 0 and i != start_idx:
+
+                    if t.operador == "DECL":
+                        nombre_var = str(t.op2)
+                        if nombre_var in params:
+                            msg = (
+                                f"ERROR: La variable '{nombre_var}' en función '{func_name}' "
+                                f"tiene el mismo nombre que un parámetro."
+                            )
+                            self.error_manager.add(t.lineno, msg, source="Semantico")
+
+                i += 1
+
+            # eliminar función procesada
+            func_info.pop(func_name)
+    
+
+    def correccion_scope(self, tercetos):
+        "se utiliza para arreglar como se ven los scope (estan invertidos sino) y se le agregan "
+        "los scopes a los lexemas"
+
+        for sym_id, entry in self.symbols.items():
+            if entry["Uso"] in ("VARIABLE", "FUNCION"):
+                if entry["Scope"] != "G":
+                    invertido = ":".join(entry["Scope"].split(":")[::-1])
+                    resultado = "G:" + invertido
+                    entry["Scope"] = resultado
+                    resultado = entry["Lexema"] + ":" + resultado
+                    entry["Lexema"] = resultado
+                else:
+                    entry["Lexema"] = entry["Lexema"] + ":" + entry["Scope"]
+            else:
+                if entry["Uso"] in ("PARAMETRO"):
+                    entry["Lexema"] = entry["Lexema"] + ":" + entry["Funcion_Pertenencia"]

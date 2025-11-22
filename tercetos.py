@@ -17,6 +17,7 @@ class GeneradorTercetos:
     
     def __init__(self,symbol_table,error_manager):
         self.tercetos = []
+        self.funciones = []
         self.symbol_table = symbol_table
         self.error_manager = error_manager
         self.current_scope = "G"  
@@ -174,6 +175,7 @@ class GeneradorTercetos:
             if entry["Lexema"] == nombre and entry["Uso"].upper() == "PARAMETRO":
                 funciones_pertenencia.append(entry["Funcion_Pertenencia"])
         return funciones_pertenencia if funciones_pertenencia else None
+    
 
 
     def mostrar(self):

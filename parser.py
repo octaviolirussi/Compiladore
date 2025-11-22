@@ -12,7 +12,6 @@ class MyParser(Parser):
         self.error_manager = error_manager
         self.tercetos = GeneradorTercetos(symbol_table,error_manager)
         self.tercetos_antes = 0
-        self.scope = ["G"]
 
     
     precedence = (
@@ -376,13 +375,6 @@ class MyParser(Parser):
     @_('type ID "(" param_list ")" "{" statement_list "}" ";"')
     def statement(self, p):
 
-        print(f"Entra: {self.scope}")
-        
-        self.scope.append(p.ID)
-        self.scope = [self.scope[0]] + list(reversed(self.scope[1:]))
-
-        print(f"Cambia: {self.scope}")
-
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type) # Generar terceto FUNC (en la posición temporal)
         
         # Generar terceto END_FUNC
@@ -412,6 +404,7 @@ class MyParser(Parser):
         self.symbol_table.add_function(p.ID, p.type, p.param_list)
         
         
+
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
     
