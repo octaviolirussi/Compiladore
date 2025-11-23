@@ -1,0 +1,29 @@
+INICIO%PROGRAMA{
+int O;
+int Y;
+
+    int F1(int U){
+        int A;
+        U=2I;
+            int F2(int U){
+                float B;
+                U=2I;
+                return(B);
+            };
+
+            float F3(int U){
+                int C;
+                U=2I;
+                return(C);
+            };
+
+            float F4(int U){
+                float D;
+                U=2I;
+                return(D);
+            };
+        return(A);
+    };
+
+
+}

@@ -43,14 +43,34 @@ class MyParser(Parser):
     
     def verifica_return(self, ID, type, start_index, end_index):
         """
-        Verifica que la función tenga un RETURN adecuado.
-        Retorna el índice del terceto RETURN insertado (si aplica) o None.
+        Verificar que si existe una instrucción RETURN dentro del cuerpo de la función, 
+        el tipo de dato que retorna sea compatible con el tipo de retorno declarado para 
+        la función.
+        Insertar un RETURN por defecto si la función no contiene explícitamente ninguna 
+        instrucción RETURN (tipos int y float)
         """ 
-        tiene_return = False      
+        tiene_return = False  
+        expected_type = type    
+        
+        skip_level = 0 # Nivel de anidamiento actual, 0 significa la función que estamos verificando
         # Recorremos el rango de índices del cuerpo de la función
         for i in range(start_index, end_index):
             terceto = self.tercetos.tercetos[i] 
-            expected_type = type
+            
+            if terceto.operador == 'FUNC':
+                # Entra en una función anidada, incrementamos el nivel de anidamiento
+                skip_level += 1
+                continue
+            
+            elif terceto.operador == 'END_FUNC':
+                if skip_level > 0:
+                    skip_level -= 1
+                    continue
+                # Si skip_level es 0, es el END_FUNC de la función actual.
+                
+            # Si estamos dentro de una función anidada (skip_level > 0), saltamos la verificación.
+            if skip_level > 0:
+                continue
             
             if terceto.operador == 'RETURN':
                 return_type = self.get_type_of_value(terceto.op1)
