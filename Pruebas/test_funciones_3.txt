@@ -14,16 +14,14 @@ int Y;
             float F3(int U){
                 int C;
                 U=2I;
-                return(C);
-            };
 
-            float F4(int U){
-                float D;
-                U=2I;
-                return(D);
+                float F4(int U){
+                        float D;
+                        U=2I;
+                        return(D);
+                };
+                return(C);
             };
         return(A);
     };
-
-
 }
