@@ -36,8 +36,8 @@ except FileNotFoundError:
 
 
 symbol_Table.eliminar(parser.tercetos.tercetos)
-parser.tercetos.actualizar_scope()
 symbol_Table.correccion_scope(parser.tercetos.tercetos)
+parser.tercetos.correcciones()
 parser.tercetos.mostrar()
 
 #errores

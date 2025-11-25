@@ -394,7 +394,6 @@ class MyParser(Parser):
     # Function statement
     @_('type ID "(" param_list ")" "{" statement_list "}" ";"')
     def statement(self, p):
-
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type) # Generar terceto FUNC (en la posición temporal)
         
         # Generar terceto END_FUNC
@@ -404,7 +403,7 @@ class MyParser(Parser):
         if op == '=':
             i = p.statement_list[0] - 2
             op = self.tercetos.tercetos[i].operador
-            while op == '+' or op == '-' or op == '*' or op == '/': 
+            while op == '+' or op == '-' or op == '*' or op == '/' or op == 'CONV_I_F': 
                 i = i - 1
                 op = self.tercetos.tercetos[i].operador
             self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), i+1)
@@ -491,7 +490,7 @@ class MyParser(Parser):
         self.error_manager.add(p.lineno, msg, source="parser")
 
     #falta do
-    @_('WHILE "(" expr ")" error block ";"')
+    @_('WHILE "(" expr ")"  block ";"')
     def statement(self, p):
         self.errok()
         msg = "Error: falta el do despues del while"

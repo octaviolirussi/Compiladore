@@ -334,7 +334,7 @@ class SymbolTable:
                     "type": type_info.get("type", "FUNCTION"),
                     "data_type": type_info.get("data_type", "N/A"),
                     "Uso": "FUNCION",
-                    "Funcion_Pertenencia": parent_scope if parent_scope != "G" else "N/A",
+                    "Funcion_Pertenencia": current_scope,
                     "Modificador": "N/A",
                     "Scope": current_scope
                 }
@@ -453,45 +453,46 @@ class SymbolTable:
                 if e.get("Uso", "").upper() in ("VARIABLE", "PARAMETRO")
             ]
 
-            lexema = getattr(t, "op1", None)
-            if lexema not in lexemas_validos:
-                continue  # ignorar literales, constantes, referencias, etc.
+            for operand in [t.op1, t.op2]:
 
-            # Buscar coincidencias en la tabla de símbolos
-            posibles = [
-                e for e in self.symbols.values()
-                if e.get("Lexema") == lexema and e.get("Uso", "").upper() in ("VARIABLE", "PARAMETRO")
-            ]
+                lexema = operand
+                if lexema not in lexemas_validos:
+                    continue  # ignorar literales, constantes, etc.
 
-            if not posibles:
-                continue
+                posibles = [
+                    e for e in self.symbols.values()
+                    if e.get("Lexema") == lexema and e.get("Uso", "").upper() in ("VARIABLE", "PARAMETRO")
+                ]
 
-            # Verificar accesibilidad
-            uso_valido = False
-            for e in posibles:
-                scope_var = norm_scope(e.get("Scope"))
-                uso = e.get("Uso", "").upper()
+                if not posibles:
+                    continue
 
-                # Variables globales siempre accesibles
-                if uso == "VARIABLE" and scope_var == "G":
-                    uso_valido = True
-                    break
+                uso_valido = False
 
-                # Variables locales accesibles en su scope o descendientes
-                if uso == "VARIABLE" and (current_scope == scope_var or is_child_scope(scope_var, current_scope)):
-                    uso_valido = True
-                    break
+                for e in posibles:
+                    scope_var = norm_scope(e.get("Scope"))
+                    uso = e.get("Uso", "").upper()
 
-                # Parámetros accesibles solo dentro de su función de pertenencia
-                if uso == "PARAMETRO":
-                    func_pert = e.get("Funcion_Pertenencia")
-                    if func_pert and (func_pert == current_scope or current_scope.startswith(func_pert)):
+                    if uso == "VARIABLE" and scope_var == "G":
                         uso_valido = True
                         break
 
-            if not uso_valido:
-                msg = f"ERROR: Variable o parámetro '{lexema}' no accesible desde scope '{current_scope}'."
-                self.error_manager.add(t.lineno, msg, source="Scope")
+                    if uso == "VARIABLE" and (current_scope == scope_var or is_child_scope(scope_var, current_scope)):
+                        uso_valido = True
+                        break
+
+                    if uso == "PARAMETRO":
+                        func_pert = e.get("Funcion_Pertenencia")
+                        if func_pert and (func_pert == current_scope or current_scope.startswith(func_pert)):
+                            uso_valido = True
+                            break
+
+                if not uso_valido and t.operador != "->":
+                    msg = (
+                        f"ERROR: Variable o parámetro '{lexema}' no accesible "
+                        f"desde scope '{current_scope}'."
+                    )
+                    self.error_manager.add(t.lineno, msg, source="Scope")
 
     def verificar_funciones(self, tercetos):
         """
@@ -702,6 +703,8 @@ class SymbolTable:
         "se utiliza para arreglar como se ven los scope (estan invertidos sino) y se le agregan "
         "los scopes a los lexemas"
 
+        funciones = []
+
         for sym_id, entry in self.symbols.items():
             if entry["Uso"] in ("VARIABLE", "FUNCION"):
                 if entry["Scope"] != "G":
@@ -710,8 +713,39 @@ class SymbolTable:
                     entry["Scope"] = resultado
                     resultado = entry["Lexema"] + ":" + resultado
                     entry["Lexema"] = resultado
+                    #cambiamos funcion de pertenencia
+                    if entry["Uso"] == "FUNCION" and entry["Funcion_Pertenencia"] != "N/A":
+                        invertido = ":".join(entry["Funcion_Pertenencia"].split(":")[::-1])
+                        resultado = "G:" + invertido
+                        entry["Funcion_Pertenencia"] = resultado
                 else:
                     entry["Lexema"] = entry["Lexema"] + ":" + entry["Scope"]
             else:
                 if entry["Uso"] in ("PARAMETRO"):
-                    entry["Lexema"] = entry["Lexema"] + ":" + entry["Funcion_Pertenencia"]
+                    func_per = entry["Funcion_Pertenencia"]
+                    if not funciones or func_per != funciones[-1]:
+                        funciones.append(func_per)
+
+                    values = list(self.symbols.values())
+                    i = 0
+                    seguir=True
+
+                    cont=0
+                    for funcion in funciones:
+                        if funcion == func_per:
+                            cont+=1
+
+                    encontradas=1
+                    while i < len(values) and seguir:
+                        valor = values[i]
+                        func = valor["Lexema"].split(":")[0]
+                        if func == func_per and valor["Uso"] == "FUNCION":
+                            if encontradas == cont:  
+                                invertido = ":".join(valor["Scope"].split(":")[::-1])
+                                resultado = "G:" + invertido
+                                entry["Lexema"] = entry["Lexema"] + ":" + resultado
+                                seguir=False
+                            else:
+                                encontradas+=1
+                        i += 1
+        
