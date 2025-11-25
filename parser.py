@@ -640,12 +640,11 @@ class MyParser(Parser):
             # Almacenamos el argumento en la posición 'i' (ordenado según la definición formal)
             processed_args[i] = ('arrow', final_arg_value, formal_name)
 
-        # Generar tercetos '->' y 'CALL' en el ORDEN FORMAL
-        for arg in processed_args:
-            if arg: 
-                op1_val = arg[1] # El ID/Terceto con el valor
-                op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
-                self.tercetos.nuevo('->', op1_val, op2_val,lineno=p.lineno) 
+        # for arg in processed_args:
+        #     if arg: 
+        #         op1_val = arg[1] # El ID/Terceto con el valor
+        #         op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
+        #         self.tercetos.nuevo('->', op1_val, op2_val,lineno=p.lineno) 
             
         call_result_type = func_entry.get("data_type")
         temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper(),lineno=p.lineno)
