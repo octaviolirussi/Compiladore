@@ -465,13 +465,17 @@ class GeneradorTercetos:
 
                 setattr(t, campo, f"[{new_idx}]")
 
+    def get_llamadas(self):
+        return self.myparser.llamadas
+    
     def correcciones(self):
         "Todas las correcciones del TP3 se ejecutan aca"
         self.actualizar_scope()
         self.actualizar_tercetos()
         self.eliminar_declaraciones()
         self.mover_funciones()
-
+        self.symbol_table.agrega_returns(self.tercetos)
+        self.symbol_table.update_returns_values(self.tercetos)
 
     def mostrar(self):
         print("\n=== CÓDIGO INTERMEDIO (TERCETOS) ===")

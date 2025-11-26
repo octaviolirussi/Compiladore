@@ -12,6 +12,7 @@ class MyParser(Parser):
         self.error_manager = error_manager
         self.tercetos = GeneradorTercetos(symbol_table,error_manager)
         self.tercetos_antes = 0
+        self.llamadas = []  # Lista para almacenar las funciones llamadas
 
     
     precedence = (
@@ -568,6 +569,7 @@ class MyParser(Parser):
     #invocacion funcion
     @_('ID "(" arg_list ")"')
     def expr(self, p):
+        
         func_id = p.ID # nombre de la función
         args_reales = p.arg_list # lista de argumentos reales: [('arrow', expr, ID_formal), ...]
         func_entry = self.symbol_table.get_token(func_id, uso_preferido="FUNCION") # buscar la función en la tabla de símbolos
@@ -648,6 +650,7 @@ class MyParser(Parser):
             
         call_result_type = func_entry.get("data_type")
         temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper(),lineno=p.lineno)
+        
         self.tercetos_antes = len(self.tercetos.tercetos)
         return temp # índice del terceto CALL
 

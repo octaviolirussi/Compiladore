@@ -25,7 +25,7 @@ class SymbolTable:
         }
 
     # ---------------------- TOKENS BÁSICOS ----------------------
-    def add_token(self, lexema, token_type):
+    def add_token(self, lexema, token_type, tipo_retorno=None, valor_retorno=None):
         entry = {
             "ID": self.next_id,
             "Lexema": lexema,
@@ -34,7 +34,8 @@ class SymbolTable:
             "data_type": None,
             "Funcion_Pertenencia": "N/A",
             "Modificador": "N/A",
-            "Scope": "N/A"
+            "Scope": "N/A", 
+            "Valor_Retorno": "N/A" 
         }
 
         if token_type == "PROGRAMA":
@@ -49,9 +50,15 @@ class SymbolTable:
         elif token_type == "STRING":
             entry["data_type"] = "STRING"
             entry["Uso"] = "CONSTANTE"
+        elif token_type == "RETORNO":
+            entry["data_type"] = tipo_retorno
+            entry["Uso"] = "RETORNO"
+            # Asignamos el valor que se pasa (será el índice del terceto o la constante)
+            entry["Valor_Retorno"] = valor_retorno if valor_retorno is not None else "PENDIENTE"
 
         self.symbols[self.next_id] = entry
         self.next_id += 1
+
 
     def add_negative_token(self, positive_lexema, negative_value):
         negative_lexema = str(negative_value)
@@ -65,6 +72,70 @@ class SymbolTable:
             self.next_id += 1
 
     # ---------------------- FUNCIONES Y PARÁMETROS ----------------------
+
+    def get_return_var_name(self, func_name):
+        return f"ret_{func_name}"
+    
+    def update_return_value(self, lexema_base_retorno, value):
+        """Busca y actualiza la entrada con Uso='RETORNO'."""
+        coincidencias = self.find_by_lexema(lexema_base_retorno)
+        
+        for entry in coincidencias:
+            if entry.get("Uso") == "RETORNO":
+                entry["Valor_Retorno"] = str(value) 
+                return True
+        return False
+
+    def agrega_returns(self, lista_tercetos):
+        '''crea una variable en la TS esperando el retorno de la función (Ej: ret_F2)'''
+        funciones = [] #lista de tuplas (nombre_funcion, tipo_retorno)
+        llamadas = []
+        
+        for entry in lista_tercetos:
+            if entry.operador == "FUNC":
+                funciones.append((str(entry.op1), entry.op2))
+    
+        i = 0
+        while i < len(lista_tercetos):
+            terceto = lista_tercetos[i]
+            if terceto.operador == "FUNC":
+                if funciones and funciones[0][0] == str(terceto.op1):
+                    nombre = funciones[0][0]
+                    tipo_retorno = funciones[0][1]
+            elif terceto.operador == "RETURN":
+                self.add_token("ret_" + nombre, "RETORNO", tipo_retorno= tipo_retorno)
+            elif terceto.operador == "END_FUNC":
+                if funciones and funciones[0][0] == str(terceto.op1):
+                    funciones.pop(0)
+                    continue
+            
+            i += 1
+
+    def update_returns_values(self, lista_tercetos):
+        funciones_scope_stack = [] # función que estamos recorriendo
+        i = 0       
+        while i < len(lista_tercetos): 
+            terceto = lista_tercetos[i]
+
+            if terceto.operador == "FUNC":
+                funciones_scope_stack.append(str(terceto.op1)) 
+                
+            elif terceto.operador == "END_FUNC":
+                if funciones_scope_stack:
+                    funciones_scope_stack.pop()
+                    
+            elif terceto.operador == "RETURN":
+                if funciones_scope_stack:
+                    nombre_funcion_actual = funciones_scope_stack[-1]
+                    lexema_base_retorno = self.get_return_var_name(nombre_funcion_actual) # "ret_F2"
+                    
+                    self.update_return_value(lexema_base_retorno, terceto.op1) 
+                    
+                else:
+                    pass
+                    
+            i += 1
+    
     def add_function(self, lexema, return_type, param_list):
         '''Registra una nueva función, incluyendo su tipo de retorno, y luego itera sobre la lista de parámetros para registrarlos individualmente con su tipo de dato y su Modificador (CV)'''
         
@@ -274,14 +345,15 @@ class SymbolTable:
     # ---------------------- MOSTRAR TABLA ----------------------
     def show(self):
         result = "Tabla de Símbolos:\n"
-        result += "-" * 120 + "\n"
-        result += "{:<5} {:<15} {:<15} {:<10} {:<15} {:<20} {:<15} {:<10}\n".format(
-            "ID", "Lexema", "Token Type", "Data Type", "Uso", "Función Pertenencia", "Modificador", "Scope"
+        result += "-" * 140 + "\n"
+        # AÑADE "Valor Retorno" al encabezado
+        result += "{:<5} {:<15} {:<15} {:<10} {:<15} {:<20} {:<15} {:<10} {:<10}\n".format(
+            "ID", "Lexema", "Token Type", "Data Type", "Uso", "Función Pertenencia", "Modificador", "Scope", "Valor_Retorno"
         )
-        result += "-" * 120 + "\n"
+        result += "-" * 140 + "\n"
 
         for sym_id, entry in sorted(self.symbols.items()):
-            result += "{:<5} {:<15} {:<15} {:<10} {:<15} {:<20} {:<15} {:<10}\n".format(
+            result += "{:<5} {:<15} {:<15} {:<10} {:<15} {:<20} {:<15} {:<10} {:<10}\n".format(
                 str(entry.get("ID", sym_id) or "N/A"),
                 str(entry.get("Lexema", "N/A") or "N/A"),
                 str(entry.get("type", "N/A") or "N/A"),
@@ -289,11 +361,13 @@ class SymbolTable:
                 str(entry.get("Uso", "N/A") or "N/A"),
                 str(entry.get("Funcion_Pertenencia", "N/A") or "N/A"),
                 str(entry.get("Modificador", "N/A") or "N/A"),
-                str(entry.get("Scope", "N/A") or "N/A")
+                str(entry.get("Scope", "N/A") or "N/A"),
+                str(entry.get("Valor_Retorno", "N/A") or "N/A") # <-- ¡Nuevo campo mostrado!
             )
 
-        result += "-" * 120 + "\n"
+        result += "-" * 140 + "\n"
         return result
+
 
     def verificacion_scope(self, tercetos, variables_list):
         """
