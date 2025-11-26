@@ -8,25 +8,24 @@ Y = 2I + 2I;
 float F2(int J,int K,int B){
             int L1;
             L1 = 2I + 0I;
-            int F3(float D){
+            int F3(float U){
                 D=2I+3I;
                 return(D);
                 float F8(float A){
                     int Y;
                     A=2I+L1;
-                    L1=1.234F+5;
                     if (A > 2I){
                         A = 2I + 2I;
                         print("Adios");
                     }else{
                         Y = 2I;
+                        return(2I);
                         Y = 2I + 0I;
                     }endif;
-                    L1=2.2;
                     print("Hola");
-                    return(A);
+                    
                 };
-                D = F8(2I->A);
+                
             };
             
             return(B);

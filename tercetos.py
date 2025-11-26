@@ -234,12 +234,11 @@ class GeneradorTercetos:
                                 
                         for entry in self.symbol_table.symbols.values():
                             last = self.scope_stack[-1]
-                            funcion = last.split(":")[-1]
-                            if entry["Lexema"] == operand + ":" + str(funcion) and entry["Uso"] == "PARAMETRO":
+                            if entry["Lexema"] == operand + ":" + str(last) and entry["Uso"] == "PARAMETRO":
                                 if t.op1 == operand:
-                                    t.op1 = operand + ":" + funcion
+                                    t.op1 = operand + ":" + last
                                 else:
-                                    t.op2 = operand + ":" + funcion
+                                    t.op2 = operand + ":" + last
                                 break
                         
                         seguir = True
@@ -264,6 +263,45 @@ class GeneradorTercetos:
                                 break  # corta también el while
                             
                             scope.pop()  # elimina último scope y sigue buscando
+            
+        for i, t in enumerate(self.tercetos):
+            "Verifico si existen variables no declaradas"
+            for operand in [t.op1, t.op2]:
+                    # Ignorar operandos vacíos
+                    if operand is None:
+                        continue
+
+                    # Ignorar números reales
+                    if isinstance(operand, (int, float)):
+                        continue
+
+                    # Ignorar strings numéricas
+                    if isinstance(operand, str) and operand.isdigit():
+                        continue
+
+                    if operand.lower() in ("int", "float"):
+                        continue
+
+                    # 5. Si es un acceso tipo [A], [1], [temp] → descartar
+                    if operand.startswith("[") and operand.endswith("]"):
+                        continue
+
+                    # Ignorar literales entre comillas
+                    if isinstance(operand, str) and (
+                        operand.startswith('"') and operand.endswith('"')
+                    ):
+                        continue
+
+                    s = str(operand)
+
+                    if self.es_float_o_punto(s):
+                        continue
+
+                    # En este punto, si es str, lo considerás un IDENTIFICADOR (variable o parámetro)
+                    if isinstance(operand, str):
+                        if ":" not in operand:
+                            msg = f"ERROR: Identificador '{operand}' no está declarado."
+                            self.error_manager.add(t.lineno, msg, source="Scope")
 
     def es_float_o_punto(self,s: str) -> bool:
         """
