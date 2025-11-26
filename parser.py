@@ -10,7 +10,7 @@ class MyParser(Parser):
     def __init__(self, symbol_table, error_manager):
         self.symbol_table = symbol_table
         self.error_manager = error_manager
-        self.tercetos = GeneradorTercetos(symbol_table, error_manager)
+        self.tercetos = GeneradorTercetos(symbol_table,error_manager)
         self.tercetos_antes = 0
 
     
@@ -40,11 +40,73 @@ class MyParser(Parser):
             if entry:
                 return entry.get("data_type", None)
         return None
+    
+    def verifica_return(self, ID, type, start_index, end_index):
+        """
+        Verificar que si existe una instrucción RETURN dentro del cuerpo de la función, 
+        el tipo de dato que retorna sea compatible con el tipo de retorno declarado para 
+        la función.
+        Insertar un RETURN por defecto si la función no contiene explícitamente ninguna 
+        instrucción RETURN (tipos int y float)
+        """ 
+        tiene_return = False  
+        expected_type = type    
+        
+        skip_level = 0 # Nivel de anidamiento actual, 0 significa la función que estamos verificando
+        # Recorremos el rango de índices del cuerpo de la función
+        for i in range(start_index, end_index):
+            terceto = self.tercetos.tercetos[i] 
+            
+            if terceto.operador == 'FUNC':
+                # Entra en una función anidada, incrementamos el nivel de anidamiento
+                skip_level += 1
+                continue
+            
+            elif terceto.operador == 'END_FUNC':
+                if skip_level > 0:
+                    skip_level -= 1
+                    continue
+                # Si skip_level es 0, es el END_FUNC de la función actual.
+                
+            # Si estamos dentro de una función anidada (skip_level > 0), saltamos la verificación.
+            if skip_level > 0:
+                continue
+            
+            if terceto.operador == 'RETURN':
+                return_type = self.get_type_of_value(terceto.op1)
+                
+                if return_type and return_type != expected_type:
+                    msg = f"Error semántico: Tipo de retorno incompatible en función '{ID}'. Se esperaba '{expected_type}', pero se obtuvo '{return_type}'."
+                    self.error_manager.add(terceto.lineno, msg, source="parser")
+                
+                tiene_return = True
+                return None 
 
+        if not tiene_return: # Lógica de inserción del RETURN por defecto
+            # Validación de tipo y valor por defecto
+            if expected_type == 'int':
+                default_value = '0'
+                self.symbol_table.add_token('0', 'CONST_INT')
+            elif expected_type == 'float':
+                default_value = '0.0'
+                self.symbol_table.add_token('0.0', 'CONST_FLOAT')
+            else:
+                return None 
+            msg = f"Warning: La función '{ID}' no tiene una instrucción RETURN. Return por defecto {default_value}."
+            self.error_manager.add(None, msg, source="parser")
+            
+            # 2. Generar RETURN(valor_defecto, None)
+            # 3. Moverlo a justo antes de END_FUNC (índice 'end_index')
+            idx_return = self.tercetos.nuevo('RETURN', default_value, None)
+            
+            return int(idx_return.strip('[]'))
 # ===================================== PROGRAMA =====================================================
 
-    @_('PROGRAMA "{" statement_list "}"')
+    @_('ID "{" statement_list "}"')
     def program(self, p):
+
+        self.symbol_table.add_token(p.ID, "PROGRAMA")
+
         # Se genera un terceto de inicio de programa
         self.tercetos.nuevo('START_PROGRAM', None, lineno=p.lineno)
         
@@ -57,7 +119,7 @@ class MyParser(Parser):
         self.tercetos.mover_terceto(index_origen, index_destino)
         return p.statement_list
     
-    @_(' statement_list ')
+    @_(' "{" statement_list "}"')
     def program(self, p):
         
         # Se genera un terceto de inicio de programa
@@ -87,7 +149,7 @@ class MyParser(Parser):
 
     #return
     @_('RETURN "(" expr ")" ";"')
-    def return_statement(self, p):
+    def statement(self, p):
         idx = self.tercetos.nuevo('RETURN', p.expr, None,lineno=p.lineno)
         self.tercetos_antes = len(self.tercetos.tercetos)
         return int(idx.strip('[]')) + 1 # índice numérico 
@@ -125,7 +187,7 @@ class MyParser(Parser):
                 if not id_entry or id_entry.get("Uso") == "N/A":
                     msg = f"Error semántico: Variable '{id_destino}' no declarada."
                     
-            self.error_manager.add(p.lineno, msg, source="parser")
+            #self.error_manager.add(p.lineno, msg, source="parser")
             idx = self.tercetos.nuevo('=', id_destino, expr_origen,lineno=p.lineno)
             return int(idx.strip('[]')) + 1
 
@@ -238,11 +300,7 @@ class MyParser(Parser):
 
         # Índices auxiliares
         expr_indice = int(p.expr.strip('[]'))                         # último terceto de la condición
-        index_else_last = (expr_indice + 1) + (len(p.block0) + 1)     # para mover BI a su posicion
         index_else_first = expr_indice + len(p.block0) + 1            # para hacer backpatch de BF
-
-        # Backpatch del BF → apunta al inicio del bloque ELSE
-        self.tercetos.backpatch([f"[{index_BF}]"], index_else_first)
 
         # Backpatch del BI → apunta al FUERA_DEL_IF
         self.tercetos.backpatch([f"[{index_BI}]"], index_end)
@@ -251,7 +309,20 @@ class MyParser(Parser):
         self.tercetos.mover_terceto(index_BF, expr_indice + 1)
 
         # Mover el BI justo antes del bloque ELSE
-        self.tercetos.mover_terceto(index_BI, index_else_last)
+        op = self.tercetos.tercetos[p.block1[0] ].operador
+        if op == '=':
+            i = p.block1[0] - 1
+            op = self.tercetos.tercetos[i].operador
+            while op == '+' or op == '-' or op == '*' or op == '/': 
+                i = i - 1
+                op = self.tercetos.tercetos[i].operador
+            self.tercetos.mover_terceto(index_BI, i+1)
+            self.tercetos.backpatch2(self.tercetos.tercetos[expr_indice+1],i+2)
+        else:
+            self.tercetos.mover_terceto(index_BI, p.block1[0])
+            self.tercetos.backpatch2(self.tercetos.tercetos[expr_indice+1],p.block1[0]+1)
+
+        #self.tercetos.mover_terceto(index_BI, index_else_last)
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return expr_indice + 1 # índice numérico
@@ -321,163 +392,40 @@ class MyParser(Parser):
 
     #====================================== FUNCTION ===================================================
     # Function statement
-    @_('type ID "(" param_list ")" "{" statement_list return_statement "}" ";"')
+    @_('type ID "(" param_list ")" "{" statement_list "}" ";"')
     def statement(self, p):
-        func_id = p.ID
-        
-        self.symbol_table.add_function(p.ID, p.type, p.param_list)
-
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type) # Generar terceto FUNC (en la posición temporal)
-
-        params_formales = p.param_list # lista de parámetros formales
-        
-        # Buscar entrada de la función para la validación de re-declaración
-        func_entry = self.symbol_table.get_token(func_id, uso_preferido="FUNCION")
-        
-        if not func_entry or func_entry.get("Uso") != "FUNCION":
-            indices_cv = {}
-            for param in params_formales:
-                # param: ('param', modificador, tipo, ID_formal)
-                modificador = param[1]
-                formal_id = param[-1]
-                
-                if modificador == 'cv':
-                    # Copia Valor: Solo copia al inicio. El operando 2 es el modificador 'CV'.
-                    terceto_op = 'COPY_VALOR'
-                    op2 = modificador # 'CV'
-                else:
-                    # Valor-Resultado: Copia al inicio y al retorno. El operando 2 es None (o N/A).
-                    terceto_op = 'COPY_VALOR_R' 
-                    op2 = None # Usamos None para indicar el default
-                    
-                # Generamos el terceto: [T#] (OP, ID_formal, Modificador/None)
-                index_cv = self.tercetos.nuevo(terceto_op, formal_id, op2)
-
-                # Guarda el resultado en el diccionario usando el ID del parámetro como clave
-                indices_cv[formal_id] = int(index_cv.strip('[]'))
-                
-        # GENERACIÓN DE TERCETOS DE COPIA DE RETORNO (RETURN_PARAM)
-        if not func_entry or func_entry.get("Uso") != "FUNCION":
-            for param in params_formales:
-                modificador = param[1] # 'CV' o None
-                formal_id = param[-1]
-                
-                if modificador != 'cv': # Solo si NO es 'CV', generamos la copia de retorno.
-                    # RETURN_PARAM copia la variable local de vuelta a la referencia del llamador.
-                    self.tercetos.nuevo('RETURN_PARAM', formal_id, None)    
-                
-        # Mover FUNC (antepenúltimo, ya que los tercetos de copia están justo después) al inicio del cuerpo
-        # p.statement_list[0] es el índice del primer statement del cuerpo
-        self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), p.statement_list[0] - 1)
-        for param in params_formales:
-            formal_id = param[-1]
-            if formal_id in indices_cv:
-                index_cv = indices_cv[formal_id]
-                # Mover cada terceto COPY_VALOR/COPY_VALOR_R justo después de FUNC
-                self.tercetos.mover_terceto(index_cv,  p.statement_list[0])
         
         # Generar terceto END_FUNC
         index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
 
+        op = self.tercetos.tercetos[p.statement_list[0] - 1].operador
+        if op == '=':
+            i = p.statement_list[0] - 2
+            op = self.tercetos.tercetos[i].operador
+            while op == '+' or op == '-' or op == '*' or op == '/' or op == 'CONV_I_F': 
+                i = i - 1
+                op = self.tercetos.tercetos[i].operador
+            self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), i+1)
+        else:
+            self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), p.statement_list[0] - 1)
+
+
+        index_return = self.verifica_return(p.ID, p.type, p.statement_list[0], len(self.tercetos.tercetos)-1)
+        if index_return is not None:
+            end_func_idx = int(index_end.strip('[]'))
+            self.tercetos.mover_terceto(index_return, end_func_idx)
+        
         # Agrega ámbito a las variables de la función
         # Los nuevos tercetos de copia (COPY_VALOR/R) quedan ahora inmediatamente después de FUNC.
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.statement_list[0] -1, int(index_end.strip('[]')))
 
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
+        
+        
+
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
-    
-    #Function statement solo return
-    @_('type ID "(" param_list ")" "{" return_statement  "}" ";"')
-    def statement(self, p):
-
-        index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type,lineno=p.lineno)
-        self.tercetos.mover_terceto(int(index_FUNC.strip('[]')),int(index_FUNC.strip('[]'))-1)
-        self.tercetos.nuevo('END_FUNC', p.ID, None,lineno=p.lineno)
-    
-    #Function statement sin return
-    @_('type ID "(" param_list ")" block ";"')
-    def statement(self, p):
-        func_id = p.ID
-        
-        self.symbol_table.add_function(p.ID, p.type, p.param_list)
-
-        # Validación de tipo y valor por defecto
-        if p.type == 'int':
-            msg = "Warning: función sin return, se usará valor por defecto 0"
-            self.error_manager.add(p.lineno, msg, source="parser")
-            default_value = '0'
-            self.symbol_table.add_token('0', 'CONST_INT')
-        elif p.type == 'float':
-            msg = "Warning: función sin return, se usará valor por defecto 0.0"
-            self.error_manager.add(p.lineno, msg, source="parser")
-            default_value = '0.0'
-            self.symbol_table.add_token('0.0', 'CONST_FLOAT')
-        else:
-            # Asumimos 'int' como valor por defecto si hay un tipo inesperado
-            msg = "Warning: función sin return, se usará valor por defecto 0"
-            self.error_manager.add(p.lineno, msg, source="parser")
-            default_value = '0' 
-            self.symbol_table.add_token('0', 'CONST_INT')
-
-        # Búsqueda inicial para validación de re-declaración
-        func_entry = self.symbol_table.get_token(func_id, uso_preferido="FUNCION")
-        params_formales = p.param_list 
-
-        # Generación del terceto FUNC
-        index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type)
-
-        # GENERACIÓN DE TERCETOS DE COPIA DE ARGUMENTOS
-        if not func_entry or func_entry.get("Uso") != "FUNCION":
-            indices_cv = {}
-            for param in params_formales:
-                modificador = param[1]
-                formal_id = param[-1]
-                
-                if modificador == 'cv':
-                    terceto_op = 'COPY_VALOR'
-                    op2 = modificador # 'CV'
-                else:
-                    terceto_op = 'COPY_VALOR_R' 
-                    op2 = None 
-                    
-                self.tercetos.nuevo(terceto_op, formal_id, op2)
-                # Generamos el terceto: [T#] (OP, ID_formal, Modificador/None)
-                index_cv = self.tercetos.nuevo(terceto_op, formal_id, op2)
-                # Guarda el resultado en el diccionario usando el ID del parámetro como clave
-                indices_cv[formal_id] = int(index_cv.strip('[]'))
-                
-                
-        # GENERACIÓN DE TERCETOS DE COPIA DE RETORNO (RETURN_PARAM)
-        if not func_entry or func_entry.get("Uso") != "FUNCION":
-            for param in params_formales:
-                modificador = param[1] # 'CV' o None
-                formal_id = param[-1]
-                
-                if modificador != 'cv':
-                    self.tercetos.nuevo('RETURN_PARAM', formal_id, None)        
-        
-        # Generar tercetos de cierre (RETURN y END_FUNC)
-        self.tercetos.nuevo('RETURN', default_value, None)
-        index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
-        
-        if p.block and len(p.block) > 0:
-            target_start_index = p.block[0]
-        else:
-            target_start_index = int(index_FUNC.strip('[]'))
-            
-        self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), target_start_index - 1)
-        
-        for param in params_formales:
-            formal_id = param[-1]
-            if formal_id in indices_cv:
-                index_cv = indices_cv[formal_id]
-                # Mover cada terceto COPY_VALOR/COPY_VALOR_R justo después de FUNC
-                self.tercetos.mover_terceto(index_cv,  p.statement_list[0])
-
-        self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, target_start_index - 1, int(index_end.strip('[]')))
-
-        self.tercetos_antes = len(self.tercetos.tercetos)
-        return self.tercetos_antes + 1
     
     #error en la expresion de la asignacion
     @_('type ID "(" param_list_error ")" block ";"')
@@ -542,7 +490,7 @@ class MyParser(Parser):
         self.error_manager.add(p.lineno, msg, source="parser")
 
     #falta do
-    @_('WHILE "(" expr ")" error block ";"')
+    @_('WHILE "(" expr ")"  block ";"')
     def statement(self, p):
         self.errok()
         msg = "Error: falta el do despues del while"
@@ -692,12 +640,11 @@ class MyParser(Parser):
             # Almacenamos el argumento en la posición 'i' (ordenado según la definición formal)
             processed_args[i] = ('arrow', final_arg_value, formal_name)
 
-        # Generar tercetos '->' y 'CALL' en el ORDEN FORMAL
-        for arg in processed_args:
-            if arg: 
-                op1_val = arg[1] # El ID/Terceto con el valor
-                op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
-                self.tercetos.nuevo('->', op1_val, op2_val,lineno=p.lineno) 
+        # for arg in processed_args:
+        #     if arg: 
+        #         op1_val = arg[1] # El ID/Terceto con el valor
+        #         op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
+        #         self.tercetos.nuevo('->', op1_val, op2_val,lineno=p.lineno) 
             
         call_result_type = func_entry.get("data_type")
         temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper(),lineno=p.lineno)
@@ -777,11 +724,8 @@ class MyParser(Parser):
         # El resultado de una comparación es siempre booleano, representado como INT (1/0)
         result_type = 'INT' 
         temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
-        # El resultado de una comparación es siempre booleano, representado como INT (1/0)
-        result_type = 'INT' 
-        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
-    
+
     @_('expr "<" expr')
     def expr(self, p):
         temp = self.tercetos.nuevo('<', p.expr0, p.expr1, 'INT',lineno=p.lineno)

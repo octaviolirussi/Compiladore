@@ -1,0 +1,29 @@
+PROGRAMA{
+    int L2,L1;
+    
+    int F1 (int W, float Z){
+        int K2,L3;
+        K2 = W - 1I + 3I;
+        return (K2);
+        L3=3I;
+        J1 = 2I;
+        int F8 (int W, float Z){
+            int J1;
+            J1=2I;
+            K1 = D+3I;
+        };
+    };
+
+
+    int F2 (int D, float Z){
+        int K1,K2,L3;
+        K1 = 2I + 3I;
+        D = 3I;
+        W = 2I + K1;
+        return (W);
+    };
+
+    L2= L2 + L3;
+
+    L2 = F1(2I->W,2I->Z);
+}

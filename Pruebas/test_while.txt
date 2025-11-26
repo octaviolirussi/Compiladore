@@ -1,4 +1,9 @@
-PROGRAMA{
+PROGRAMA%1{
+    int X;
+    int A;
+    float Y;
+    float B;
+
     while (X < 1I) 
     do{
         X = 3I;

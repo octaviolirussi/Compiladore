@@ -1,18 +1,20 @@
-PROGRAMA{
+INICIO%PROGRAMA{
     int A;
     int B;
     float C;
     float D;
 
     float F4 (cv int W, float Z){
-        Z = W - 1I;
+        int X;
+        X = 1I;
+        Z = W - X;
     };
 
     int F3 (int X, cv float J){
         int Z;
         int W;
         W = Z + 1I;
-
+        return (W);
     };
 
     C = F4(B -> W, D -> Z);
@@ -26,5 +28,3 @@ PROGRAMA{
     C = F3(B -> X, B -> J);
     A = F4(B -> W, D -> Z);
 }
-
-

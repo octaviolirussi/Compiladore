@@ -13,9 +13,15 @@ class ErrorManager:
         return len(self.errors) > 0
 
     def __str__(self):
-        # Ordenamos por número de línea
-        sorted_errors = sorted(self.errors, key=lambda e: e['line'])
+        # Ordenamos los errores por número de línea (los que no tienen línea van al final)
+        sorted_errors = sorted(
+            self.errors,
+            key=lambda e: e['line'] if e['line'] is not None else float('inf')
+        )
+
         out = []
         for e in sorted_errors:
-            out.append(f"[{e['source']}] Línea {e['line']}: {e['message']}")
+            line_info = f"Línea {e['line']}" if e['line'] is not None else "Sin línea"
+            out.append(f"[{e['source']}] {line_info}: {e['message']}")
+
         return "\n".join(out)

@@ -1,4 +1,4 @@
-PROGRAMA{
+{
     ## Esto es un comentario
     que puede ocupar
     varias lineas ##
@@ -18,6 +18,6 @@ PROGRAMA{
 
     if (A > B)
         print ("mayor");
-
+    
 
 }

@@ -1,24 +1,28 @@
 PROGRAMA{
+    int X;
+    X = 0I;
+    float Y;
+    Y = 2.0;
+
     if (X > 2I) {
         X = 3I;
     }else {
         X = 2I;
     }endif;
 
-    print("Mensaje");
-
     while (X <= 3I)
     do {
         X = X + 5I;
-    } 
+    } ;
 
-    while (X > 3I)
-
-    iF (X == 3I) {
+    if (X == 3I) {
         X = 3I + 2I;
-    }ELSE {
+        print( "Mensaje uno" );
+    }else{
         X = 3I - 2I;
-    }
+        print( "Mensaje dos" );
+    } endif;
 
-    PRINT("Mensaje");
+    
+    
 }
