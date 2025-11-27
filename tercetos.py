@@ -230,6 +230,20 @@ class GeneradorTercetos:
                             if not e:
                                 msg = f"Error: funcion '{func}' invocada fuera de su ambito"
                                 self.error_manager.add(t.lineno, msg, source="Scope")
+
+                        if t.operador == "->":     
+                            first = operand.split(":")[0]   
+                            for entry in self.symbol_table.symbols.values():
+                                print(first + self.scope_stack[-1] + entry["Funcion_Pertenencia"])
+                                if entry["Lexema"] == first + ":"+ self.scope_stack[-1] + ":" + entry["Funcion_Pertenencia"]:
+                                    # actualizar en tercetos
+                                    if t.op1 == operand:
+                                        t.op1 = entry["Lexema"]
+                                    elif t.op2 == operand:
+                                        t.op2 = entry["Lexema"]
+
+                                    seguir = False
+                                    break  # sale solo del for
                                 
                         for entry in self.symbol_table.symbols.values():
                             last = self.scope_stack[-1]
@@ -301,7 +315,9 @@ class GeneradorTercetos:
                         if ":" not in operand:
                             msg = f"ERROR: Identificador '{operand}' no está declarado."
                             self.error_manager.add(t.lineno, msg, source="Scope")
-
+                            
+                            
+                            
     def es_float_o_punto(self,s: str) -> bool:
         """
         Devuelve True si 's' debe ser ignorado porque parece un float
@@ -330,7 +346,7 @@ class GeneradorTercetos:
         cont = 0
 
         for i, t in enumerate(self.tercetos): 
-            if t.operador in ("DECL","->"): 
+            if t.operador in ("DECL"): 
                 cont = cont + 1  
             if isinstance(t.op1, str) and t.op1.startswith("[") and t.op1.endswith("]"): 
                 contenido = t.op1[1:-1] 
@@ -344,7 +360,7 @@ class GeneradorTercetos:
         for i in range(len(self.tercetos) - 1, -1, -1):
             t = self.tercetos[i]
 
-            if t.operador in ("DECL", "->"):
+            if t.operador in ("DECL"):
                 self.tercetos.pop(i)
                 continue  # pasar al siguiente índice hacia atrás
 
@@ -476,6 +492,7 @@ class GeneradorTercetos:
         self.mover_funciones()
         self.symbol_table.agrega_returns(self.tercetos)
         self.symbol_table.update_returns_values(self.tercetos)
+        
 
     def mostrar(self):
         print("\n=== CÓDIGO INTERMEDIO (TERCETOS) ===")

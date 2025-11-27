@@ -106,6 +106,7 @@ class SymbolTable:
                     tipo_retorno_actual = funciones[0][1]
             elif terceto.operador == "RETURN":
                 if nombre_func_actual is not None:
+                    # agregar 
                     self.add_token("ret_" + nombre_func_actual, "RETORNO", tipo_retorno= tipo_retorno_actual)
             elif terceto.operador == "END_FUNC":
                 if funciones and funciones[0][0] == str(terceto.op1):

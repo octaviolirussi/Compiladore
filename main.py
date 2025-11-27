@@ -21,7 +21,7 @@ parser = MyParser(symbol_Table,error)
 
 # # Abrimos el archivo en modo lectura ('r')
 try:
-    with open("Pruebas/test_if.txt", "r", encoding="utf-8") as f:
+    with open("Pruebas/test.txt", "r", encoding="utf-8") as f:
         
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
@@ -38,7 +38,8 @@ except FileNotFoundError:
 symbol_Table.eliminar(parser.tercetos.tercetos)
 symbol_Table.correccion_scope(parser.tercetos.tercetos)
 parser.tercetos.correcciones()
-parser.tercetos.mostrar()
+
+
 
 #errores
 print("\nMuestra de Errores:\n")
@@ -50,6 +51,7 @@ if error.has_errors():
     sys.exit(1) 
 else:
     print("Análisis completado sin errores. Continuando con la generación de código/tercetos.")
+    parser.tercetos.mostrar()
 
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")

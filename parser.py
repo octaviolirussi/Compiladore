@@ -44,9 +44,6 @@ class MyParser(Parser):
     
     def verifica_return(self, ID, type, start_index, end_index):
         """
-        Verificar que si existe una instrucción RETURN dentro del cuerpo de la función, 
-        el tipo de dato que retorna sea compatible con el tipo de retorno declarado para 
-        la función.
         Insertar un RETURN por defecto si la función no contiene explícitamente ninguna 
         instrucción RETURN (tipos int y float)
         """ 
@@ -74,15 +71,15 @@ class MyParser(Parser):
                 continue
             
             if terceto.operador == 'RETURN':
-                return_type = self.get_type_of_value(terceto.op1).upper() if terceto.op1 else None
+                return_type = self.get_type_of_value(terceto.op1) if terceto.op1 else None
                 
                 if return_type is None or expected_type is None:
                     msg = f"Error semántico: Tipo de retorno desconocido en función '{ID}'."
-                    self.error_manager.add(terceto.lineno, msg, source="parser")
+                    # self.error_manager.add(terceto.lineno, msg, source="parser")
                 elif return_type and return_type != expected_type:
                     # TODO hacer conversiones si es posible Se esperaba 'FLOAT', pero se obtuvo 'INT'.
                     msg = f"Error semántico: Tipo de retorno incompatible en función '{ID}'. Se esperaba '{expected_type}', pero se obtuvo '{return_type}'."
-                    self.error_manager.add(terceto.lineno, msg, source="parser")
+                    # self.error_manager.add(terceto.lineno, msg, source="parser")
                 
                 tiene_return = True
                 return None 
@@ -472,7 +469,7 @@ class MyParser(Parser):
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
     
-    @_('type ID "(" param_list ")" "{" "}" ";"')
+    @_('type ID "(" param_list ")" error ";"')
     def statement(self, p):
         """
         Captura la definición de una función con cuerpo vacío.
@@ -701,11 +698,11 @@ class MyParser(Parser):
             # Almacenamos el argumento en la posición 'i' (ordenado según la definición formal)
             processed_args[i] = ('arrow', final_arg_value, formal_name)
 
-        # for arg in processed_args:
-        #     if arg: 
-        #         op1_val = arg[1] # El ID/Terceto con el valor
-        #         op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
-        #         self.tercetos.nuevo('->', op1_val, op2_val,lineno=p.lineno) 
+        for arg in processed_args:
+            if arg: 
+                op1_val = arg[1] # El ID/Terceto con el valor
+                op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
+                self.tercetos.nuevo('->', op1_val, op2_val,lineno=p.lineno) 
             
         call_result_type = func_entry.get("data_type")
         temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper(),lineno=p.lineno)
