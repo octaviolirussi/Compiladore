@@ -4,31 +4,33 @@ PROGRAMA1
     int B;
     
     if (A > 10I) { 
+        A = B - 5I;   
         B = 5I;
-        A = B - 5I;    
     } else{ 
         B = 2I; 
     }endif;
 
-    if (A>=10I)
+    if (A>=10I){
+        A = B - 5I;   
         B = 5I;
-    else
+    }else
         B = 2I;
     endif;
 
-    if(A<=10I)
-        B = 5I;
-    else{
+    if(A<=10I){
+    }else{
         B = 5I;
         A = B - 5I;    
     }
     endif;
 
-    if(A<=10I)
+    if(A<=10I){
+        A = B - 5I;   
         B = 5I;
-    endif;
+    }endif;
 
     if(A<=10I){
+        A = B - 5I;   
         B = 5I;
         A = B - 5I;
     }

@@ -51,7 +51,7 @@ class MyParser(Parser):
         instrucción RETURN (tipos int y float)
         """ 
         tiene_return = False  
-        expected_type = type    
+        expected_type = type.upper()    
         
         skip_level = 0 # Nivel de anidamiento actual, 0 significa la función que estamos verificando
         # Recorremos el rango de índices del cuerpo de la función
@@ -77,6 +77,7 @@ class MyParser(Parser):
                 return_type = self.get_type_of_value(terceto.op1)
                 
                 if return_type and return_type != expected_type:
+                    # TODO hacer conversiones si es posible Se esperaba 'FLOAT', pero se obtuvo 'INT'.
                     msg = f"Error semántico: Tipo de retorno incompatible en función '{ID}'. Se esperaba '{expected_type}', pero se obtuvo '{return_type}'."
                     self.error_manager.add(terceto.lineno, msg, source="parser")
                 
@@ -84,11 +85,10 @@ class MyParser(Parser):
                 return None 
 
         if not tiene_return: # Lógica de inserción del RETURN por defecto
-            # Validación de tipo y valor por defecto
-            if expected_type == 'int':
+            if expected_type == 'INT':
                 default_value = '0'
                 self.symbol_table.add_token('0', 'CONST_INT')
-            elif expected_type == 'float':
+            elif expected_type == 'FLOAT':
                 default_value = '0.0'
                 self.symbol_table.add_token('0.0', 'CONST_FLOAT')
             else:
@@ -96,8 +96,6 @@ class MyParser(Parser):
             msg = f"Warning: La función '{ID}' no tiene una instrucción RETURN. Return por defecto {default_value}."
             self.error_manager.add(None, msg, source="parser")
             
-            # 2. Generar RETURN(valor_defecto, None)
-            # 3. Moverlo a justo antes de END_FUNC (índice 'end_index')
             idx_return = self.tercetos.nuevo('RETURN', default_value, None)
             
             return int(idx_return.strip('[]'))
@@ -390,6 +388,20 @@ class MyParser(Parser):
         self.errok()
         msg = "Error: falta endif al final del if"
         self.error_manager.add(p.lineno, msg, source="parser")
+        
+    # **NUEVA REGLA PARA CAPTURAR BLOQUE VACÍO**
+    @_('"{" "}"')
+    def block(self, p):
+        """
+        Captura {}. El statement_list no se usa, ya que la gramática asume
+        que statement_list debe contener al menos 1 statement.
+        """
+        msg = "Error: El bloque de sentencias no puede estar vacío ({})."
+        # El lineno de 'p' será el de la llave de apertura '{'
+        self.error_manager.add(p.lineno, msg, source="parser")
+        # Retornar una lista vacía o None para evitar errores de tercetos posteriores
+        return [] 
+
 
     #====================================== FUNCTION ===================================================
     # Function statement

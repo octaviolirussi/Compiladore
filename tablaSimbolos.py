@@ -89,7 +89,6 @@ class SymbolTable:
     def agrega_returns(self, lista_tercetos):
         '''crea una variable en la TS esperando el retorno de la función (Ej: ret_F2)'''
         funciones = [] #lista de tuplas (nombre_funcion, tipo_retorno)
-        llamadas = []
         
         for entry in lista_tercetos:
             if entry.operador == "FUNC":
@@ -112,6 +111,13 @@ class SymbolTable:
             i += 1
 
     def update_returns_values(self, lista_tercetos):
+        # funciones = [] #lista de tuplas (nombre_funcion, tipo_retorno)
+        
+        # for entry in lista_tercetos:
+        #     if entry.operador == "FUNC":
+        #         funciones.append((str(entry.op1), entry.op2))
+    
+    
         funciones_scope_stack = [] # función que estamos recorriendo
         i = 0       
         while i < len(lista_tercetos): 
@@ -130,7 +136,6 @@ class SymbolTable:
                     lexema_base_retorno = self.get_return_var_name(nombre_funcion_actual) # "ret_F2"
                     
                     self.update_return_value(lexema_base_retorno, terceto.op1) 
-                    
                 else:
                     pass
                     
