@@ -43,10 +43,13 @@ parser.tercetos.mostrar()
 #errores
 print("\nMuestra de Errores:\n")
 if error.has_errors():
-    print("Se encontraron errores:")    
-    print(error)
+    print("Se encontraron errores. El proceso se detiene.")
+    print(error) # Muestra los errores
+    
+    # Detenemos la ejecución del programa aquí.
+    sys.exit(1) 
 else:
-    print("Análisis completado sin errores.")
+    print("Análisis completado sin errores. Continuando con la generación de código/tercetos.")
 
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")

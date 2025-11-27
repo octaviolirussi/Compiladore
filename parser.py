@@ -291,7 +291,18 @@ class MyParser(Parser):
     # 1. IF-ELSE statement
     @_('IF "(" expr ")" block ELSE block ENDIF ";"')
     def statement(self, p): 
-
+        if not p.block0:
+            # msg = "Error: El bloque de sentencias del IF (bloque principal) no puede estar vacío ({})."
+            # self.error_manager.add(p.lineno, msg, source="parser")
+            self.errok()
+            return None
+            
+        if not p.block1:
+            msg = "Error: El bloque de sentencias del ELSE no puede estar vacío ({})."
+            self.error_manager.add(p.lineno, msg, source="parser")
+            self.errok()
+            return None
+    
         # Crear tercetos de control y obtener sus índices
         index_BF = int(self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE).strip('[]'))
         index_BI = int(self.tercetos.nuevo('BI', self.tercetos.PENDIENTE, None).strip('[]'))
@@ -349,6 +360,11 @@ class MyParser(Parser):
     # 2. IF-only statement
     @_('IF "(" expr ")" block ENDIF ";" %prec ELSE')
     def statement(self, p):
+        if not p.block:
+            msg = "Error: El bloque de sentencias del if no puede estar vacío."
+            self.errok()
+            return None # Retorna un valor neutro
+        
         
         #Creamos el terceto BF y obtenemos su indice
         index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE,lineno=p.lineno)
@@ -406,6 +422,22 @@ class MyParser(Parser):
     # Function statement
     @_('type ID "(" param_list ")" "{" statement_list "}" ";"')
     def statement(self, p):
+        if not p.statement_list or p.statement_list[0] is None:
+
+            # Generar terceto FUNC (para registrar el nombre de la función antes de fallar)
+            # Aseguramos que la función se registre
+            index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type) 
+            
+            # Registramos el error de cuerpo
+            msg = f"Error: El cuerpo de la función '{p.ID}' está vacío o contiene errores."
+            self.error_manager.add(p.lineno, msg, source="parser")
+            
+            # Registrar función en TS (fundamental para evitar KeyError en etapas posteriores)
+            self.symbol_table.add_function(p.ID, p.type, p.param_list)
+
+            # Devolvemos un índice del terceto FUNC para continuar
+            return int(index_FUNC.strip('[]')) + 1
+    
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type) # Generar terceto FUNC (en la posición temporal)
         
         # Generar terceto END_FUNC
@@ -433,8 +465,6 @@ class MyParser(Parser):
         self.symbol_table.actualizar_scope_bloque_automatica(p.ID, self.tercetos.tercetos, p.statement_list[0] -1, int(index_end.strip('[]')))
 
         self.symbol_table.add_function(p.ID, p.type, p.param_list)
-        
-        
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1

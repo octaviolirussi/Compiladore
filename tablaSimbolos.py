@@ -93,20 +93,25 @@ class SymbolTable:
         for entry in lista_tercetos:
             if entry.operador == "FUNC":
                 funciones.append((str(entry.op1), entry.op2))
-    
+                
+        nombre_func_actual = None
+        tipo_retorno_actual = None
+        
         i = 0
         while i < len(lista_tercetos):
             terceto = lista_tercetos[i]
             if terceto.operador == "FUNC":
                 if funciones and funciones[0][0] == str(terceto.op1):
-                    nombre = funciones[0][0]
-                    tipo_retorno = funciones[0][1]
+                    nombre_func_actual = funciones[0][0]
+                    tipo_retorno_actual = funciones[0][1]
             elif terceto.operador == "RETURN":
-                self.add_token("ret_" + nombre, "RETORNO", tipo_retorno= tipo_retorno)
+                if nombre_func_actual is not None:
+                    self.add_token("ret_" + nombre_func_actual, "RETORNO", tipo_retorno= tipo_retorno_actual)
             elif terceto.operador == "END_FUNC":
                 if funciones and funciones[0][0] == str(terceto.op1):
                     funciones.pop(0)
-                    continue
+                    nombre_func_actual = None
+                    tipo_retorno_actual = None
             
             i += 1
 

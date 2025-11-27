@@ -19,8 +19,7 @@ PROGRAMA1
 
     if(A<=10I){
     }else{
-        B = 5I;
-        A = B - 5I;    
+          
     }
     endif;
 
