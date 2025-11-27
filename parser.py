@@ -389,7 +389,6 @@ class MyParser(Parser):
         msg = "Error: falta endif al final del if"
         self.error_manager.add(p.lineno, msg, source="parser")
         
-    # **NUEVA REGLA PARA CAPTURAR BLOQUE VACÍO**
     @_('"{" "}"')
     def block(self, p):
         """
@@ -439,6 +438,21 @@ class MyParser(Parser):
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return p.statement_list[0] + 1
+    
+    @_('type ID "(" param_list ")" "{" "}" ";"')
+    def statement(self, p):
+        """
+        Captura la definición de una función con cuerpo vacío.
+        Ejemplo: INT miFuncion(INT a) {};
+        """
+        func_id = p.ID
+        msg = f"Error: La función '{func_id}' no puede tener un cuerpo vacío ({{}})."
+        self.error_manager.add(p.lineno, msg, source="parser")
+        self.errok() # Permite que el parser intente recuperarse
+        
+        self.symbol_table.add_function(p.ID, p.type, p.param_list)
+        
+        return 0
     
     #error en la expresion de la asignacion
     @_('type ID "(" param_list_error ")" block ";"')
