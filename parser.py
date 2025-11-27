@@ -74,9 +74,12 @@ class MyParser(Parser):
                 continue
             
             if terceto.operador == 'RETURN':
-                return_type = self.get_type_of_value(terceto.op1)
+                return_type = self.get_type_of_value(terceto.op1).upper() if terceto.op1 else None
                 
-                if return_type and return_type != expected_type:
+                if return_type is None or expected_type is None:
+                    msg = f"Error semántico: Tipo de retorno desconocido en función '{ID}'."
+                    self.error_manager.add(terceto.lineno, msg, source="parser")
+                elif return_type and return_type != expected_type:
                     # TODO hacer conversiones si es posible Se esperaba 'FLOAT', pero se obtuvo 'INT'.
                     msg = f"Error semántico: Tipo de retorno incompatible en función '{ID}'. Se esperaba '{expected_type}', pero se obtuvo '{return_type}'."
                     self.error_manager.add(terceto.lineno, msg, source="parser")
