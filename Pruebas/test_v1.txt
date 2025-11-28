@@ -1,0 +1,50 @@
+INICIO%PROGRAMA{
+float O;
+int Y;
+
+Y = 2I + 2I;
+
+
+float F2(int J,int K,int B){
+            float L1;
+            L1 = 2I + 0I;
+            int F3(float D){
+                D=2I+3I;
+                return(D);
+                float F8(float A){
+                    int Y;
+                    A=2I+L1;
+                    L1=1.234F+5;
+                    if (A > 2I){
+                        A = 2I + 2I;
+                        print("Adios");
+                    }else{
+                        Y = 2I;
+                        Y = 2I + 0I;
+                    }endif;
+                    L1=2.2;
+                    print("Hola");
+                    return(A);
+                };
+                D = F8(2I->A);
+            };
+            
+            return(B);
+        };
+
+    O = 2I+2I;
+
+    int F3(int U){
+        int H,D;
+        D=2I;
+        while(U>3I) do {
+            U=3I+Y;
+            Y=2I;
+        };
+        U=2I;
+        return(U);
+    };
+
+    O = F3(2I->U);
+
+}

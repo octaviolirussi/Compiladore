@@ -1,0 +1,24 @@
+PROGRAMA {
+    int A,B,C;
+
+    if (A > B + C){
+        A = B + C;
+        K = A;
+        int D,E;
+
+        while (A != B) do {
+            D = A + 2I;
+            E = B * 3.0F+2;
+            
+            if (D <= E){
+                C = 1;
+                A = 2I;
+            }else{
+                C = 2I + 3I - 2I;
+                print("prueba");
+            }endif;
+
+            A=A+1I;
+        };
+    }endif;
+}

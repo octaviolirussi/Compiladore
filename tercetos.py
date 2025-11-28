@@ -234,9 +234,9 @@ class GeneradorTercetos:
                         if t.operador == "->":     
                             first = operand.split(":")[0]   
                             for entry in self.symbol_table.symbols.values():
-                                print(first + self.scope_stack[-1] + entry["Funcion_Pertenencia"])
                                 if entry["Lexema"] == first + ":"+ self.scope_stack[-1] + ":" + entry["Funcion_Pertenencia"]:
                                     # actualizar en tercetos
+                                    t.operador = "="
                                     if t.op1 == operand:
                                         t.op1 = entry["Lexema"]
                                     elif t.op2 == operand:

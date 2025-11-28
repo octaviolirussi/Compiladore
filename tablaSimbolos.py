@@ -712,7 +712,7 @@ class SymbolTable:
 
                     if not existe:
                         msg = f"ERROR: Identificador '{val}' no está declarado."
-                        self.error_manager.add(t.lineno, msg, source="Scope")
+                        # self.error_manager.add(t.lineno, msg, source="Scope")
 
     def verificacion_parametros(self, tercetos):
         "evita que se declaren variables con el mismo nombre de los parametros"

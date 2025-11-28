@@ -21,7 +21,7 @@ parser = MyParser(symbol_Table,error)
 
 # # Abrimos el archivo en modo lectura ('r')
 try:
-    with open("Pruebas/test.txt", "r", encoding="utf-8") as f:
+    with open("Pruebas/test_v4.txt", "r", encoding="utf-8") as f:
         
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
