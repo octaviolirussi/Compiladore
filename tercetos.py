@@ -490,4 +490,6 @@ class GeneradorTercetos:
             op1_str = str(t.op1)
             op2_str = str(t.op2)
             
-            print(f"{i:d}: ({t.operador}, {op1_str}, {op2_str})")
+            result_type_str = f"TIPO={t.result_type}" if t.result_type else ""
+            
+            print(f"{i:d}: ({t.operador}, {op1_str}, {op2_str}, {result_type_str})")

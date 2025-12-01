@@ -701,8 +701,10 @@ class MyParser(Parser):
         for arg in processed_args:
             if arg: 
                 op1_val = arg[1] # El ID/Terceto con el valor
+                print("arg 1", arg[1])
                 op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
-                self.tercetos.nuevo('->', op1_val, op2_val,lineno=p.lineno) 
+                print("arg 2", arg[2])
+                self.tercetos.nuevo('->', op2_val, op1_val,lineno=p.lineno) 
             
         call_result_type = func_entry.get("data_type")
         temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper(),lineno=p.lineno)
