@@ -286,7 +286,7 @@ class MyParser(Parser):
     def statement(self, p):
         self.errok()
         msg = "Error: cadena sin cierre antes de salto de línea"
-        self.error_manager.add(p.lineno, msg, source="parser")
+        # self.error_manager.add(p.lineno, msg, source="parser")
         
     # 1. IF-ELSE statement
     @_('IF "(" expr ")" block ELSE block ENDIF ";"')
@@ -364,7 +364,6 @@ class MyParser(Parser):
             msg = "Error: El bloque de sentencias del if no puede estar vacío."
             self.errok()
             return None # Retorna un valor neutro
-        
         
         #Creamos el terceto BF y obtenemos su indice
         index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE,lineno=p.lineno)
@@ -639,8 +638,11 @@ class MyParser(Parser):
         
         params_formales_def = func_entry.get("parameters", []) # lista de parámetros formales definidos
         
-        formal_map = {param[-1]: param[-2].upper() for param in params_formales_def} # diccionario con el parámetro formal y su tipo {ID_param_formal: Tipo_param_formal}
-        
+        formal_map = { # Diccionario que mapea ID_formal -> (Tipo, Modificador)
+            param[-1]: (param[-2].upper(), param[1].upper() if len(param) == 4 and param[1].lower() == "cv" else "CVR")
+            for param in params_formales_def
+        }
+   
         if len(args_reales) != len(params_formales_def): # cantidad de argumentos no coincide
             msg = f"Error: La función '{func_id}' espera {len(params_formales_def)} argumentos, pero se proporcionaron {len(args_reales)}."
             self.error_manager.add(p.lineno, msg, source="parser")
@@ -651,7 +653,6 @@ class MyParser(Parser):
         arg_names_used = set() # conjunto para rastrear nombres de parámetros formales ya usados
         
         for arg_real in args_reales: # arg_real es ('arrow', expr, ID_formal)
-            
             # Extraemos el nombre del parámetro formal que se está especificando:
             formal_name = arg_real[2] 
             
@@ -672,7 +673,7 @@ class MyParser(Parser):
             # busca la posición 'i' del parámetro formal en la definición
             i = next(j for j, param_def in enumerate(params_formales_def) if param_def[-1] == formal_name)
             
-            param_formal_type = formal_map[formal_name] # Tipo esperado ('INT' o 'FLOAT')
+            param_formal_type, param_modificador = formal_map.get(formal_name, (None, None))
             arg_real_value = arg_real[1]
             arg_real_type = self.get_type_of_value(arg_real_value) # Tipo real del argumento
             
@@ -684,26 +685,33 @@ class MyParser(Parser):
                 self.errok()
                 continue
 
-            # Coerción: INT a FLOAT (Segura)
-            if arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT':
+            # Regla 1: Coerción permitida para CV (INT -> FLOAT)
+            if param_modificador == 'CV' and arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT':
                 new_temp = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT',lineno=p.lineno)
                 final_arg_value = new_temp
-                                
-            # Incompatibilidad de Tipos
-            elif arg_real_type.upper() != param_formal_type:
-                msg = f"Error: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
-                self.error_manager.add(p.lineno, msg, source="parser")
-                # Mantenemos el valor original
                 
+            # Regla 2: CVR (por defecto) requiere tipos idénticos (sin coerción)
+            elif param_modificador == 'CVR' and arg_real_type.upper() != param_formal_type:
+                msg = (
+                    f"Error semántico: Parámetro '{formal_name}' (CVR) requiere tipo idéntico. "
+                    f"Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'. "
+                )
+                self.error_manager.add(p.lineno, msg, source="parser")
+                
+            # Regla 3: CV, tipos incompatibles que no sean INT->FLOAT
+            elif param_modificador == 'CV' and arg_real_type.upper() != param_formal_type:
+                 msg = (
+                    f"Error semántico: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. "
+                    f"Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
+                 )
+
             # Almacenamos el argumento en la posición 'i' (ordenado según la definición formal)
             processed_args[i] = ('arrow', final_arg_value, formal_name)
 
         for arg in processed_args:
             if arg: 
                 op1_val = arg[1] # El ID/Terceto con el valor
-                print("arg 1", arg[1])
                 op2_val = arg[2] # El ID del parámetro formal (W, Z, X, J)
-                print("arg 2", arg[2])
                 self.tercetos.nuevo('->', op2_val, op1_val,lineno=p.lineno) 
             
         call_result_type = func_entry.get("data_type")
