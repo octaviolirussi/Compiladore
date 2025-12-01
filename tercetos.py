@@ -235,7 +235,6 @@ class GeneradorTercetos:
                             first = operand.split(":")[0]   
                             for entry in self.symbol_table.symbols.values():
                                 if entry["Lexema"] == first + ":"+ self.scope_stack[-1] + ":" + entry["Funcion_Pertenencia"]:
-                                    # actualizar en tercetos
                                     t.operador = "="
                                     if t.op1 == operand:
                                         t.op1 = entry["Lexema"]
@@ -343,26 +342,17 @@ class GeneradorTercetos:
         return False
     
     def eliminar_declaraciones(self):
-        cont = 0
 
-        for i, t in enumerate(self.tercetos): 
-            if t.operador in ("DECL"): 
-                cont = cont + 1  
-            if isinstance(t.op1, str) and t.op1.startswith("[") and t.op1.endswith("]"): 
-                contenido = t.op1[1:-1] 
-                nuevo = int(contenido) - cont 
-                t.op1 = f"[{nuevo}]" 
-            if isinstance(t.op2, str) and t.op2.startswith("[") and t.op2.endswith("]"): 
-                contenido = t.op2[1:-1] 
-                nuevo = int(contenido) - cont 
-                t.op2 = f"[{nuevo}]"
-        
-        for i in range(len(self.tercetos) - 1, -1, -1):
-            t = self.tercetos[i]
+            original = copy.copy(self.tercetos)
+            
+            for i in range(len(self.tercetos) - 1, -1, -1):
+                t = self.tercetos[i]
 
-            if t.operador in ("DECL"):
-                self.tercetos.pop(i)
-                continue  # pasar al siguiente índice hacia atrás
+                if t.operador in ("DECL"):
+                    self.tercetos.pop(i)
+                    continue  # pasar al siguiente índice hacia atrás
+
+            self.actualizar_referencias(original,self.tercetos)
 
     def mover_funciones(self):
         "Sacamos las funciones de los tercetos y las ponemos al final"

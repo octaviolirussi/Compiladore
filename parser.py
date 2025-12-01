@@ -94,7 +94,7 @@ class MyParser(Parser):
             else:
                 return None 
             msg = f"Warning: La función '{ID}' no tiene una instrucción RETURN. Return por defecto {default_value}."
-            self.error_manager.add(None, msg, source="parser")
+            self.error_manager.add(None, msg, source="parser", msg_type="Warning")
             
             idx_return = self.tercetos.nuevo('RETURN', default_value, None)
             
@@ -134,7 +134,7 @@ class MyParser(Parser):
 
         self.errok()
         msg = "Warning: falta inicio del programa"
-        self.error_manager.add(p.lineno, msg, source="parser")
+        self.error_manager.add(p.lineno, msg, source="parser", msg_type="Warning")
 
     @_('statement_list statement')
     def statement_list(self, p):
@@ -285,7 +285,7 @@ class MyParser(Parser):
     @_('PRINT "(" error ')
     def statement(self, p):
         self.errok()
-        msg = "Warning: cadena sin cierre antes de salto de línea"
+        msg = "Error: cadena sin cierre antes de salto de línea"
         self.error_manager.add(p.lineno, msg, source="parser")
         
     # 1. IF-ELSE statement

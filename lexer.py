@@ -9,7 +9,6 @@ class MyLexer(Lexer):
         self.symbol_table = symbol_table
         self.error_manager = error_manager
 
-
     # Lista de tokens
     tokens = { ID, CONST_INT, CONST_FLOAT, GE, LE, EQ, NE
               , ARROW, STRING, RESERVED, IF, ELSE, ENDIF, PRINT, RETURN, WHILE, DO, FLOAT
@@ -65,7 +64,7 @@ class MyLexer(Lexer):
         # se llegó al fin de archivo sin otro ##
         self.lineno += t.value.count('\n')
         msg = "Warning: comentario iniciado nunca se cerró con '##'"
-        self.error_manager.add(t.lineno,msg,source="lexer")
+        self.error_manager.add(t.lineno,msg,source="lexer", msg_type="Warning")
         pass
 
     #Acciones semanticas
@@ -79,7 +78,7 @@ class MyLexer(Lexer):
         # Truncar si excede longitud máxima
         if len(t.value) > max_length:
             msg = f"Warning: Identificador '{t.value}' truncado a {max_length} caracteres"
-            self.error_manager.add(t.lineno,msg,source="lexer")
+            self.error_manager.add(t.lineno,msg,source="lexer", msg_type="Warning")
             t.value = t.value[:max_length]
 
         # Agregar a la tabla de simbolos
@@ -98,7 +97,7 @@ class MyLexer(Lexer):
     def UNCLOSED_STRING(self, t):
         self.lineno += 1
         msg = "Warning: cadena sin cierre antes de salto de línea"
-        self.error_manager.add(t.lineno, msg, source="lexer")
+        self.error_manager.add(t.lineno, msg, source="lexer", msg_type="Warning")
         return None
 
     #CONST_INT
@@ -134,14 +133,14 @@ class MyLexer(Lexer):
 
         if numero != 0.0 and numero < MIN_FLOAT_POSITIVO:
             # Pongo el límite para que no corte la ejecución
-            msg = f"Error: Constante entera {numero} fuera de rango. Se usará {MIN_FLOAT_POSITIVO}."
+            msg = f"Error: Constante entera {numero} fuera de rango."
             self.error_manager.add(t.lineno, msg, source="lexer")
             t.value = MIN_FLOAT_POSITIVO
             self.symbol_table.add_token(str(t.value), "CONST_FLOAT") 
                 
         elif numero > MAX_FLOAT_POSITIVO:
             # Pongo el límite para que no corte la ejecución
-            msg = f"Error: Constante entera {numero} fuera de rango. Se usará {MAX_FLOAT_POSITIVO}."
+            msg = f"Error: Constante entera {numero} fuera de rango."
             self.error_manager.add(t.lineno, msg, source="lexer")
             t.value = MAX_FLOAT_POSITIVO   
             self.symbol_table.add_token(str(t.value), "CONST_FLOAT")   
@@ -156,19 +155,19 @@ class MyLexer(Lexer):
     @_(r'[a-z]+')
     def RESERVED(self,t):
         if t.value not in self.symbol_table.keywords:
-            msg = f"Warning: Palabra reservada {t.value} no encontrada"
+            msg = f"Error: Palabra reservada {t.value} no encontrada"
             self.error_manager.add(t.lineno,msg,source="lexer")
             return None
         
     @_(r'\d+')
     def NUMBER(self,t):
-        msg = f"Warning: Número {t.value} sin sufijo"
+        msg = f"Error: Número {t.value} sin sufijo"
         self.error_manager.add(t.lineno,msg,source="lexer")
         return None
     
     # Caracteres ilegales
     def error(self, t):
-        msg = f"Warning: Carácter ilegal '{t.value[0]}'"
+        msg = f"Error: Carácter ilegal '{t.value[0]}'"
         self.error_manager.add(t.lineno,msg,source="lexer")
         self.index += 1  # Avanza solo un carácter para continuar
   

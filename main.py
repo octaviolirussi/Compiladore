@@ -19,13 +19,12 @@ parser = MyParser(symbol_Table,error)
 
 # ruta_txt = sys.argv[1]
 
-# # Abrimos el archivo en modo lectura ('r')
+# Abrimos el archivo en modo lectura ('r')
 try:
-    with open("Pruebas/test_v4.txt", "r", encoding="utf-8") as f:
+    with open("pruebas/test_funciones.txt", "r", encoding="utf-8") as f:
         
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
-
 
         #Muestra el parser
         tokens_iter = iter(tokens)
@@ -42,15 +41,27 @@ parser.tercetos.correcciones()
 
 
 #errores
-print("\nMuestra de Errores:\n")
+# print("\nMuestra de Errores:\n")
 if error.has_errors():
-    print("Se encontraron errores. El proceso se detiene.")
-    print(error) # Muestra los errores
-    
-    # Detenemos la ejecución del programa aquí.
-    sys.exit(1) 
+    print("\nSe encontraron ERRORES. El proceso se detiene.")
+    print(str(error)) # Imprime todos los mensajes (incluidos warnings, si los hay)
+    sys.exit(1)
 else:
-    print("Análisis completado sin errores. Continuando con la generación de código/tercetos.")
+    # 2. Si no hay errores, verificar WARNINGS (no detienen la ejecución)
+    warnings = error.get_warnings()
+    if warnings:
+        print(f"\nAnálisis completado con {len(warnings)} advertencias. Continuando con la generación de código/tercetos.")
+        
+        # Opcional: imprimir solo los warnings de forma separada
+        print("\n--- ADVERTENCIAS DETECTADAS ---")
+        for w in warnings:
+             line_info = f"Línea {w['line']}" if w['line'] is not None else "Sin línea"
+             print(f"[{w['source']}] {line_info}: {w['message']}")
+        print("---------------------------------")
+    else:
+        print("\nAnálisis completado sin errores ni advertencias. Continuando con la generación de código/tercetos.")
+        
+    # Continuar la ejecución (Generación de Tercetos, etc.)
     parser.tercetos.mostrar()
 
 #Tabla de simbolos

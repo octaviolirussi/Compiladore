@@ -32,9 +32,7 @@ PROGRAMA1
     }endif;
 
     if(A<=10I){
-        A = B - 5I;   
-        B = 5I;
-        A = B - 5I;
+        print("hola"); 
     }
     endif;
 }
