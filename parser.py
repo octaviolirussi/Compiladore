@@ -25,7 +25,7 @@ class MyParser(Parser):
 
     def get_type_of_value(self, value):
         """
-        Determina el tipo de dato ('INT', 'FLOAT', etc.) de un operando:
+        Determina el tipo de dato ('INT', 'FLOAT') de un operando:
         ID, CONSTANTE, o índice de terceto ([T#]).
         """
         # si es un índice de un terceto
@@ -99,6 +99,36 @@ class MyParser(Parser):
             idx_return = self.tercetos.nuevo('RETURN', default_value, None)
             
             return int(idx_return.strip('[]'))
+
+    def is_constant_or_temp(self, value):
+        """
+        Verifica si el valor es un literal, una constante en la TS, o un resultado temporal de terceto.
+        Retorna True si es constante/temporal (NO es una variable simple o parámetro).
+        """
+        # Caso 1: Es un resultado temporal de un terceto ([T#])
+        if isinstance(value, str) and value.startswith('[') and value.endswith(']'):
+            return True
+        
+        # Caso 2: Es un literal numérico (int o float)
+        if isinstance(value, (int, float)):
+            return True
+
+        # Caso 3: Es un string, usamos la función existente de la tabla de símbolos.
+        entry = self.symbol_table.get_token(str(value))
+        
+        if entry:
+            uso = entry.get("Uso", "").upper()
+            
+            # CVR no puede ser ni CONSTANTE, ni un RETORNO (valor temporal de función)
+            if uso in ("CONSTANTE", "RETORNO"):
+                return True
+            
+            # Es una Variable o Parámetro (Ubicación de memoria válida para CVR)
+            if uso in ("VARIABLE", "PARAMETRO"):
+                return False 
+        
+        # Cualquier otro caso (ej. un ID no declarado) lo consideramos inseguro para CVR.
+        return True
 # ===================================== PROGRAMA =====================================================
 
     @_('ID "{" statement_list "}"')
@@ -453,7 +483,6 @@ class MyParser(Parser):
         else:
             self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), p.statement_list[0] - 1)
 
-
         index_return = self.verifica_return(p.ID, p.type, p.statement_list[0], len(self.tercetos.tercetos)-1)
         if index_return is not None:
             end_func_idx = int(index_end.strip('[]'))
@@ -685,26 +714,47 @@ class MyParser(Parser):
                 self.errok()
                 continue
 
-            # Regla 1: Coerción permitida para CV (INT -> FLOAT)
-            if param_modificador == 'CV' and arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT':
-                new_temp = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT',lineno=p.lineno)
-                final_arg_value = new_temp
+            # --- VALIDACIÓN SEMÁNTICA POR MODIFICADOR (Prioridad 1: CVR y Constantes/Temporales) ---
+            
+            if param_modificador == 'CVR':
+                # 1. Chequeo CVR (Debe ser variable/parámetro)
+                if self.is_constant_or_temp(arg_real_value):
+                    msg = (
+                        f"Error semántico: El parámetro real para '{formal_name}' es Copia Valor/Resultado (CVR) "
+                        f"y debe ser una variable (ID) o parámetro, no una constante o expresión."
+                    )
+                    self.error_manager.add(p.lineno, msg, source="parser")
+                    self.errok()
+                    return None
+                    
+                # 2. Chequeo CVR (Debe ser tipo idéntico)
+                if arg_real_type.upper() != param_formal_type:
+                    msg = (
+                        f"Error semántico: Parámetro '{formal_name}' (CVR) requiere tipo idéntico. "
+                        f"Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
+                    )
+                    self.error_manager.add(p.lineno, msg, source="parser")
+                    self.errok()
+                    return None
+            
+            # --- VALIDACIÓN CV (Prioridad 2: CV y Coerción/Tipos) ---
+            
+            elif param_modificador == 'CV':
+                # 1. Coerción permitida para CV (INT -> FLOAT)
+                if arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT':
+                    new_temp = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT',lineno=p.lineno)
+                    final_arg_value = new_temp
                 
-            # Regla 2: CVR (por defecto) requiere tipos idénticos (sin coerción)
-            elif param_modificador == 'CVR' and arg_real_type.upper() != param_formal_type:
-                msg = (
-                    f"Error semántico: Parámetro '{formal_name}' (CVR) requiere tipo idéntico. "
-                    f"Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'. "
-                )
-                self.error_manager.add(p.lineno, msg, source="parser")
-                
-            # Regla 3: CV, tipos incompatibles que no sean INT->FLOAT
-            elif param_modificador == 'CV' and arg_real_type.upper() != param_formal_type:
-                 msg = (
-                    f"Error semántico: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. "
-                    f"Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
-                 )
-
+                # 2. Tipos incompatibles (excepto la coerción anterior)
+                elif arg_real_type.upper() != param_formal_type:
+                    msg = (
+                        f"Error semántico: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. "
+                        f"Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
+                    )
+                    self.error_manager.add(p.lineno, msg, source="parser")
+                    self.errok()
+                    return None
+                 
             # Almacenamos el argumento en la posición 'i' (ordenado según la definición formal)
             processed_args[i] = ('arrow', final_arg_value, formal_name)
 

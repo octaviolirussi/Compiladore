@@ -25,6 +25,6 @@ INICIO%PROGRAMA{
 
     A = F3(C -> X, C -> J);
     
-    C = F3(B -> X, B -> J);
+    C = F3(2I -> X, 3I -> J);
     A = F4(B -> W, D -> Z);
 }
