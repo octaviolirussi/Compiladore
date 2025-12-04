@@ -517,12 +517,10 @@ class SymbolTable:
                 current_scope = scope_stack[-1]
                 continue
 
-            # Ignorar declaraciones
-            if op == "DECL":
+            if op == "DECL": # Ignorar declaraciones
                 continue
-
-            # Obtener posibles lexemas (VARIABLE o PARAMETRO)
-            lexemas_validos = [
+            
+            lexemas_validos = [ # Obtener posibles lexemas (VARIABLE o PARAMETRO)
                 e.get("Lexema") for e in self.symbols.values()
                 if e.get("Uso", "").upper() in ("VARIABLE", "PARAMETRO")
             ]
@@ -675,7 +673,7 @@ class SymbolTable:
             op = getattr(t, "operador", None)
             if op == "->":  # ignorar redirecciones
                 continue
-
+                        
             for attr in ["op1", "op2", "op3"]:
                 val = getattr(t, attr, None)
                 if not val or not isinstance(val, str):
@@ -700,6 +698,7 @@ class SymbolTable:
                     )
 
                     if not existe:
+                        print("holis")
                         msg = f"ERROR: Identificador '{val}' no está declarado."
                         # self.error_manager.add(t.lineno, msg, source="Scope")
 

@@ -483,7 +483,6 @@ class GeneradorTercetos:
         self.symbol_table.agrega_returns(self.tercetos)
         self.symbol_table.update_returns_values(self.tercetos)
         
-
     def mostrar(self):
         print("\n=== CÓDIGO INTERMEDIO (TERCETOS) ===")
         for i, t in enumerate(self.tercetos):

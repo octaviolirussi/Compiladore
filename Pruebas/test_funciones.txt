@@ -7,7 +7,6 @@ INICIO%PROGRAMA{
     float F4 (cv int W, float Z){
         int X;
         X = 1I;
-        Z = W - X;
     };
 
     int F3 (int X, cv float J){

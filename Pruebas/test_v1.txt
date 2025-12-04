@@ -11,7 +11,7 @@ float F2(int J,int K,int B){
             int F3(float D){
                 D=2I+3I;
                 return(D);
-                float F8(float A){
+                float F8(cv float A){
                     int Y;
                     A=2I+L1;
                     L1=1.234F+5;
@@ -45,6 +45,6 @@ float F2(int J,int K,int B){
         return(U);
     };
 
-    O = F3(2I->U);
+    O = F3(Y->U);
 
 }

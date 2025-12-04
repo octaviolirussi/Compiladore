@@ -1,7 +1,7 @@
-PROGRAMA {
+{
 
     int F1 (int X,float Y){
-        int L1;
+        int L1
         int L2;
 
         L1=2I;
@@ -11,6 +11,7 @@ PROGRAMA {
 
     while (K>L) do {
         L1 = 0I;
+        print("hola);
         
     };
 
