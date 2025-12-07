@@ -336,7 +336,8 @@ class MyParser(Parser):
         # Crear tercetos de control y obtener sus índices
         index_BF = int(self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE).strip('[]'))
         index_BI = int(self.tercetos.nuevo('BI', self.tercetos.PENDIENTE, None).strip('[]'))
-        index_end = int(self.tercetos.nuevo('FIN_IF_ELSE', None, None).strip('[]'))
+        index_else = int(self.tercetos.nuevo('LABEL', None, None).strip('[]'))
+        index_end = int(self.tercetos.nuevo('LABEL', None, None).strip('[]'))
 
         # Índices auxiliares
         expr_indice = int(p.expr.strip('[]'))                         # último terceto de la condición
@@ -357,9 +358,11 @@ class MyParser(Parser):
                 i = i - 1
                 op = self.tercetos.tercetos[i].operador
             self.tercetos.mover_terceto(index_BI, i+1)
+            self.tercetos.mover_terceto(index_else,i+2)
             self.tercetos.backpatch2(self.tercetos.tercetos[expr_indice+1],i+2)
         else:
             self.tercetos.mover_terceto(index_BI, p.block1[0])
+            self.tercetos.mover_terceto(index_else,p.block1[0]+1)
             self.tercetos.backpatch2(self.tercetos.tercetos[expr_indice+1],p.block1[0]+1)
 
         #self.tercetos.mover_terceto(index_BI, index_else_last)
@@ -409,7 +412,7 @@ class MyParser(Parser):
         self.tercetos.mover_terceto(int(index_BF.strip('[]')),expr_indice+1)
 
         #Etiqueta de fin del if
-        self.tercetos.nuevo("FIN_IF", None, None,lineno=p.lineno)
+        self.tercetos.nuevo("LABEL", None, None,lineno=p.lineno)
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return expr_indice  # índice numérico
@@ -535,17 +538,17 @@ class MyParser(Parser):
         
         t_cond = self.tercetos.tercetos[expr_indice]
     
-        #Esto toma la el primer operando de la condicion while
+        # Determinar el inicio real de la condición del while
         if isinstance(t_cond.op1, str) and t_cond.op1.startswith('['):
-            etiqueta_condicion = int(t_cond.op1.strip('[]')) # apunta al primer terceto de la condicion
+            etiqueta_condicion = int(t_cond.op1.strip('[]'))
+        elif isinstance(t_cond.op2, str) and t_cond.op2.startswith('['):
+            etiqueta_condicion = int(t_cond.op2.strip('[]'))
         else:
-            etiqueta_condicion = expr_indice 
+            etiqueta_condicion = expr_indice    
 
         # Generar BF pendiente
         index_BF = self.tercetos.nuevo('BF', p.expr, self.tercetos.PENDIENTE,lineno=p.lineno)
         
-        # Genera BI que salte al primer operando de la condicion del while
-        self.tercetos.nuevo('BI', f"[{etiqueta_condicion}]", None,lineno=p.lineno)
         
         # índice del primer terceto después del bucle.
         index_end_while = len(self.tercetos.tercetos)
@@ -555,7 +558,16 @@ class MyParser(Parser):
         
         self.tercetos.mover_terceto(int(index_BF.strip('[]')),expr_indice+1)
 
-        self.tercetos.nuevo("FIN_WHILE", None, None,lineno=p.lineno)
+        self.tercetos.nuevo("LABEL", None, None,lineno=p.lineno)
+
+        #genero label inicial
+        index_first = self.tercetos.nuevo("LABEL", None, None,lineno=p.lineno)
+        self.tercetos.mover_terceto(int(index_first.strip('[]')),etiqueta_condicion)
+
+        # Genera BI que salte al primer operando de la condicion del while
+        index_BI = self.tercetos.nuevo('BI', f"[{etiqueta_condicion}]", None,lineno=p.lineno)
+        self.tercetos.mover_terceto(int(index_BI.strip('[]')),int(index_first.strip('[]')) )
+
 
         self.tercetos_antes = len(self.tercetos.tercetos)
         return expr_indice + 1  # índice numérico
@@ -784,7 +796,6 @@ class MyParser(Parser):
             # Operación: (=, Formal, Real)
             # formal_param = assignment['formal'] 
             real_arg = assignment['real'] 
-            print("TERCETO CVR_RET:", None, real_arg)
 
             self.tercetos.nuevo('CVR_RET', None, real_arg, lineno=p.lineno) 
         

@@ -1,24 +1,17 @@
 INICIO%PROGRAMA{
 float O;
-int Y, H;
+int Y,N;
 
-Y = 2I + 2I;
+N = 2I;
+print("aca");
 
-float F2(int J,int K, cv int B){
-            int L1, L2;
-            L1 = 2I + 0I;
-            int F3(float D){
-            
-            };
-            B = F3(2I -> D);
-            return(B);
-        };
-
-    O = 2I+2I;
-
-    Y = F2(Y->J, H->K, Y->B);
-    O = F3(2I->U);
-
-
+while (Y < Y+2I)do{
+    Y = 2I + 3I;
+    while (Y+2I < Y)do{
+    Y = 2I + 3I;
+    print("Hola");
+};
+    print("Hola");
+};
 
 }
