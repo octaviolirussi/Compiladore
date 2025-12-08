@@ -1,17 +1,5 @@
 INICIO%PROGRAMA{
-float O;
-int Y,N;
+    int O;
 
-N = 2I;
-print("aca");
-
-while (Y < Y+2I)do{
-    Y = 2I + 3I;
-    while (Y+2I < Y)do{
-    Y = 2I + 3I;
-    print("Hola");
-};
-    print("Hola");
-};
-
+    O = 2I;
 }

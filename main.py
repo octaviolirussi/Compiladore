@@ -4,7 +4,7 @@ from tablaSimbolos import SymbolTable
 from lexer import MyLexer
 from parser import MyParser
 from errorManager import ErrorManager
-
+from codeGenerator import CodeGenerator
 
 error = ErrorManager()
 
@@ -39,20 +39,15 @@ symbol_Table.correccion_scope(parser.tercetos.tercetos)
 parser.tercetos.correcciones()
 
 
-
-#errores
-# print("\nMuestra de Errores:\n")
 if error.has_errors():
     print("\nSe encontraron ERRORES. El proceso se detiene.")
-    print(str(error)) # Imprime todos los mensajes (incluidos warnings, si los hay)
+    print(str(error))
     sys.exit(1)
 else:
-    # 2. Si no hay errores, verificar WARNINGS (no detienen la ejecución)
     warnings = error.get_warnings()
     if warnings:
         print(f"\nAnálisis completado con {len(warnings)} advertencias. Continuando con la generación de código/tercetos.")
         
-        # Opcional: imprimir solo los warnings de forma separada
         print("\n--- ADVERTENCIAS DETECTADAS ---")
         for w in warnings:
              line_info = f"Línea {w['line']}" if w['line'] is not None else "Sin línea"
@@ -61,9 +56,23 @@ else:
     else:
         print("\nAnálisis completado sin errores ni advertencias. Continuando con la generación de código/tercetos.")
         
-    # Continuar la ejecución (Generación de Tercetos, etc.)
     parser.tercetos.mostrar()
 
+    code_gen = CodeGenerator(symbol_Table, parser.tercetos, error)
+    
+    # 1. Preparar/procesar la información para el ASM
+    code_gen.prepare_asm_data() 
+    
+    # 2. Generar el código
+    asm_code = code_gen.generate_code()
+    archivo_salida = "salida.asm"
+    try:
+        with open(archivo_salida, "w", encoding="utf-8") as f_asm:
+            f_asm.write(asm_code)
+        print(f"\nArchivo de código Assembler '{archivo_salida}' generado exitosamente.")
+    except Exception as e:
+        print(f"\n Error al escribir el archivo ASM: {e}")
+    
 #Tabla de simbolos
 print("\nTabla de palabras reservadas:\n")
 print(symbol_Table.keywords)
