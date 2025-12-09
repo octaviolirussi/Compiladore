@@ -1,5 +1,27 @@
 INICIO%PROGRAMA{
-    int O;
+    int O,K;
+    int I;
 
-    O = 2I;
+    I = 0I;
+    O = 3I + 3I;
+    K = 2I + O;
+
+    print("O:");
+    print(O);
+    print("K:");
+    print(K);
+
+    if (O >= K){
+        print("esMayor");
+        print(O);
+    }else{
+        print("esMenor");
+        print(O);  
+    }endif;
+
+    while (I < 2I) do {
+        print(I);
+        I = I + 1I;
+    };
+  
 }
