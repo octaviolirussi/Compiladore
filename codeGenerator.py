@@ -3,9 +3,6 @@ from tablaSimbolos import SymbolTable
 from tercetos import GeneradorTercetos
 from errorManager import ErrorManager
 
-
-# Asume que ErrorManager están importados o accesibles
-
 class CodeGenerator:
     """Genera código Assembler para Pentium de 32 bits (NASM) a partir de los tercetos."""
     

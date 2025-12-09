@@ -20,8 +20,9 @@ parser = MyParser(symbol_Table,error)
 # ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
+file = "pruebas/test.txt"
 try:
-    with open("pruebas/test.txt", "r", encoding="utf-8") as f:
+    with open(file, "r", encoding="utf-8") as f:
         
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
@@ -65,7 +66,11 @@ else:
     
     # 2. Generar el código
     asm_code = code_gen.generate_code()
-    archivo_salida = "salida.asm"
+    
+    nombre_base_con_extension = os.path.basename(file) 
+    nombre_sin_extension, _ = os.path.splitext(nombre_base_con_extension)
+    archivo_salida = nombre_sin_extension + ".asm"
+ 
     try:
         with open(archivo_salida, "w", encoding="utf-8") as f_asm:
             f_asm.write(asm_code)
