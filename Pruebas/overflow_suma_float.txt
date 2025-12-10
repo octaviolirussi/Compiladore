@@ -1,0 +1,43 @@
+INICIO%PROGRAMA{
+    int O,K;
+    float I;
+
+    I = 25I;
+    O = 3I + 3I;
+    K = 2I + O;
+
+    print("I:");
+    print(I);
+    print("K:");
+    print(K);
+
+    if (O >= K){
+        print("esMayor");
+        print(O);
+    }else{
+        print("esMenor");
+        print(O);  
+    }endif;
+
+
+    float A;
+    A = 1.17549435F-38;
+    float B;
+    B = 3.40282347F+38;
+    float C;
+    C = B + B;
+    print(B);
+    print(C);
+
+    print("A");
+    print(A);
+    print("B");
+    print(B);
+
+    while (I < 35I) do {
+        print(I);
+        print("hola");
+        I = I + 1I;
+    };
+  
+}

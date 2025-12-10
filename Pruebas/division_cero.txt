@@ -35,4 +35,16 @@ INICIO%PROGRAMA{
     print("X:");
     print(X); 
     
+
+
+    int Z;
+    float W;
+    Z = 0I;
+    W = Z;
+    
+    F1 = 1.0 / W;
+    
+    print("F1:");
+    print(F1);    
+
 }
