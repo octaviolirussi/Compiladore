@@ -832,13 +832,15 @@ class MyParser(Parser):
         result_type = None
 
         if type0 == 'FLOAT' and type1 == 'INT':
-            # Conversión: INT (op1) -> FLOAT
+        # Conversión: INT (op1) -> FLOAT. GUARDAR LA REFERENCIA [T#]
             final_op1 = self.tercetos.nuevo('CONV_I_F', op1, None, 'FLOAT', lineno=lineno)
+            
             result_type = 'FLOAT'
 
         elif type0 == 'INT' and type1 == 'FLOAT':
-            # Conversión: INT (op0) -> FLOAT
+            # Conversión: INT (op0) -> FLOAT. GUARDAR LA REFERENCIA [T#]
             final_op0 = self.tercetos.nuevo('CONV_I_F', op0, None, 'FLOAT', lineno=lineno)
+            
             result_type = 'FLOAT'
 
         elif type0 == 'FLOAT' and type1 == 'FLOAT':
@@ -860,43 +862,38 @@ class MyParser(Parser):
     
     @_('expr "+" expr')
     def expr(self, p):
-        
         final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
         if result_type is None:
             return None
-
+        # Usar final_op0 y final_op1
         temp = self.tercetos.nuevo('+', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
 
     @_('expr "-" expr')
     def expr(self, p):
         final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
         if result_type is None:
             return None
-
-        temp = self.tercetos.nuevo('-', p.expr0, p.expr1, result_type,lineno=p.lineno)
-        return temp 
+        # Usar final_op0 y final_op1
+        temp = self.tercetos.nuevo('-', final_op0, final_op1, result_type, lineno=p.lineno) 
+        return temp
 
     @_('expr "*" expr')
     def expr(self, p):
         final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
         if result_type is None:
             return None
-
-        temp = self.tercetos.nuevo('*', p.expr0, p.expr1, result_type,lineno=p.lineno)
+        # Usar final_op0 y final_op1
+        temp = self.tercetos.nuevo('*', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
 
     @_('expr "/" expr')
     def expr(self, p):
         final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
         if result_type is None:
             return None
-
-        temp = self.tercetos.nuevo('/', p.expr0, p.expr1, result_type,lineno=p.lineno)
+        # Usar final_op0 y final_op1
+        temp = self.tercetos.nuevo('/', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
     
     @_('expr ">" expr')
@@ -906,7 +903,7 @@ class MyParser(Parser):
         if result_type is None:
             return None
         
-        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        temp = self.tercetos.nuevo('>', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
 
     @_('expr "<" expr')
@@ -916,7 +913,7 @@ class MyParser(Parser):
         if result_type is None:
             return None
         
-        temp = self.tercetos.nuevo('<', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        temp = self.tercetos.nuevo('<', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
     
     @_('expr GE expr') # >=
@@ -926,7 +923,7 @@ class MyParser(Parser):
         if result_type is None:
             return None
         
-        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        temp = self.tercetos.nuevo('>=', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
     
     @_('expr LE expr') # <=
@@ -936,7 +933,7 @@ class MyParser(Parser):
         if result_type is None:
             return None
          
-        temp = self.tercetos.nuevo('<=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        temp = self.tercetos.nuevo('<=', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
     
     @_('expr EQ expr')# ==
@@ -946,7 +943,7 @@ class MyParser(Parser):
         if result_type is None:
             return None
         
-        temp = self.tercetos.nuevo('==', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        temp = self.tercetos.nuevo('==', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
     
     @_('expr NE expr') # !=
@@ -956,7 +953,7 @@ class MyParser(Parser):
         if result_type is None:
             return None
         
-        temp = self.tercetos.nuevo('!=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        temp = self.tercetos.nuevo('!=', final_op0, final_op1, result_type, lineno=p.lineno)
         return temp
 
     #================================= Tipos =================================================================================================
