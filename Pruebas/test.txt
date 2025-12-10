@@ -1,41 +1,19 @@
 INICIO%PROGRAMA{
-    int O,K;
-    float I;
+    int A,B,C;
+    float X,Y;
 
-    int A;
-    A = 32767I * 32767I;
-    int B;
-    B = A * 2I;
-    int C;
-  
-    int D;
-    D = C + 3I;
-    print("B");
-    ##aca voy a poner mucho texto 
-    a ver que pasa##
+    A = 2I;
+    B = 3I;
+
+    X = 1.5;
+    Y = 2.F+1;     
+
+    int F1(cv int A){
+        A =  2I + A;
+    };
+
+    B = F1(6I->A) + 2I;
+
     print(B);
 
-    I = 25I;
-    O = 3I + 3I;
-    K = 2I + O;
-
-    print("I:");
-    print(I);
-    print("K:");
-    print(K);
-
-    if (O >= K){
-        print("esMayor");
-        print(O);
-    }else{
-        print("esMenor");
-        print(O);  
-    }endif;
-
-    while (I < 35I) do {
-        print(I);
-        print("hola");
-        I = I + 1I;
-    };
-  
 }

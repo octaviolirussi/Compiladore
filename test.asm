@@ -9,17 +9,18 @@ printf PROTO C :VARARG
 DVC_MSG DB 'Error en tiempo de ejecución: División por Cero.', 0 ; STRING
 OVF_INT_MSG DB 'Error en tiempo de ejecución: Overflow en suma de INT.', 0 ; STRING
 OVF_FLOAT_MSG DB 'Error en tiempo de ejecución: Overflow en suma de FLOAT.', 0 ; STRING
-V_O_ DB "O:",0 ; STRING
-V_K_ DB "K:",0 ; STRING
-V_ESMAYOR DB "esMayor",0 ; STRING
-V_ESMENOR DB "esMenor",0 ; STRING
-V_0 DD 0 ; INT
-V_3 DD 3 ; INT
-V_2 DD 2 ; INT
-V_1 DD 1 ; INT
-V_O_G DD 0 ; INT
-V_K_G DD 0 ; INT
-V_I_G DD 0 ; INT
+V_C3 DD 3 ; INT
+V_C1_5 DD 1.5 ; FLOAT
+V_C2_EP1 DD 2.e+1 ; FLOAT
+V_C0 DD 0 ; INT
+V_A_G_F1 DD 0 ; INT
+V_C6 DD 6 ; INT
+V_C2 DD 2 ; INT
+V_A_G DD 0 ; INT
+V_B_G DD 0 ; INT
+V_C_G DD 0 ; INT
+V_X_G DD 0.0 ; FLOAT
+V_Y_G DD 0.0 ; FLOAT
 V_A_0 DD 0 ; INT
 V_A_1 DD 0 ; INT
 V_A_2 DD 0 ; INT
@@ -36,18 +37,6 @@ V_A_12 DD 0 ; INT
 V_A_13 DD 0 ; INT
 V_A_14 DD 0 ; INT
 V_A_15 DD 0 ; INT
-V_A_16 DD 0 ; INT
-V_A_17 DD 0 ; INT
-V_A_18 DD 0 ; INT
-V_A_19 DD 0 ; INT
-V_A_20 DD 0 ; INT
-V_A_21 DD 0 ; INT
-V_A_22 DD 0 ; INT
-V_A_23 DD 0 ; INT
-V_A_24 DD 0 ; INT
-V_A_25 DD 0 ; INT
-V_A_26 DD 0 ; INT
-V_A_27 DD 0 ; INT
 NEWLINE DB 13,10,0 ; STRING
 HELLO_MSG DB "El programa se ejecuto correctamente.",0
 
@@ -55,97 +44,70 @@ HELLO_MSG DB "El programa se ejecuto correctamente.",0
 start:
 LABEL_0:
 LABEL_1:
-    MOV EAX, dword ptr [V_0]
-    MOV dword ptr [V_I_G], EAX
+    MOV EAX, dword ptr [V_C2]
+    MOV dword ptr [V_A_G], EAX
 LABEL_2:
-  ; Suma INT 32 bits - Terceto 5
-  MOV EAX, dword ptr [V_3]
-  ADD EAX, dword ptr [V_3]
-  JO ErrorOverflowInt
-  MOV dword ptr [V_A_2], EAX
+    MOV EAX, dword ptr [V_C3]
+    MOV dword ptr [V_B_G], EAX
 LABEL_3:
-    MOV EAX, dword ptr [V_A_2]
-    MOV dword ptr [V_O_G], EAX
+    FLD dword ptr [V_C1_5]
+    FSTP dword ptr [V_X_G]
 LABEL_4:
-  ; Suma INT 32 bits - Terceto 14
-  MOV EAX, dword ptr [V_2]
-  ADD EAX, dword ptr [V_O_G]
-  JO ErrorOverflowInt
-  MOV dword ptr [V_A_4], EAX
+    FLD dword ptr [V_C2_EP1]
+    FSTP dword ptr [V_Y_G]
 LABEL_5:
-    MOV EAX, dword ptr [V_A_4]
-    MOV dword ptr [V_K_G], EAX
+    MOV EAX, dword ptr [V_C6]
+    MOV dword ptr [V_A_G_F1], EAX
 LABEL_6:
-    invoke printf, addr V_O_
-    invoke printf, addr NEWLINE
+    CALL F1_G_F1
+    MOV dword ptr [V_A_6], EAX
 LABEL_7:
-    invoke printf, cfm$("%d\n"), dword ptr [V_O_G]
-LABEL_8:
-    invoke printf, addr V_K_
-    invoke printf, addr NEWLINE
-LABEL_9:
-    invoke printf, cfm$("%d\n"), dword ptr [V_K_G]
-LABEL_10:
- ; Comparación (>=) - Terceto 33
-   MOV EAX, dword ptr [V_O_G]
-   CMP EAX, dword ptr [V_K_G]
-    SETGE AL
-    MOVZX EAX, AL
-    MOV dword ptr [V_A_10], EAX
-LABEL_11:
-    CMP dword ptr [V_A_10], 0
-    JE LABEL_15
-LABEL_12:
-    invoke printf, addr V_ESMAYOR
-    invoke printf, addr NEWLINE
-LABEL_13:
-    invoke printf, cfm$("%d\n"), dword ptr [V_O_G]
-LABEL_14:
-JMP LABEL_18
-LABEL_15:
-LABEL_16:
-    invoke printf, addr V_ESMENOR
-    invoke printf, addr NEWLINE
-LABEL_17:
-    invoke printf, cfm$("%d\n"), dword ptr [V_O_G]
-LABEL_18:
-LABEL_19:
-LABEL_20:
- ; Comparación (<) - Terceto 58
-   MOV EAX, dword ptr [V_I_G]
-   CMP EAX, dword ptr [V_2]
-    SETL AL
-    MOVZX EAX, AL
-    MOV dword ptr [V_A_20], EAX
-LABEL_21:
-    CMP dword ptr [V_A_20], 0
-    JE LABEL_26
-LABEL_22:
-    invoke printf, cfm$("%d\n"), dword ptr [V_I_G]
-LABEL_23:
-  ; Suma INT 32 bits - Terceto 70
-  MOV EAX, dword ptr [V_I_G]
-  ADD EAX, dword ptr [V_1]
+  ; Suma INT 32 bits - Terceto 20
+  MOV EAX, dword ptr V_A_6
+  ADD EAX, dword ptr V_C2
   JO ErrorOverflowInt
-  MOV dword ptr [V_A_23], EAX
-LABEL_24:
-    MOV EAX, dword ptr [V_A_23]
-    MOV dword ptr [V_I_G], EAX
-LABEL_25:
-JMP LABEL_19
-LABEL_26:
-LABEL_27:
+  MOV dword ptr [V_A_7], EAX
+LABEL_8:
+    MOV EAX, dword ptr [V_A_7]
+    MOV dword ptr [V_B_G], EAX
+LABEL_9:
+    invoke printf, cfm$("%d\n"), dword ptr [V_B_G]
+LABEL_10:
+LABEL_11:
+
+F1_G_F1:
+    PUSH EBP
+    MOV EBP, ESP
+    ; --- espacio para variables  ---
+LABEL_12:
+  ; Suma INT 32 bits - Terceto 38
+  MOV EAX, dword ptr V_C2
+  ADD EAX, dword ptr V_A_G_F1
+  JO ErrorOverflowInt
+  MOV dword ptr [V_A_12], EAX
+LABEL_13:
+    MOV EAX, dword ptr [V_A_12]
+    MOV dword ptr [V_A_G_F1], EAX
+LABEL_14:
+    MOV EAX, dword ptr [V_C0]
+    MOV ESP, EBP
+    POP EBP
+    RET
+LABEL_15:
+    MOV ESP, EBP
+    POP EBP
+    RET
     jmp fin
 
 ; ----- HANDLERS DE ERROR -----
 ErrorOverflowInt:
-    print "Error en tiempo de ejecución: Overflow en INT"
+    print "Error en tiempo de ejecucion: Overflow en INT"
     invoke ExitProcess, 1
 ErrorOverflowFloat:
-    print "Error en tiempo de ejecución: Overflow en FLOAT"
+    print "Error en tiempo de ejecucion: Overflow en FLOAT"
     invoke ExitProcess, 1
 ErrorDVC:
-    print "Error en tiempo de ejecución: División por Cero"
+    print "Error en tiempo de ejecucion: Division por Cero"
     invoke ExitProcess, 1
 
 fin:

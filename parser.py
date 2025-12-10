@@ -563,8 +563,12 @@ class MyParser(Parser):
 
         #genero label inicial
         index_first = self.tercetos.nuevo("LABEL", None, None,lineno=p.lineno)
-        self.tercetos.mover_terceto(int(index_first.strip('[]')),etiqueta_condicion)
-
+        
+        if self.tercetos.tercetos[etiqueta_condicion-1].operador == "CONV_I_F":
+            self.tercetos.mover_terceto(int(index_first.strip('[]')),etiqueta_condicion-1)
+        else:
+            self.tercetos.mover_terceto(int(index_first.strip('[]')),etiqueta_condicion)
+            
         # Genera BI que salte al primer operando de la condicion del while
         index_BI = self.tercetos.nuevo('BI', f"[{etiqueta_condicion}]", None,lineno=p.lineno)
         self.tercetos.mover_terceto(int(index_BI.strip('[]')),int(index_first.strip('[]')) )

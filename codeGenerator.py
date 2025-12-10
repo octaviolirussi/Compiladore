@@ -16,6 +16,8 @@ class CodeGenerator:
         self.mem_map = {}           # Mapeo de (Lexema:Scope o [T#]) -> Etiqueta ASM
         self.temp_vars_created = set() # Variables temporales ASM ya definidas
         self.runtime_labels = {}    # Etiquetas de rutinas de error (Ej: DVC, Overflow)
+        self.func_return_types = {}      # <<< AGREGA ESTO
+        self.func_stack = []  
 
     # ----------------------------------------------------------------------
     # 1. PREPARACIÓN DE LA SECCIÓN DE DATOS (.data)
@@ -38,12 +40,19 @@ class CodeGenerator:
             # Reemplazar caracteres no válidos con '_'
             # Correccion para la notación científica en floats
             label_base = str(original_key)
-            # 1. Reemplazar caracteres no válidos (incluyendo el punto decimal y los signos)
-            label_base = label_base.replace(':', '_').replace('[', 'T_').replace(']', '').replace('"', '')
+
+            # Elimina comillas y reemplaza espacios
+            label_base = label_base.replace('"', '')
+            label_base = label_base.replace(' ', '_')
+
+            # Reemplaza caracteres no válidos
+            label_base = label_base.replace(':', '_')
+            label_base = label_base.replace('[', 'T_')
+            label_base = label_base.replace(']', '')
             label_base = label_base.replace('.', '_')
-            label_base = label_base.replace('+', 'P')  # P de Positivo
-            label_base = label_base.replace('-', 'N')  # N de Negativo
-            label_base = label_base.replace('F', 'E') # Normalizar la notación científica
+            label_base = label_base.replace('+', 'P')
+            label_base = label_base.replace('-', 'N')
+            label_base = label_base.replace('!', '')
 
             # 2. Eliminar guiones bajos iniciales si la clave original era solo un punto
             if label_base.startswith('_'):
@@ -149,7 +158,15 @@ class CodeGenerator:
         elif t.operador == 'BF': # Se asume que t.op1 es el resultado de una comparación booleana [T#]
             self.asm_code.append(f"    CMP dword ptr [{op1_asm}], 0")  # 0 = falso
             self.asm_code.append(f"    JE LABEL_{t.op2.strip('[]')}")      # Salta si falso
-        # TODO... (Agregar lógica para el resto de operadores: *, -, >, <, funciones, etc.)
+        elif t.operador == 'FUNC':
+            self.generate_function_start(t.op1)   
+        elif t.operador == 'END_FUNC':
+            self.generate_function_end()
+        elif t.operador == 'RETURN':
+            self.generate_return(op1_asm)
+        elif t.operador == 'CALL':
+            self.generate_call(t.op1, res_asm)
+
 
     def get_op_asm_label(self, op):
         """Devuelve la etiqueta ASM para un operando (lexema o referencia de terceto [N])."""
@@ -329,6 +346,51 @@ class CodeGenerator:
                 self.asm_code.append(f"    FLD dword ptr [{label}]")           # carga float 32 bits
                 self.asm_code.append(f"    FSTP qword ptr [{tmp_double_label}]")  # lo guarda como double
                 self.asm_code.append(f"    invoke printf, cfm$(\"%f\\n\"), [{tmp_double_label}]")
+
+    def generate_function_start(self, func_name):
+        # Etiqueta global visible desde main
+        self.asm_code.append("")
+        func_name = func_name.replace(":", "_")
+        self.asm_code.append(f"{func_name}:")
+        self.asm_code.append("    PUSH EBP")
+        self.asm_code.append("    MOV EBP, ESP")
+        self.asm_code.append("    ; --- espacio para variables  ---")
+
+    def generate_function_end(self):
+        self.asm_code.append("    MOV ESP, EBP")
+        self.asm_code.append("    POP EBP")
+        self.asm_code.append("    RET")
+
+    def generate_return(self, value_asm):
+        # Mover el valor al registro EAX (convención estándar)
+        self.asm_code.append(f"    MOV EAX, dword ptr [{value_asm}]")
+        self.asm_code.append("    MOV ESP, EBP")
+        self.asm_code.append("    POP EBP")
+        self.asm_code.append("    RET")
+
+    def generate_call(self, function_name, res_asm):
+        """
+        Genera código ASM para llamar a una función.
+        Si la función devuelve un valor, RETURN debe haber depositado el valor en EAX (INT)
+        o en ST(0) (FLOAT).
+        """
+        function_name = function_name.replace(":", "_")
+        self.asm_code.append(f"    CALL {function_name}")
+
+        # Si no hay retorno, no generamos asignación
+        if res_asm is None:
+            return
+
+        # Detectar tipo del retorno
+        ret_type = self.func_return_types.get(function_name, "INT")
+
+        if ret_type == "INT":
+            # Guardar EAX en el temporal de resultado
+            self.asm_code.append(f"    MOV dword ptr [{res_asm}], EAX")
+
+        elif ret_type == "FLOAT":
+            # Guardar retorno FLOAT desde FPU
+            self.asm_code.append(f"    FSTP dword ptr [{res_asm}]")
     # ----------------------------------------------------------------------
     # 3. RUTINAS FINALES Y PIE DE ARCHIVO
     # ----------------------------------------------------------------------
