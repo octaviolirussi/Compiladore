@@ -35,10 +35,6 @@ class CodeGenerator:
             label = f"V_A_{label_base}" 
             
         else:
-            # Generar nombre para VARIABLES DE USUARIO (ej: 'O:G', '2', '"hola"')
-            # Generar nombre de etiqueta basado en la clave original
-            # Reemplazar caracteres no válidos con '_'
-            # Correccion para la notación científica en floats
             label_base = str(original_key)
 
             # Elimina comillas y reemplaza espacios
@@ -75,6 +71,10 @@ class CodeGenerator:
         self.runtime_labels["OVF_INT"] = self._add_data_entry("OVF_INT_MSG", "DB", "'Error en tiempo de ejecución: Overflow en suma de INT.', 0", "STRING")
         self.runtime_labels["OVF_FLOAT"] = self._add_data_entry("OVF_FLOAT_MSG", "DB", "'Error en tiempo de ejecución: Overflow en suma de FLOAT.', 0", "STRING")
 
+        self.runtime_labels["INF_CONST"] = self._add_data_entry("V_INF_CONST", "DD", "7F800000h", "HEX_FLOAT")
+        self.runtime_labels["NINF_CONST"] = self._add_data_entry("V_NINF_CONST", "DD", "7F800000h", "HEX_FLOAT")
+
+        
         # Variables / constantes / parámetros
         for entry in self.ts.symbols.values():
             lexema_scope = entry.get("Lexema")
@@ -194,21 +194,37 @@ class CodeGenerator:
             self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
         
         elif result_type.upper() == 'FLOAT':
-            self.asm_code.append(f"  ; Suma FLOAT - Terceto {len(self.asm_code)}")
+            INF_LABEL = self.runtime_labels.get("INF_CONST")
+            NINF_LABEL = self.runtime_labels.get("NINF_CONST")
+
+            self.asm_code.append(f"  ; Suma FLOAT - Deteccion por Valor INF")
+            
             self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
             self.asm_code.append(f"  FADD dword ptr [{op2_asm}]")
-                       
-            self.asm_code.append(f"  FSTSW AX") 
-            self.asm_code.append(f"  FWAIT")
-
-            self.asm_code.append(f"  AND AX, 0004h") 
             
-            # 4. Saltamos si el bit 2 (OE) se activó (0004h != 0).
-            # Esto es lo mismo que TEST AX, 0004h, pero asegura que el valor se comprueba
-            # Vamos a usar CMP para poner la bandera ZF (Zero Flag) y luego JNZ
-            self.asm_code.append(f"  CMP AX, 0")
-            self.asm_code.append(f"  JNE ErrorOverflowFloat") # Saltar si AX NO ES CERO (es decir, si el bit 2 está activo)
+            self.asm_code.append(f"  FSTP dword ptr [{res_asm}]") 
+            
+            # --- CHEQUEOS DE OVERFLOW ---
+            
+            # self.asm_code.append(f"  MOV EAX, dword ptr [{res_asm}]") 
+            
+            # self.asm_code.append(f"  CMP EAX, dword ptr [{INF_LABEL}]") 
+            # self.asm_code.append(f"  JE ErrorOverflowFloat") 
+            
+            # self.asm_code.append(f"  CMP EAX, dword ptr [{NINF_LABEL}]") 
+            # self.asm_code.append(f"  JE ErrorOverflowFloat")
+            
+            self.asm_code.append(f"  ; Suma FLOAT - Deteccion de Underflow y Overflow (Bandera)")
+            
+            self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
+            self.asm_code.append(f"  FADD dword ptr [{op2_asm}]")
+            
+            self.asm_code.append(f"  FSTSW AX")
+            self.asm_code.append(f"  FWAIT")
+            self.asm_code.append(f"  TEST AX, 0008h")  # Chequea el bit de excepción de Overflow (0008h)
+            self.asm_code.append(f"  JNZ ErrorOverflowFloat") # Salta si Overflow detectado
             self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
+            pass
 
     def generate_subtraction(self, res_asm, op1_asm, op2_asm, result_type):
         if result_type.upper() == 'INT':

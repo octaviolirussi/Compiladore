@@ -5,25 +5,20 @@ INICIO%PROGRAMA{
     float D;
 
     float F1 (cv int W, float Z){
-        int A, R;
+        int R;
         R = W - 1I;
-        B = A;
         return (R);
     };
- 
+
     int F2 (int X, cv float J){
-        int A, X, Z;
+        int Z;
         int W;
         W = Z + 1I;
-
-        return W;
 
         if(Z<=10I){
             W = 5I;
             W = W + 2I - 1I;
         }endif;
-
-
     };
     
     int F3 (float W, int Z){
@@ -36,7 +31,7 @@ INICIO%PROGRAMA{
         J = 2I;
 
         int F4 (int W, float Z){
-            int J, S;
+            int J;
             S = 2I;
             J = D + 3I;
             return (J);
