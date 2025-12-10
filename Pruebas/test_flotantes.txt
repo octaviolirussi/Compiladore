@@ -1,8 +1,24 @@
 PROGRAMA{
+    float NUM1, NUM2, NUM3, NUM4, NUM5, NUM6;
     NUM1 = 123.45;
     NUM2 = 123.;
     NUM3 = .45;
     NUM4 = 1.234F+5;
     NUM5 = 1.234F-5;
     NUM6 = .234F-5;
+
+    print("NUM1");
+    print(NUM1);
+    print("NUM2");
+    print(NUM2);    
+    print("NUM3");
+    print(NUM3);    
+    print("NUM4");
+    print(NUM4);    
+    print("NUM5");
+    print(NUM5);    
+    print("NUM6");
+    print(NUM6);
+
 }
+

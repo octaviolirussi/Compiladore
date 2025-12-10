@@ -36,12 +36,24 @@ class CodeGenerator:
             # Generar nombre para VARIABLES DE USUARIO (ej: 'O:G', '2', '"hola"')
             # Generar nombre de etiqueta basado en la clave original
             # Reemplazar caracteres no válidos con '_'
-            label_base = str(original_key).replace(':', '_').replace('[', 'T_').replace(']', '').replace('.', '_').replace('"', '')
+            # Correccion para la notación científica en floats
+            label_base = str(original_key)
+            # 1. Reemplazar caracteres no válidos (incluyendo el punto decimal y los signos)
+            label_base = label_base.replace(':', '_').replace('[', 'T_').replace(']', '').replace('"', '')
+            label_base = label_base.replace('.', '_')
+            label_base = label_base.replace('+', 'P')  # P de Positivo
+            label_base = label_base.replace('-', 'N')  # N de Negativo
+            label_base = label_base.replace('F', 'E') # Normalizar la notación científica
+
+            # 2. Eliminar guiones bajos iniciales si la clave original era solo un punto
+            if label_base.startswith('_'):
+                label_base = label_base.lstrip('_')
+                
+            # 3. Asegurar que la etiqueta final comience con una letra.
+            if not label_base[0].isalpha():
+                label_base = 'C' + label_base # Anteponer 'C' de Constante si no empieza con letra (ej: V_.45 -> V_C45)
+
             label = f"V_{label_base.upper()}"
-            
-        # Si ya existe, añadir un sufijo numérico para garantizar unicidad
-        if label in self.data_section:
-            label = f"{label}_{len(self.data_section)}"
             
         self.mem_map[original_key] = label
         return label
@@ -68,8 +80,17 @@ class CodeGenerator:
                     initial_value = entry["Lexema"] if uso == "CONSTANTE" else "0"
                     self._add_data_entry(asm_label, "DD", initial_value, data_type) # DD = 32 bits (INT)
                 elif data_type == "FLOAT":
-                    initial_value = entry["Lexema"] if uso == "CONSTANTE" else "0.0"
-                    self._add_data_entry(asm_label, "DD", initial_value, data_type) # DD = 32 bits (FLOAT)
+                    if uso == "CONSTANTE":
+                        lexema = str(entry["Lexema"])
+                        # 1. Asegurar dígito inicial: Cambia '.45' a '0.45'
+                        if lexema.startswith('.'):
+                            lexema = '0' + lexema                        
+                        # 2. Reemplazar F por E si tu compilador usa F para notación científica
+                        lexema = lexema.replace('F', 'e') 
+                        initial_value = lexema
+                    else:
+                        initial_value = "0.0"
+                    self._add_data_entry(asm_label, "DD", initial_value, data_type)
                 elif data_type == "STRING":
                     value = entry["Lexema"]
                     self._add_data_entry(asm_label, "DB", f"{value}, 0", data_type)

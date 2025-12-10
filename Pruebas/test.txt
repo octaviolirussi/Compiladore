@@ -1,11 +1,13 @@
 INICIO%PROGRAMA{
     int O,K;
-    int I;
+    float I;
 
-    I = 0I;
+    I = 25I;
     O = 3I + 3I;
     K = 2I + O;
 
+    print("I:");
+    print(I);
     print("O:");
     print(O);
     print("K:");
@@ -19,8 +21,9 @@ INICIO%PROGRAMA{
         print(O);  
     }endif;
 
-    while (I < 2I) do {
+    while (I < 35I) do {
         print(I);
+        print("hola");
         I = I + 1I;
     };
   

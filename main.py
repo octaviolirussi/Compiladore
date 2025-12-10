@@ -20,7 +20,7 @@ parser = MyParser(symbol_Table,error)
 # ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
-file = "pruebas/test.txt"
+file = "pruebas/test_flotantes.txt"
 try:
     with open(file, "r", encoding="utf-8") as f:
         
