@@ -561,7 +561,6 @@ class MyParser(Parser):
 
         self.tercetos.nuevo("LABEL", None, None,lineno=p.lineno)
 
-        #genero label inicial
         index_first = self.tercetos.nuevo("LABEL", None, None,lineno=p.lineno)
         
         if self.tercetos.tercetos[etiqueta_condicion-1].operador == "CONV_I_F":
