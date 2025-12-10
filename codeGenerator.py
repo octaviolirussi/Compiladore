@@ -161,14 +161,13 @@ class CodeGenerator:
         # Si es una variable/constante/parámetro
         return self.mem_map.get(op)
 
-    ## Chequeos de Runtime
-
+    ## Chequeos de Runtime: overflow en sumas y división por cero ---------------
     def generate_addition(self, res_asm, op1_asm, op2_asm, result_type):
         """Genera código para la suma en 32 bits (INT) o en FLOAT (FPU)."""
         if result_type.upper() == 'INT':
             self.asm_code.append(f"  ; Suma INT 32 bits - Terceto {len(self.asm_code)}")
-            self.asm_code.append(f"  MOV EAX, dword ptr [{op1_asm}]")
-            self.asm_code.append(f"  ADD EAX, dword ptr [{op2_asm}]")
+            self.asm_code.append(f"  MOV EAX, dword ptr {op1_asm}")
+            self.asm_code.append(f"  ADD EAX, dword ptr {op2_asm}")
             self.asm_code.append(f"  JO ErrorOverflowInt")
             self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
         elif result_type.upper() == 'FLOAT':
@@ -186,7 +185,7 @@ class CodeGenerator:
             self.asm_code.append(f"  ; Resta INT 32 bits - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  MOV EAX, dword ptr [{op1_asm}]")
             self.asm_code.append(f"  SUB EAX, dword ptr [{op2_asm}]")
-            self.asm_code.append(f"  JO ErrorOverflowInt")
+            # self.asm_code.append(f"  JO ErrorOverflowInt")
             self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
         elif result_type.upper() == 'FLOAT':
             self.asm_code.append(f"  ; Resta FLOAT - Terceto {len(self.asm_code)}")
@@ -195,31 +194,29 @@ class CodeGenerator:
             self.asm_code.append(f"  FSTSW AX")
             self.asm_code.append(f"  FWAIT")
             self.asm_code.append(f"  TEST AX, 0004h")
-            self.asm_code.append(f"  JNZ ErrorOverflowFloat")
+            # self.asm_code.append(f"  JNZ ErrorOverflowFloat")
             self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
     
     def generate_multiplication(self, res_asm, op1_asm, op2_asm, result_type):
-
         if result_type.upper() == 'INT':
-            self.asm_code.append(f"  ; Multiplicación INT 32 bits - Terceto {len(self.asm_code)}")
+            self.asm_code.append(f"  ; Multiplicacion INT 32 bits - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  MOV EAX, dword ptr [{op1_asm}]")
-            # IMUL EAX, r/m32 --> EAX = EAX * r/m32 and OF/CF set on overflow
             self.asm_code.append(f"  IMUL EAX, dword ptr [{op2_asm}]")
-            self.asm_code.append(f"  JO ErrorOverflowInt")
+            # self.asm_code.append(f"  JO ErrorOverflowInt")
             self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
         elif result_type.upper() == 'FLOAT':
-            self.asm_code.append(f"  ; Multiplicación FLOAT - Terceto {len(self.asm_code)}")
+            self.asm_code.append(f"  ; Multiplicacion FLOAT - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
             self.asm_code.append(f"  FMUL dword ptr [{op2_asm}]")
             self.asm_code.append(f"  FSTSW AX")
             self.asm_code.append(f"  FWAIT")
             self.asm_code.append(f"  TEST AX, 0004h")
-            self.asm_code.append(f"  JNZ ErrorOverflowFloat")
+            # self.asm_code.append(f"  JNZ ErrorOverflowFloat")
             self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
 
     def generate_division(self, res_asm, op1_asm, op2_asm, result_type):
         if result_type.upper() == 'INT':
-            self.asm_code.append(f"  ; División INT 32 bits - Terceto {len(self.asm_code)}")
+            self.asm_code.append(f"  ; Division INT 32 bits - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  MOV ECX, dword ptr [{op2_asm}]")
             self.asm_code.append(f"  CMP ECX, 0")
             self.asm_code.append(f"  JE ErrorDVC")
@@ -228,7 +225,7 @@ class CodeGenerator:
             self.asm_code.append(f"  IDIV ECX")               # EAX = EDX:EAX / ECX
             self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
         elif result_type.upper() == 'FLOAT':
-            self.asm_code.append(f"  ; División FLOAT - Terceto {len(self.asm_code)}")
+            self.asm_code.append(f"  ; Division FLOAT - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  FLD dword ptr [{op2_asm}]")
             self.asm_code.append(f"  FTST")
             self.asm_code.append(f"  FWAIT")
@@ -256,13 +253,13 @@ class CodeGenerator:
             self.asm_code.append(f"    FLD dword ptr [{src_asm}]")
             self.asm_code.append(f"    FSTP dword ptr [{dest_asm}]")
         else: # STRING / fallback
-            self.asm_code.append(f"    ; Asignación de STRING/PUNTERO (copia simple de 32-bit)")
+            self.asm_code.append(f"    ; Asignacion de STRING/PUNTERO (copia simple de 32-bit)")
             self.asm_code.append(f"    MOV EAX, dword ptr [{src_asm}]")
             self.asm_code.append(f"    MOV dword ptr [{dest_asm}], EAX")
     
     # Comparaciones
     def generate_comparison(self, res_asm, op1_asm, op2_asm, operator, result_type):
-        self.asm_code.append(f" ; Comparación ({operator}) - Terceto {len(self.asm_code)}")
+        self.asm_code.append(f" ; Comparacion ({operator}) - Terceto {len(self.asm_code)}")
         self.asm_code.append(f"   MOV EAX, dword ptr [{op1_asm}]")
         self.asm_code.append(f"   CMP EAX, dword ptr [{op2_asm}]")
 
@@ -287,7 +284,7 @@ class CodeGenerator:
         
     def generate_print(self, op_to_print):
         """
-        Traduce el terceto PRINT a código ASM usando printf.
+        Traduce el terceto PRINT a codigo ASM usando printf.
         Soporta INT, FLOAT y STRING.
         """
         NEWLINE_LABEL = "NEWLINE"
@@ -324,7 +321,7 @@ class CodeGenerator:
     # ----------------------------------------------------------------------
 
     def generate_runtime_routines(self):
-        """Genera las rutinas de manejo de errores en tiempo de ejecución."""
+        """Genera las rutinas de manejo de errores en tiempo de ejecucion."""
         
         # Rutina de División por Cero
         self.asm_code.append(f"\nErrorDVC:")
@@ -385,15 +382,15 @@ class CodeGenerator:
         # Handlers de error
         output.append("\n; ----- HANDLERS DE ERROR -----")
         output.append("ErrorOverflowInt:")
-        output.append('    print "Error en tiempo de ejecución: Overflow en INT"')
+        output.append('    print "Error en tiempo de ejecucion: Overflow en INT"')
         output.append("    invoke ExitProcess, 1")
 
         output.append("ErrorOverflowFloat:")
-        output.append('    print "Error en tiempo de ejecución: Overflow en FLOAT"')
+        output.append('    print "Error en tiempo de ejecucion: Overflow en FLOAT"')
         output.append("    invoke ExitProcess, 1")
 
         output.append("ErrorDVC:")
-        output.append('    print "Error en tiempo de ejecución: División por Cero"')
+        output.append('    print "Error en tiempo de ejecucion: Division por Cero"')
         output.append("    invoke ExitProcess, 1")
 
         # Fin del programa

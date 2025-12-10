@@ -1,0 +1,39 @@
+INICIO%PROGRAMA{
+    int O,K;
+    float I;
+
+    int A;
+    A = 32767I * 32767I;
+    int B;
+    B = A * 2I;
+    int C;
+    C = B + B;
+    int D;
+    D = C + 3I;
+    print("B"); 
+    print(B);
+
+    I = 25I;
+    O = 3I + 3I;
+    K = 2I + O;
+
+    print("I:");
+    print(I);
+    print("K:");
+    print(K);
+
+    if (O >= K){
+        print("esMayor");
+        print(O);
+    }else{
+        print("esMenor");
+        print(O);  
+    }endif;
+
+    while (I < 35I) do {
+        print(I);
+        print("hola");
+        I = I + 1I;
+    };
+  
+}
