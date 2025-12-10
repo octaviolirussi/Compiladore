@@ -53,7 +53,7 @@ class MyLexer(Lexer):
         self.lineno += len(t.value)
 
     # #Ignora comentarios y cuenta lineas
-    @_(r'##(.|\n| )*?##')
+    @_(r'##(.|\s)*?##')
     def comments(self,t):
         self.lineno += t.value.count('\n')
         pass
