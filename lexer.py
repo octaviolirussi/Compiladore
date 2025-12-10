@@ -133,14 +133,14 @@ class MyLexer(Lexer):
 
         if numero != 0.0 and numero < MIN_FLOAT_POSITIVO:
             # Pongo el límite para que no corte la ejecución
-            msg = f"Error: Constante entera {numero} fuera de rango."
+            msg = f"Error: Constante flotante {numero} fuera de rango."
             self.error_manager.add(t.lineno, msg, source="lexer")
             t.value = MIN_FLOAT_POSITIVO
             self.symbol_table.add_token(str(t.value), "CONST_FLOAT") 
                 
         elif numero > MAX_FLOAT_POSITIVO:
             # Pongo el límite para que no corte la ejecución
-            msg = f"Error: Constante entera {numero} fuera de rango."
+            msg = f"Error: Constante flotante {numero} fuera de rango."
             self.error_manager.add(t.lineno, msg, source="lexer")
             t.value = MAX_FLOAT_POSITIVO   
             self.symbol_table.add_token(str(t.value), "CONST_FLOAT")   

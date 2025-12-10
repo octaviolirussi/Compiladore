@@ -155,11 +155,16 @@ class CodeGenerator:
         """Devuelve la etiqueta ASM para un operando (lexema o referencia de terceto [N])."""
         if op is None:
             return None
+        
+        # Convertir a cadena para la búsqueda, ya que las claves de las constantes suelen ser strings
+        op_key = str(op)
+
         # Si es una referencia de terceto [N]
-        if isinstance(op, str) and op.startswith('[') and op.endswith(']'):
-            return self.mem_map.get(op)
+        if op_key.startswith('[') and op_key.endswith(']'):
+            return self.mem_map.get(op_key)
+
         # Si es una variable/constante/parámetro
-        return self.mem_map.get(op)
+        return self.mem_map.get(op_key)
 
     ## Chequeos de Runtime: overflow en sumas y división por cero ---------------
     def generate_addition(self, res_asm, op1_asm, op2_asm, result_type):
@@ -170,14 +175,22 @@ class CodeGenerator:
             self.asm_code.append(f"  ADD EAX, dword ptr {op2_asm}")
             self.asm_code.append(f"  JO ErrorOverflowInt")
             self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
+        
         elif result_type.upper() == 'FLOAT':
             self.asm_code.append(f"  ; Suma FLOAT - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
             self.asm_code.append(f"  FADD dword ptr [{op2_asm}]")
-            self.asm_code.append(f"  FSTSW AX")
+                       
+            self.asm_code.append(f"  FSTSW AX") 
             self.asm_code.append(f"  FWAIT")
-            self.asm_code.append(f"  TEST AX, 0004h")
-            self.asm_code.append(f"  JNZ ErrorOverflowFloat")
+
+            self.asm_code.append(f"  AND AX, 0004h") 
+            
+            # 4. Saltamos si el bit 2 (OE) se activó (0004h != 0).
+            # Esto es lo mismo que TEST AX, 0004h, pero asegura que el valor se comprueba
+            # Vamos a usar CMP para poner la bandera ZF (Zero Flag) y luego JNZ
+            self.asm_code.append(f"  CMP AX, 0")
+            self.asm_code.append(f"  JNE ErrorOverflowFloat") # Saltar si AX NO ES CERO (es decir, si el bit 2 está activo)
             self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
 
     def generate_subtraction(self, res_asm, op1_asm, op2_asm, result_type):

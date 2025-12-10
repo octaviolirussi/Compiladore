@@ -39,7 +39,8 @@ class MyParser(Parser):
             
             entry = self.symbol_table.get_token(value_str)
             if entry:
-                return entry.get("data_type", None)
+                data_type = entry.get("data_type", None)
+                return data_type.upper() if data_type else None
         return None
     
     def verifica_return(self, ID, type, start_index, end_index):
@@ -820,8 +821,8 @@ class MyParser(Parser):
 
     @_('expr "+" expr')
     def expr(self, p):
-        type0 = self.get_type_of_value(p.expr0)
-        type1 = self.get_type_of_value(p.expr1)
+        type0 = self.get_type_of_value(p.expr0).upper()
+        type1 = self.get_type_of_value(p.expr1).upper()
 
         if type0 == 'FLOAT' or type1 == 'FLOAT':
             result_type = 'FLOAT'

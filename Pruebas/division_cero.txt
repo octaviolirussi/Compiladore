@@ -1,0 +1,38 @@
+INICIO%PROGRAMA{
+    int O,K;
+    float I;
+    
+
+
+    int X;
+    int Y;
+    Y = 0I;
+    X = 100I / Y; 
+    
+    print("X:");
+    print(X);
+
+
+
+    float F1;
+    float F2;
+    F2 = 0.0;
+    F1 = 50.0 / F2;
+    
+    print("F1:");
+    print(F1);
+    
+
+
+    int A;
+    int B;
+    int C, X;
+    A = 10I;
+    B = 5I;
+    C = A - A; // C = 0
+    X = B / C; // 5 / 0
+    
+    print("X:");
+    print(X); 
+    
+}

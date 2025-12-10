@@ -231,8 +231,7 @@ class SymbolTable:
         """
         coincidencias = [
             entry for entry in self.symbols.values()
-            if entry.get("Lexema", "").upper() == lexema.upper()
-        ]
+                if str(entry.get("Lexema", "")).upper() == lexema.upper()        ]
         if not coincidencias:
             return None
 
@@ -698,7 +697,6 @@ class SymbolTable:
                     )
 
                     if not existe:
-                        print("holis")
                         msg = f"ERROR: Identificador '{val}' no está declarado."
                         # self.error_manager.add(t.lineno, msg, source="Scope")
 
