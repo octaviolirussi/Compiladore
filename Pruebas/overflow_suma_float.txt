@@ -2,42 +2,29 @@ INICIO%PROGRAMA{
     int O,K;
     float I;
 
+
     I = 25I;
     O = 3I + 3I;
     K = 2I + O;
-
-    print("I:");
-    print(I);
-    print("K:");
-    print(K);
-
-    if (O >= K){
-        print("esMayor");
-        print(O);
-    }else{
-        print("esMenor");
-        print(O);  
-    }endif;
-
-
-    float A;
-    A = 1.17549435F-38;
     float B;
-    B = 3.40282347F+38;
+    B = 3.40282347F+38; 
+
+    float N;
+    N = 0.0 - B; 
+
     float C;
-    C = B + B;
-    print(B);
-    print(C);
-
-    print("A");
-    print(A);
-    print("B");
-    print(B);
-
+    C = N + N; 
+    
+    print("N:");
+    print(N); ## Debería imprimir el máximo negativo representable ##
+    print("C:");
+    print(C); ## Esta línea DEBERÍA activar el ErrorOverflowFloat ##
+    
+    
     while (I < 35I) do {
         print(I);
         print("hola");
         I = I + 1I;
     };
-  
+    
 }
