@@ -340,21 +340,18 @@ class CodeGenerator:
         self.asm_code.append(f"\nErrorDVC:")
         self.asm_code.append(f"\n{self.runtime_labels['DVC']}:") 
         self.asm_code.append(f"    PUSH {self.runtime_labels['DVC']}") 
-        # self.asm_code.append(f"  CALL imprimir_string")
         self.asm_code.append(f"    ADD ESP, 4")
         self.asm_code.append(f"    invoke ExitProcess, 0")
                 
         # Rutina de Overflow en Sumas INT
         self.asm_code.append(f"\nErrorOverflowInt:")
         self.asm_code.append(f"    PUSH {self.runtime_labels['OVF_INT']}")
-        # self.asm_code.append(f"  CALL imprimir_string")
         self.asm_code.append(f"    ADD ESP, 4")
         self.asm_code.append(f"    invoke ExitProcess, 0")
         
         # Rutina de Overflow en Sumas FLOAT
         self.asm_code.append(f"\nErrorOverflowFloat:")
         self.asm_code.append(f"    PUSH {self.runtime_labels['OVF_FLOAT']}")
-        # self.asm_code.append(f"  CALL imprimir_string")
         self.asm_code.append(f"    ADD ESP, 4")
         self.asm_code.append(f"    invoke ExitProcess, 0")
         
