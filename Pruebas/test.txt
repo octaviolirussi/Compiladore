@@ -8,17 +8,10 @@ INICIO%PROGRAMA{
     X = 1.5;
     Y = 2.F+1;     
 
-    int F1(int A){
+    int F1(int L){ 
+        print(A);
 
-        int P;
-        P=1I;
-
-        int F2(cv int B){
-            B =  2I + B;
-            return (B);
-        };
-        
-        A =  F2(6I->B);
+        L = L +2I;
 
         if (A<=15I)
             return(10I + 10I);
@@ -27,12 +20,7 @@ INICIO%PROGRAMA{
         endif;
     };
 
-    print(F1(B->A));
+    print(F1(B->L));
 
-    X = F1(B->A) + 2I;
-
-    print(X);
-
-    print(B);
 
 }

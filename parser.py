@@ -484,9 +484,17 @@ class MyParser(Parser):
             while op == '+' or op == '-' or op == '*' or op == '/' or op == 'CONV_I_F': 
                 i = i - 1
                 op = self.tercetos.tercetos[i].operador
+            while (self.tercetos.tercetos[i].operador == "FUNC"):
+                i = i - 1
             self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), i+1)
         else:
-            self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), p.statement_list[0] - 1)
+            j = p.statement_list[0] - 2
+            op = self.tercetos.tercetos[j].operador
+            while op == "FUNC":
+                j=j-1
+                op = self.tercetos.tercetos[j].operador
+            self.tercetos.mover_terceto(int(index_FUNC.strip('[]')), j+1)
+
 
         index_return = self.verifica_return(p.ID, p.type, p.statement_list[0], len(self.tercetos.tercetos)-1)
         if index_return is not None:
