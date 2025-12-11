@@ -8,11 +8,30 @@ INICIO%PROGRAMA{
     X = 1.5;
     Y = 2.F+1;     
 
-    int F1(cv int A){
-        A =  2I + A;
+    int F1(int A){
+
+        int P;
+        P=1I;
+
+        int F2(cv int B){
+            B =  2I + B;
+            return (B);
+        };
+        
+        A =  F2(6I->B);
+
+        if (A<=15I)
+            return(10I + 10I);
+        else
+            return(4I);
+        endif;
     };
 
-    B = F1(6I->A) + 2I;
+    print(F1(B->A));
+
+    X = F1(B->A) + 2I;
+
+    print(X);
 
     print(B);
 

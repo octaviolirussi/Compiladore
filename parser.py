@@ -472,6 +472,7 @@ class MyParser(Parser):
             return int(index_FUNC.strip('[]')) + 1
     
         index_FUNC = self.tercetos.nuevo('FUNC', p.ID, p.type) # Generar terceto FUNC (en la posición temporal)
+    
         
         # Generar terceto END_FUNC
         index_end = self.tercetos.nuevo('END_FUNC', p.ID, None)
@@ -669,142 +670,134 @@ class MyParser(Parser):
     #invocacion funcion #TODO corregir cuando se crea el terceto de copia de vuelta a los parametros CVR despues del call.
     @_('ID "(" arg_list ")"')
     def expr(self, p):
-        
-        func_id = p.ID # nombre de la función
-        args_reales = p.arg_list # lista de argumentos reales: [('arrow', expr, ID_formal), ...]
-        func_entry = self.symbol_table.get_token(func_id, uso_preferido="FUNCION") # buscar la función en la tabla de símbolos
-        
-        if not func_entry or func_entry.get("Uso") != "FUNCION": # función no declarada o no es funcion
+            
+        func_id = p.ID
+        args_reales = p.arg_list
+        func_entry = self.symbol_table.get_token(func_id, uso_preferido="FUNCION")
+            
+        if not func_entry or func_entry.get("Uso") != "FUNCION":
             msg = f"Error: La función '{func_id}' no está declarada."
             self.error_manager.add(p.lineno, msg, source="parser")
-
             self.errok()
             return None
-        
-        params_formales_def = func_entry.get("parameters", []) # lista de parámetros formales definidos
-        
-        formal_map = { # Diccionario que mapea ID_formal -> (Tipo, Modificador)
+            
+        params_formales_def = func_entry.get("parameters", [])
+
+        formal_map = {
             param[-1]: (param[-2].upper(), param[1].upper() if len(param) == 4 and param[1].lower() == "cv" else "CVR")
             for param in params_formales_def
         }
-   
-        if len(args_reales) != len(params_formales_def): # cantidad de argumentos no coincide
+
+        if len(args_reales) != len(params_formales_def):
             msg = f"Error: La función '{func_id}' espera {len(params_formales_def)} argumentos, pero se proporcionaron {len(args_reales)}."
             self.error_manager.add(p.lineno, msg, source="parser")
             self.errok()
             return None
-            
-        processed_args = [None] * len(params_formales_def) # lista almacenará los argumentos en el orden de definición formal.
-        arg_names_used = set() # conjunto para rastrear nombres de parámetros formales ya usados
-        
-        for arg_real in args_reales: # arg_real es ('arrow', expr, ID_formal)
-            # Extraemos el nombre del parámetro formal que se está especificando:
-            formal_name = arg_real[2] 
-            
-            # Lista para almacenar los argumentos CVR que necesitan reasignación después del CALL
-            cvr_results_to_copy = []
-            
-            if formal_name not in formal_map: 
-                msg = f"Error: El parámetro formal '{formal_name}' no existe en la definición de la función '{func_id}'."
+                
+        processed_args = [None] * len(params_formales_def)
+        arg_names_used = set()
+
+        # LISTA DE RETORNOS CVR (ACUMULA TODOS)
+        cvr_results_to_copy = []
+
+        for arg_real in args_reales:
+
+            formal_name = arg_real[2]
+                
+            if formal_name not in formal_map:
+                msg = f"Error: El parámetro formal '{formal_name}' no existe en la función '{func_id}'."
+                self.error_manager.add(p.lineno, msg, source="parser")
+                self.errok()
+                return None
+                    
+            if formal_name in arg_names_used:
+                msg = f"Error: El parámetro formal '{formal_name}' fue especificado múltiples veces en '{func_id}'."
                 self.error_manager.add(p.lineno, msg, source="parser")
                 self.errok()
                 return None
                 
-            if formal_name in arg_names_used:
-                msg = f"Error: El parámetro formal '{formal_name}' fue especificado múltiples veces en la llamada a '{func_id}'."
-                self.error_manager.add(p.lineno, msg, source="parser")
-                self.errok()
-                return None
-            
             arg_names_used.add(formal_name)
-            
-            # busca la posición 'i' del parámetro formal en la definición
-            i = next(j for j, param_def in enumerate(params_formales_def) if param_def[-1] == formal_name)
-            
+                
+            i = next(j for j, pdef in enumerate(params_formales_def) if pdef[-1] == formal_name)
+
             param_formal_type, param_modificador = formal_map.get(formal_name, (None, None))
             arg_real_value = arg_real[1]
-            arg_real_type = self.get_type_of_value(arg_real_value) # Tipo real del argumento
-            
-            final_arg_value = arg_real_value # valor final del argumento (posible conversión)
+            arg_real_type = self.get_type_of_value(arg_real_value)
+
+            final_arg_value = arg_real_value
 
             if arg_real_type is None:
-                msg = f"Error: No se pudo determinar el tipo del argumento para el parámetro formal '{formal_name}' en la función '{func_id}'."
+                msg = f"Error: No se pudo determinar el tipo del argumento para '{formal_name}'."
                 self.error_manager.add(p.lineno, msg, source="parser")
                 self.errok()
                 continue
 
-            # --- VALIDACIÓN SEMÁNTICA POR MODIFICADOR (Prioridad 1: CVR y Constantes/Temporales) ---
-            
+            # ---- CVR ----
             if param_modificador == 'CVR':
-                # Chequeo CVR (Debe ser variable/parámetro)
+
                 if self.is_constant_or_temp(arg_real_value):
-                    msg = (
-                        f"Error semántico: El parámetro real para '{formal_name}' es Copia Valor/Resultado (CVR) "
-                        f"y debe ser una variable (ID) o parámetro, no una constante o expresión."
-                    )
+                    msg = f"Error: '{formal_name}' es CVR y requiere variable, no constante o expresión."
                     self.error_manager.add(p.lineno, msg, source="parser")
                     self.errok()
                     return None
-                    
-                # Chequeo CVR (Debe ser tipo idéntico)
+                        
                 if arg_real_type.upper() != param_formal_type:
                     msg = (
-                        f"Error semántico: Parámetro '{formal_name}' (CVR) requiere tipo idéntico. "
-                        f"Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
+                        f"Error: CVR '{formal_name}' requiere tipo '{param_formal_type}', "
+                        f"pero recibió '{arg_real_type}'."
                     )
                     self.error_manager.add(p.lineno, msg, source="parser")
                     self.errok()
                     return None
 
-                # Preparar terceto de copia de regreso para CVR
-                if param_modificador == 'CVR':
-                    real_arg_name = str(arg_real_value)
-                    # Almacenamos (Parámetro Real, Parámetro Formal)
-                    cvr_results_to_copy.append({
-                        "real": arg_real_value  # Ej: B:G (que debe recibir el valor)
-                        # "formal": formal_name     # Ej: W (que contiene el valor al finalizar la función)
-                    })
-                    
-            # --- VALIDACIÓN CV (Prioridad 2: CV y Coerción/Tipos) ---
-            
+                # GUARDAR PARA CREAR CVR_RET DESPUÉS
+                # guardamos: parámetro formal y la variable real
+                full_formal_name = params_formales_def[i][-1]
+                cvr_results_to_copy.append({
+                    "formal": full_formal_name,
+                    "real": arg_real_value
+                })
+
+            # ---- CV ----
             elif param_modificador == 'CV':
-                # INT -> FLOAT
                 if arg_real_type.upper() == 'INT' and param_formal_type == 'FLOAT':
-                    new_temp = self.tercetos.nuevo('CONV_I_F', arg_real_value, None, 'FLOAT',lineno=p.lineno)
+                    new_temp = self.tercetos.nuevo(
+                        'CONV_I_F', arg_real_value, None, 'FLOAT', lineno=p.lineno
+                    )
                     final_arg_value = new_temp
-                
-                # Tipos incompatibles
                 elif arg_real_type.upper() != param_formal_type:
                     msg = (
-                        f"Error semántico: Tipo de argumento incompatible para el parámetro formal '{formal_name}' en la función '{func_id}'. "
-                        f"Se esperaba '{param_formal_type}', pero se recibió '{arg_real_type}'."
+                        f"Error: Argumento incompatible para '{formal_name}'. "
+                        f"Se esperaba '{param_formal_type}', pero llegó '{arg_real_type}'."
                     )
                     self.error_manager.add(p.lineno, msg, source="parser")
                     self.errok()
                     return None
-                 
-            # Almacenamos el argumento en la posición 'i' (ordenado según la definición formal)
+
             processed_args[i] = ('arrow', final_arg_value, formal_name)
 
+        # ---- GENERAR ARROWS ----
         for arg in processed_args:
-            if arg: 
-                op1_val = arg[1] # El ID/Terceto con el valor
-                op2_val = arg[2] # El ID del parámetro formal
-                self.tercetos.nuevo('->', op2_val, op1_val,lineno=p.lineno) 
-            
-        call_result_type = func_entry.get("data_type")
-        temp = self.tercetos.nuevo('CALL', func_id, len(processed_args), call_result_type.upper(),lineno=p.lineno)
-        
-        for assignment in cvr_results_to_copy:
-            # Reasignación: ASIGNAR (Formal) -> (Real)
-            # Operación: (=, Formal, Real)
-            # formal_param = assignment['formal'] 
-            real_arg = assignment['real'] 
+            if arg:
+                self.tercetos.nuevo('->', arg[2], arg[1], lineno=p.lineno)
 
-            self.tercetos.nuevo('CVR_RET', None, real_arg, lineno=p.lineno) 
-        
+        call_result_type = func_entry.get("data_type")
+        temp = self.tercetos.nuevo(
+            'CALL', func_id, len(processed_args), call_result_type.upper(), lineno=p.lineno
+        )
+
+        # ---- GENERAR TODOS LOS CVR_RET NECESARIOS ----
+        for assignment in cvr_results_to_copy:
+            self.tercetos.nuevo(
+                'CVR_RET',
+                assignment["real"],  # valor final que quedó en el ámbito de la función
+                assignment["formal"],    # variable original a escribir
+                lineno=p.lineno
+            )
+
         self.tercetos_antes = len(self.tercetos.tercetos)
-        return temp # índice del terceto CALL
+
+        return temp
 
     # Lista de argumentos
     @_('arg_list "," arg')
@@ -814,6 +807,10 @@ class MyParser(Parser):
     @_('arg')
     def arg_list(self, p):
         return [p.arg]
+    
+    @_('')
+    def arg_list(self, p):
+        return []
     
     # Argumento tipo expr -> ID
     @_('expr ARROW ID')

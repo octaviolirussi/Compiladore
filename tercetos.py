@@ -478,6 +478,23 @@ class GeneradorTercetos:
         for i, t in enumerate(self.tercetos):
             if t.operador == "LABEL":
                 t.operador = f"{t.operador}_{i}"
+            elif t.operador == "->":
+                t.operador = "="
+            elif t.operador == "CALL":
+                func = ":".join(t.op1.split(":")[1:])   
+                j = i + 1                               
+                terc = self.tercetos[j]
+
+                while terc.operador == "CVR_RET":
+                    var = terc.op2.split(":")[0]        
+
+                    terc.op2 = f"{var}:{func}"
+                    terc.operador = "="
+
+                    j += 1
+                    if j >= len(self.tercetos):
+                        break
+                    terc = self.tercetos[j]
     
     def correcciones(self):
         "Todas las correcciones del TP3 se ejecutan aca"

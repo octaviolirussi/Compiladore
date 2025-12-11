@@ -16,7 +16,7 @@ class CodeGenerator:
         self.mem_map = {}           # Mapeo de (Lexema:Scope o [T#]) -> Etiqueta ASM
         self.temp_vars_created = set() # Variables temporales ASM ya definidas
         self.runtime_labels = {}    # Etiquetas de rutinas de error (Ej: DVC, Overflow)
-        self.func_return_types = {}      # <<< AGREGA ESTO
+        self.func_return_types = {}      
         self.func_stack = []  
 
     # ----------------------------------------------------------------------
@@ -359,7 +359,6 @@ class CodeGenerator:
         self.asm_code.append(f"{func_name}:")
         self.asm_code.append("    PUSH EBP")
         self.asm_code.append("    MOV EBP, ESP")
-        self.asm_code.append("    ; --- espacio para variables  ---")
 
     def generate_function_end(self):
         self.asm_code.append("    MOV ESP, EBP")
