@@ -20,7 +20,7 @@ parser = MyParser(symbol_Table,error)
 # ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
-file = "pruebas/test.txt"
+file = "pruebas/overflow_suma_int.txt"
 try:
     with open(file, "r", encoding="utf-8") as f:
         
@@ -72,6 +72,15 @@ else:
     nombre_sin_extension, _ = os.path.splitext(nombre_base_con_extension)
     archivo_salida = nombre_sin_extension + ".asm"
  
+    CARPETA_SALIDA = "archivos_asm" 
+    if not os.path.exists(CARPETA_SALIDA):
+        os.makedirs(CARPETA_SALIDA)
+
+    nombre_base_con_extension = os.path.basename(file) 
+    nombre_sin_extension, _ = os.path.splitext(nombre_base_con_extension)
+
+    archivo_salida = os.path.join(CARPETA_SALIDA, nombre_sin_extension + ".asm")
+    
     try:
         with open(archivo_salida, "w", encoding="utf-8") as f_asm:
             f_asm.write(asm_code)

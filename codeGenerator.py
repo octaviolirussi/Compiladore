@@ -72,7 +72,7 @@ class CodeGenerator:
         self.runtime_labels["OVF_FLOAT"] = self._add_data_entry("OVF_FLOAT_MSG", "DB", "'Error en tiempo de ejecución: Overflow en suma de FLOAT.', 0", "STRING")
 
         self.runtime_labels["INF_CONST"] = self._add_data_entry("V_INF_CONST", "DD", "7F800000h", "HEX_FLOAT")
-        self.runtime_labels["NINF_CONST"] = self._add_data_entry("V_INF_CONST", "DD", "7F800000h", "HEX_FLOAT")
+        self.runtime_labels["NINF_CONST"] = self._add_data_entry("V_NINF_CONST", "DD", "7F800000h", "HEX_FLOAT")
 
         
         # Variables / constantes / parámetros
@@ -206,13 +206,24 @@ class CodeGenerator:
             
             # --- CHEQUEOS DE OVERFLOW ---
             
-            self.asm_code.append(f"  MOV EAX, dword ptr [{res_asm}]") 
+            # self.asm_code.append(f"  MOV EAX, dword ptr [{res_asm}]") 
             
-            self.asm_code.append(f"  CMP EAX, dword ptr [{INF_LABEL}]") 
-            self.asm_code.append(f"  JE ErrorOverflowFloat") 
+            # self.asm_code.append(f"  CMP EAX, dword ptr [{INF_LABEL}]") 
+            # self.asm_code.append(f"  JE ErrorOverflowFloat") 
             
-            self.asm_code.append(f" CMP EAX, dword ptr [{NINF_LABEL}]") 
-            self.asm_code.append(f"  JE ErrorOverflowFloat")
+            # self.asm_code.append(f"  CMP EAX, dword ptr [{NINF_LABEL}]") 
+            # self.asm_code.append(f"  JE ErrorOverflowFloat")
+            
+            self.asm_code.append(f"  ; Suma FLOAT - Deteccion de Underflow y Overflow (Bandera)")
+            
+            self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
+            self.asm_code.append(f"  FADD dword ptr [{op2_asm}]")
+            
+            self.asm_code.append(f"  FSTSW AX")
+            self.asm_code.append(f"  FWAIT")
+            self.asm_code.append(f"  TEST AX, 0008h")  # Chequea el bit de excepción de Overflow (0008h)
+            self.asm_code.append(f"  JNZ ErrorOverflowFloat") # Salta si Overflow detectado
+            self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
             pass
 
     def generate_subtraction(self, res_asm, op1_asm, op2_asm, result_type):
