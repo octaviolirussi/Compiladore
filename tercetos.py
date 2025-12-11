@@ -275,6 +275,7 @@ class GeneradorTercetos:
                                 break  # corta también el while
                             
                             scope.pop()  # elimina último scope y sigue buscando
+        
             
         for i, t in enumerate(self.tercetos):
             "Verifico si existen variables no declaradas"
@@ -307,6 +308,9 @@ class GeneradorTercetos:
                     s = str(operand)
 
                     if self.es_float_o_punto(s):
+                        continue
+
+                    if t.operador == "CVR_RET":
                         continue
 
                     # En este punto, si es str, lo considerás un IDENTIFICADOR (variable o parámetro)

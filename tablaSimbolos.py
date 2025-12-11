@@ -526,6 +526,9 @@ class SymbolTable:
 
             for operand in [t.op1, t.op2]:
 
+                if t.operador == "CVR_RET":
+                        continue
+
                 lexema = operand
                 if lexema not in lexemas_validos:
                     continue  # ignorar literales, constantes, etc.
@@ -585,6 +588,9 @@ class SymbolTable:
 
             # --- Ignorar tercetos con '->' ---
             if op == "->":
+                continue
+
+            if op == "CVR_RET":
                 continue
 
             # --- Declaración de función ---

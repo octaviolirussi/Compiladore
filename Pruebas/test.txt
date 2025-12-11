@@ -9,9 +9,12 @@ INICIO%PROGRAMA{
     Y = 2.F+1;     
 
     int F1(int L){ 
-        print(A);
-
-        L = L +2I;
+        int F2(cv int B){
+            B =  2I + B;
+            return (B);
+        };
+        
+        L =  F2(6I->B);
 
         if (A<=15I)
             return(10I + 10I);
@@ -22,5 +25,10 @@ INICIO%PROGRAMA{
 
     print(F1(B->L));
 
+    X = F1(B->L) + 2I;
+
+    print(X);
+
+    print(B);
 
 }
