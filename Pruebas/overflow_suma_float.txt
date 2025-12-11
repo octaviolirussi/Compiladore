@@ -2,7 +2,6 @@ INICIO%PROGRAMA{
     int O,K;
     float I;
 
-
     I = 25I;
     O = 3I + 3I;
     K = 2I + O;

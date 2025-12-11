@@ -3,7 +3,7 @@ INICIO%PROGRAMA{
     float I;
     
 
-
+##
     int X;
     int Y;
     Y = 0I;
@@ -11,40 +11,41 @@ INICIO%PROGRAMA{
     
     print("X:");
     print(X);
+##
 
-
-
-    float F1;
-    float F2;
-    F2 = 0.0;
-    F1 = 50.0 / F2;
+##
+    float X;
+    float Y;
+    Y = 0.0;
+    X = 50.0 / Y;
     
-    print("F1:");
-    print(F1);
+    print("X:");
+    print(X);
     
-
-
+##
+##
     int A;
     int B;
     int C, X;
     A = 10I;
     B = 5I;
-    C = A - A; // C = 0
-    X = B / C; // 5 / 0
+    C = A - A; 
+    X = B / C;
     
     print("X:");
     print(X); 
-    
-
+   
+##
 
     int Z;
-    float W;
+    float W, A;
+
     Z = 0I;
     W = Z;
     
-    F1 = 1.0 / W;
+    A = 1.0 / W;
     
-    print("F1:");
-    print(F1);    
+    print("A:");
+    print(A);    
 
 }

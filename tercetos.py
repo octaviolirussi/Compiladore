@@ -500,6 +500,71 @@ class GeneradorTercetos:
                         break
                     terc = self.tercetos[j]
     
+    def coersion_types(self):
+        inserciones = []   # ← guardamos aquí (pos, terceto_nuevo)
+
+        original = copy.copy(self.tercetos)
+
+        for i, t in enumerate(self.tercetos):
+            if t.operador not in ("+", "-", "*", "/" , "<" , ">" , "<=", ">=", "==", "!="):
+                continue
+
+            op1 = t.op1
+            op2 = t.op2
+
+            #--- Obtener tipos ---
+            op1_type = None
+            op2_type = None
+
+            # Si son referencias a tercetos
+            if op1.startswith("[") and op1.endswith("]"):
+                idx = int(op1[1:-1])
+                op1_type = self.tercetos[idx].result_type
+            if op2.startswith("[") and op2.endswith("]"):
+                idx = int(op2[1:-1])
+                op2_type = self.tercetos[idx].result_type
+
+            # Si son símbolos
+            for entry in self.symbol_table.symbols.values():
+                if op1 == entry["Lexema"]:
+                    op1_type = entry["data_type"]
+                if op2 == entry["Lexema"]:
+                    op2_type = entry["data_type"]
+
+            # Si todavía no se obtuvieron tipos, saltamos
+            if op1_type is None or op2_type is None:
+                continue
+
+            #--- Conversiones ---
+            if str(op1_type).upper() == 'FLOAT' and str(op2_type).upper() == 'INT':
+                # insertar DESPUÉS del terceto actual
+                nuevo = Terceto('CONV_I_F', op2, None, 'FLOAT')
+                inserciones.append((i, nuevo))
+
+            if str(op1_type).upper() == 'INT' and str(op2_type).upper() == 'FLOAT':
+                # insertar ANTES del terceto actual
+                nuevo = Terceto('CONV_I_F', op1, None, 'FLOAT')
+                inserciones.append((i, nuevo))
+
+        #--- Aplicar inserciones en orden ---
+        # Importante: insertar de atrás hacia adelante
+        for pos, terceto_nuevo in reversed(inserciones):
+            self.tercetos.insert(pos, terceto_nuevo)
+
+        self.actualizar_referencias(original,self.tercetos)
+
+        for i, t in enumerate(self.tercetos):
+            if t.operador == "CONV_I_F":
+                if not (t.op1.startswith("[") and t.op1.endswith("]")):
+                    if self.tercetos[i+1].op1 == t.op1:
+                        self.tercetos[i+1].op1 = f"[{i}]"
+                    elif self.tercetos[i+1].op2 == t.op1:
+                        self.tercetos[i+1].op2 = f"[{i}]"
+                
+                if (t.op1.startswith("[") and t.op1.endswith("]")):
+                    if self.tercetos[i+1].op1 == t.op1:
+                        self.tercetos[i+1].op1 = f"[{i}]"
+    
     def correcciones(self):
         "Todas las correcciones del TP3 se ejecutan aca"
         self.actualizar_scope()
@@ -507,6 +572,7 @@ class GeneradorTercetos:
         self.eliminar_declaraciones()
         self.mover_funciones()
         self.generar_label()
+        self.coersion_types()
         self.symbol_table.agrega_returns(self.tercetos)
         self.symbol_table.update_returns_values(self.tercetos)
         

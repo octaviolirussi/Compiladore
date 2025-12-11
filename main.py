@@ -20,7 +20,7 @@ parser = MyParser(symbol_Table,error)
 # ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
-file = "pruebas/test.txt"
+file = "pruebas/overflow_suma_float.txt"
 try:
     with open(file, "r", encoding="utf-8") as f:
         
@@ -38,13 +38,12 @@ except FileNotFoundError:
 symbol_Table.eliminar(parser.tercetos.tercetos)
 symbol_Table.correccion_scope(parser.tercetos.tercetos)
 parser.tercetos.correcciones()
-parser.tercetos.mostrar()
 
 
 if error.has_errors():
     print("\nSe encontraron ERRORES. El proceso se detiene.")
     print(str(error))
-    #sys.exit(1)
+    sys.exit(1)
 else:
     warnings = error.get_warnings()
     if warnings:
@@ -58,7 +57,7 @@ else:
     else:
         print("\nAnálisis completado sin errores ni advertencias. Continuando con la generación de código/tercetos.")
         
-    #parser.tercetos.mostrar()
+    parser.tercetos.mostrar()
 
     code_gen = CodeGenerator(symbol_Table, parser.tercetos, error)
     
