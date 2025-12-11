@@ -827,141 +827,90 @@ class MyParser(Parser):
     
     # ===================================== EXPRESIONES =================================================
 
-    def coercion_types(self, op0, op1, lineno):
-        """
-        Realiza la coerción de tipos (INT -> FLOAT) para operaciones binarias.
-        Retorna: (final_op0, final_op1, result_type)
-        """
-        type0 = self.get_type_of_value(op0)
-        type1 = self.get_type_of_value(op1)
-
-        final_op0 = op0
-        final_op1 = op1
-        result_type = None
-
-        if type0 == 'FLOAT' and type1 == 'INT':
-        # Conversión: INT (op1) -> FLOAT. GUARDAR LA REFERENCIA [T#]
-            final_op1 = self.tercetos.nuevo('CONV_I_F', op1, None, 'FLOAT', lineno=lineno)
-            
-            result_type = 'FLOAT'
-
-        elif type0 == 'INT' and type1 == 'FLOAT':
-            # Conversión: INT (op0) -> FLOAT. GUARDAR LA REFERENCIA [T#]
-            final_op0 = self.tercetos.nuevo('CONV_I_F', op0, None, 'FLOAT', lineno=lineno)
-            
-            result_type = 'FLOAT'
-
-        elif type0 == 'FLOAT' and type1 == 'FLOAT':
-            result_type = 'FLOAT'
-
-        elif type0 == 'INT' and type1 == 'INT':
-            result_type = 'INT'
-
-        else:
-            # Error de tipos incompatibles (ej. si get_type_of_value devuelve None)
-            self.error_manager.add(
-                lineno, 
-                f"Error semántico: Tipos incompatibles ({type0} y {type1}) en la expresión.", 
-                source="parser"
-            )
-            return None, None, None # Devuelve None si hay error
-
-        return final_op0, final_op1, result_type
+    
     
     @_('expr "+" expr')
     def expr(self, p):
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        if result_type is None:
-            return None
-        # Usar final_op0 y final_op1
-        temp = self.tercetos.nuevo('+', final_op0, final_op1, result_type, lineno=p.lineno)
-        return temp
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+
+        temp = self.tercetos.nuevo('+', p.expr0, p.expr1, result_type,lineno=p.lineno)
+        return temp 
 
     @_('expr "-" expr')
     def expr(self, p):
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        if result_type is None:
-            return None
-        # Usar final_op0 y final_op1
-        temp = self.tercetos.nuevo('-', final_op0, final_op1, result_type, lineno=p.lineno) 
-        return temp
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+
+        temp = self.tercetos.nuevo('-', p.expr0, p.expr1, result_type,lineno=p.lineno)
+        return temp 
 
     @_('expr "*" expr')
     def expr(self, p):
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        if result_type is None:
-            return None
-        # Usar final_op0 y final_op1
-        temp = self.tercetos.nuevo('*', final_op0, final_op1, result_type, lineno=p.lineno)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+
+        temp = self.tercetos.nuevo('*', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
 
     @_('expr "/" expr')
     def expr(self, p):
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        if result_type is None:
-            return None
-        # Usar final_op0 y final_op1
-        temp = self.tercetos.nuevo('/', final_op0, final_op1, result_type, lineno=p.lineno)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+
+        temp = self.tercetos.nuevo('/', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
     
     @_('expr ">" expr')
     def expr(self, p):
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
-        if result_type is None:
-            return None
-        
-        temp = self.tercetos.nuevo('>', final_op0, final_op1, result_type, lineno=p.lineno)
+        # El resultado de una comparación es siempre booleano, representado como INT (1/0)
+        result_type = 'INT' 
+        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
 
     @_('expr "<" expr')
     def expr(self, p):
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
-        if result_type is None:
-            return None
-        
-        temp = self.tercetos.nuevo('<', final_op0, final_op1, result_type, lineno=p.lineno)
+        temp = self.tercetos.nuevo('<', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr GE expr') # >=
     def expr(self, p):  
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
-        if result_type is None:
-            return None
-        
-        temp = self.tercetos.nuevo('>=', final_op0, final_op1, result_type, lineno=p.lineno)
+        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr LE expr') # <=
-    def expr(self, p):
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
-        if result_type is None:
-            return None
-         
-        temp = self.tercetos.nuevo('<=', final_op0, final_op1, result_type, lineno=p.lineno)
+    def expr(self, p): 
+        temp = self.tercetos.nuevo('<=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr EQ expr')# ==
     def expr(self, p): 
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
-        if result_type is None:
-            return None
-        
-        temp = self.tercetos.nuevo('==', final_op0, final_op1, result_type, lineno=p.lineno)
+        temp = self.tercetos.nuevo('==', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
     
     @_('expr NE expr') # !=
     def expr(self, p): 
-        final_op0, final_op1, result_type = self.coercion_types(p.expr0, p.expr1, p.lineno)
-        
-        if result_type is None:
-            return None
-        
-        temp = self.tercetos.nuevo('!=', final_op0, final_op1, result_type, lineno=p.lineno)
+        temp = self.tercetos.nuevo('!=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
         return temp
 
     #================================= Tipos =================================================================================================

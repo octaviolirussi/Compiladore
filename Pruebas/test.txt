@@ -14,7 +14,7 @@ INICIO%PROGRAMA{
             return (B);
         };
         
-        L =  F2(6I->B);
+        L =  2I;
 
         if (A<=15I)
             return(10I + 10I);

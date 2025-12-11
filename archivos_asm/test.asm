@@ -15,7 +15,6 @@ V_C3 DD 3 ; INT
 V_C1_5 DD 1.5 ; FLOAT
 V_C2_EP1 DD 2.e+1 ; FLOAT
 V_B_G_F1_F2 DD 0 ; INT
-V_C6 DD 6 ; INT
 V_C15 DD 15 ; INT
 V_C10 DD 10 ; INT
 V_C4 DD 4 ; INT
@@ -60,8 +59,6 @@ V_A_30 DD 0 ; INT
 V_A_31 DD 0 ; INT
 V_A_32 DD 0 ; INT
 V_A_33 DD 0 ; INT
-V_A_34 DD 0 ; INT
-V_A_35 DD 0 ; INT
 NEWLINE DB 13,10,0 ; STRING
 V_TMP_DOUBLE DQ 0.0 ; FLOAT64
 HELLO_MSG DB "El programa se ejecuto correctamente.",0
@@ -127,68 +124,62 @@ F1_G_F1:
     PUSH EBP
     MOV EBP, ESP
 LABEL_19:
-    MOV EAX, dword ptr [V_C6]
-    MOV dword ptr [V_B_G_F1_F2], EAX
-LABEL_20:
-    CALL F2_G_F1_F2
-    MOV dword ptr [V_A_20], EAX
-LABEL_21:
-    MOV EAX, dword ptr [V_A_20]
+    MOV EAX, dword ptr [V_C2]
     MOV dword ptr [V_L_G_F1], EAX
-LABEL_22:
- ; Comparacion (<=) - Terceto 68
+LABEL_20:
+ ; Comparacion (<=) - Terceto 62
    MOV EAX, dword ptr [V_A_G]
    CMP EAX, dword ptr [V_C15]
     SETLE AL
     MOVZX EAX, AL
-    MOV dword ptr [V_A_22], EAX
-LABEL_23:
-    CMP dword ptr [V_A_22], 0
-    JE LABEL_27
-LABEL_24:
-  ; Suma INT 32 bits - Terceto 78
+    MOV dword ptr [V_A_20], EAX
+LABEL_21:
+    CMP dword ptr [V_A_20], 0
+    JE LABEL_25
+LABEL_22:
+  ; Suma INT 32 bits - Terceto 72
   MOV EAX, dword ptr V_C10
   ADD EAX, dword ptr V_C10
   JO ErrorOverflowInt
-  MOV dword ptr [V_A_24], EAX
-LABEL_25:
-    MOV EAX, dword ptr [V_A_24]
+  MOV dword ptr [V_A_22], EAX
+LABEL_23:
+    MOV EAX, dword ptr [V_A_22]
     MOV ESP, EBP
     POP EBP
     RET
+LABEL_24:
+JMP LABEL_27
+LABEL_25:
 LABEL_26:
-JMP LABEL_29
-LABEL_27:
-LABEL_28:
     MOV EAX, dword ptr [V_C4]
     MOV ESP, EBP
     POP EBP
     RET
-LABEL_29:
-LABEL_30:
+LABEL_27:
+LABEL_28:
     MOV ESP, EBP
     POP EBP
     RET
-LABEL_31:
+LABEL_29:
 
 F2_G_F1_F2:
     PUSH EBP
     MOV EBP, ESP
-LABEL_32:
-  ; Suma INT 32 bits - Terceto 107
+LABEL_30:
+  ; Suma INT 32 bits - Terceto 101
   MOV EAX, dword ptr V_C2
   ADD EAX, dword ptr V_B_G_F1_F2
   JO ErrorOverflowInt
-  MOV dword ptr [V_A_32], EAX
-LABEL_33:
-    MOV EAX, dword ptr [V_A_32]
+  MOV dword ptr [V_A_30], EAX
+LABEL_31:
+    MOV EAX, dword ptr [V_A_30]
     MOV dword ptr [V_B_G_F1_F2], EAX
-LABEL_34:
+LABEL_32:
     MOV EAX, dword ptr [V_B_G_F1_F2]
     MOV ESP, EBP
     POP EBP
     RET
-LABEL_35:
+LABEL_33:
     MOV ESP, EBP
     POP EBP
     RET
