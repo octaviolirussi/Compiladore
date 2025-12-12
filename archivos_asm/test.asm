@@ -14,12 +14,15 @@ V_NINF_CONST DD 7F800000h ; HEX_FLOAT
 V_C3 DD 3 ; INT
 V_C1_5 DD 1.5 ; FLOAT
 V_C2_EP1 DD 2.e+1 ; FLOAT
+V_J_G_F1_F2_F3 DD 0 ; INT
 V_B_G_F1_F2 DD 0 ; INT
+V_C6 DD 6 ; INT
 V_C15 DD 15 ; INT
-V_C10 DD 10 ; INT
 V_C4 DD 4 ; INT
 V_L_G_F1 DD 0 ; INT
 V_C2 DD 2 ; INT
+V_C10 DD 10 ; INT
+V_C1 DD 1 ; INT
 V_A_G DD 0 ; INT
 V_B_G DD 0 ; INT
 V_C_G DD 0 ; INT
@@ -59,6 +62,25 @@ V_A_30 DD 0 ; INT
 V_A_31 DD 0 ; INT
 V_A_32 DD 0 ; INT
 V_A_33 DD 0 ; INT
+V_A_34 DD 0 ; INT
+V_A_35 DD 0 ; INT
+V_A_36 DD 0 ; INT
+V_A_37 DD 0 ; INT
+V_A_38 DD 0 ; INT
+V_A_39 DD 0 ; INT
+V_A_40 DD 0 ; INT
+V_A_41 DD 0 ; INT
+V_A_42 DD 0 ; INT
+V_A_43 DD 0 ; INT
+V_A_44 DD 0 ; INT
+V_A_45 DD 0 ; INT
+V_A_46 DD 0 ; INT
+V_A_47 DD 0 ; INT
+V_A_48 DD 0 ; INT
+V_A_49 DD 0 ; INT
+V_A_50 DD 0 ; INT
+V_A_51 DD 0 ; INT
+V_A_52 DD 0 ; INT
 NEWLINE DB 13,10,0 ; STRING
 V_TMP_DOUBLE DQ 0.0 ; FLOAT64
 HELLO_MSG DB "El programa se ejecuto correctamente.",0
@@ -112,74 +134,140 @@ LABEL_14:
     FLD dword ptr [V_A_13]
     FSTP dword ptr [V_X_G]
 LABEL_15:
+LABEL_16:
+ ; Comparacion (<) - Terceto 48
+   MOV EAX, dword ptr [V_B_G]
+   CMP EAX, dword ptr [V_C10]
+    SETL AL
+    MOVZX EAX, AL
+    MOV dword ptr [V_A_16], EAX
+LABEL_17:
+    CMP dword ptr [V_A_16], 0
+    JE LABEL_22
+LABEL_18:
+    invoke printf, cfm$("%d\n"), dword ptr [V_B_G]
+LABEL_19:
+  ; Suma INT 32 bits - Terceto 60
+  MOV EAX, dword ptr V_B_G
+  ADD EAX, dword ptr V_C1
+  JO ErrorOverflowInt
+  MOV dword ptr [V_A_19], EAX
+LABEL_20:
+    MOV EAX, dword ptr [V_A_19]
+    MOV dword ptr [V_B_G], EAX
+LABEL_21:
+JMP LABEL_15
+LABEL_22:
+LABEL_23:
     FLD dword ptr [V_X_G]
     FSTP qword ptr [V_TMP_DOUBLE]
     invoke printf, cfm$("%f\n"), [V_TMP_DOUBLE]
-LABEL_16:
+LABEL_24:
     invoke printf, cfm$("%d\n"), dword ptr [V_B_G]
-LABEL_17:
-LABEL_18:
+LABEL_25:
+LABEL_26:
 
 F1_G_F1:
     PUSH EBP
     MOV EBP, ESP
-LABEL_19:
-    MOV EAX, dword ptr [V_C2]
+LABEL_27:
+    MOV EAX, dword ptr [V_C6]
+    MOV dword ptr [V_B_G_F1_F2], EAX
+LABEL_28:
+    CALL F2_G_F1_F2
+    MOV dword ptr [V_A_28], EAX
+LABEL_29:
+    MOV EAX, dword ptr [V_A_28]
     MOV dword ptr [V_L_G_F1], EAX
-LABEL_20:
- ; Comparacion (<=) - Terceto 62
-   MOV EAX, dword ptr [V_A_G]
+LABEL_30:
+ ; Comparacion (<=) - Terceto 93
+   MOV EAX, dword ptr [V_L_G_F1]
    CMP EAX, dword ptr [V_C15]
     SETLE AL
     MOVZX EAX, AL
-    MOV dword ptr [V_A_20], EAX
-LABEL_21:
-    CMP dword ptr [V_A_20], 0
-    JE LABEL_25
-LABEL_22:
-  ; Suma INT 32 bits - Terceto 72
+    MOV dword ptr [V_A_30], EAX
+LABEL_31:
+    CMP dword ptr [V_A_30], 0
+    JE LABEL_35
+LABEL_32:
+  ; Suma INT 32 bits - Terceto 103
   MOV EAX, dword ptr V_C10
   ADD EAX, dword ptr V_C10
   JO ErrorOverflowInt
-  MOV dword ptr [V_A_22], EAX
-LABEL_23:
-    MOV EAX, dword ptr [V_A_22]
+  MOV dword ptr [V_A_32], EAX
+LABEL_33:
+    MOV EAX, dword ptr [V_A_32]
     MOV ESP, EBP
     POP EBP
     RET
-LABEL_24:
-JMP LABEL_27
-LABEL_25:
-LABEL_26:
+LABEL_34:
+JMP LABEL_37
+LABEL_35:
+LABEL_36:
     MOV EAX, dword ptr [V_C4]
     MOV ESP, EBP
     POP EBP
     RET
-LABEL_27:
-LABEL_28:
+LABEL_37:
+LABEL_38:
     MOV ESP, EBP
     POP EBP
     RET
-LABEL_29:
+LABEL_39:
 
 F2_G_F1_F2:
     PUSH EBP
     MOV EBP, ESP
-LABEL_30:
-  ; Suma INT 32 bits - Terceto 101
+LABEL_40:
+    MOV EAX, dword ptr [V_C1]
+    MOV dword ptr [V_J_G_F1_F2_F3], EAX
+LABEL_41:
+    CALL F3_G_F1_F2_F3
+    MOV dword ptr [V_A_41], EAX
+LABEL_42:
+    MOV EAX, dword ptr [V_A_41]
+    MOV dword ptr [V_B_G_F1_F2], EAX
+LABEL_43:
+  ; Suma INT 32 bits - Terceto 141
   MOV EAX, dword ptr V_C2
   ADD EAX, dword ptr V_B_G_F1_F2
   JO ErrorOverflowInt
-  MOV dword ptr [V_A_30], EAX
-LABEL_31:
-    MOV EAX, dword ptr [V_A_30]
+  MOV dword ptr [V_A_43], EAX
+LABEL_44:
+    MOV EAX, dword ptr [V_A_43]
     MOV dword ptr [V_B_G_F1_F2], EAX
-LABEL_32:
+LABEL_45:
     MOV EAX, dword ptr [V_B_G_F1_F2]
     MOV ESP, EBP
     POP EBP
     RET
-LABEL_33:
+LABEL_46:
+    MOV ESP, EBP
+    POP EBP
+    RET
+LABEL_47:
+
+F3_G_F1_F2_F3:
+    PUSH EBP
+    MOV EBP, ESP
+LABEL_48:
+    MOV EAX, dword ptr [V_C2]
+    MOV dword ptr [V_J_G_F1_F2_F3], EAX
+LABEL_49:
+  ; Suma INT 32 bits - Terceto 167
+  MOV EAX, dword ptr V_A_G
+  ADD EAX, dword ptr V_C2
+  JO ErrorOverflowInt
+  MOV dword ptr [V_A_49], EAX
+LABEL_50:
+    MOV EAX, dword ptr [V_A_49]
+    MOV dword ptr [V_J_G_F1_F2_F3], EAX
+LABEL_51:
+    MOV EAX, dword ptr [V_J_G_F1_F2_F3]
+    MOV ESP, EBP
+    POP EBP
+    RET
+LABEL_52:
     MOV ESP, EBP
     POP EBP
     RET

@@ -1,0 +1,35 @@
+INICIO%PROGRAMA{
+    int A,B,C;
+    float X,Y;
+
+    A = 2I;
+    B = 3I;
+
+    X = 1.5;
+    Y = 2.F+1;     
+
+    int F1(int L, int K){ 
+        int I;
+        I = 1I;
+        L = 0I;
+        K = 0I;
+        while (I < 10I) do {
+            L = L + I;
+            K = K - I;
+            I = I + 1I;
+        };
+        return (10I);
+    };
+
+    C = F1(A->L,B->K);
+
+    print(A);
+    print(B);
+    print(C);
+
+    if (A + B == 0I){
+        print("Da cero: ");
+        print(A+B);
+    }endif;
+
+}

@@ -72,16 +72,6 @@ class SymbolTable:
 
     def get_return_var_name(self, func_name):
         return f"ret_{func_name}"
-    
-    # def update_return_value(self, lexema_base_retorno, value):
-    #     """Busca y actualiza la entrada con Uso='RETORNO'."""
-    #     coincidencias = self.find_by_lexema(lexema_base_retorno)
-        
-    #     for entry in coincidencias:
-    #         if entry.get("Uso") == "RETORNO":
-    #             entry["Valor_Retorno"] = str(value) 
-    #             return True
-    #     return False
 
     def agrega_returns(self, lista_tercetos):
         '''crea una variable en la TS esperando el retorno de la función (Ej: ret_F2)'''
@@ -132,7 +122,6 @@ class SymbolTable:
                     nombre_funcion_actual = funciones_scope_stack[-1]
                     lexema_base_retorno = self.get_return_var_name(nombre_funcion_actual) # "ret_F2"
                     
-                    # self.update_return_value(lexema_base_retorno, terceto.op1) 
                 else:
                     pass
                     
