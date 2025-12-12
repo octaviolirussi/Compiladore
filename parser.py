@@ -839,7 +839,7 @@ class MyParser(Parser):
         else:
             result_type = 'INT'
 
-        temp = self.tercetos.nuevo('+', p.expr0, p.expr1, result_type,lineno=p.lineno)
+        temp = self.tercetos.nuevo('+', p.expr0, p.expr1, result_type, lineno=p.lineno)
         return temp 
 
     @_('expr "-" expr')

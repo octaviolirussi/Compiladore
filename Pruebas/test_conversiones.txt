@@ -1,0 +1,9 @@
+INICIO%PROGRAMA{
+    int A,B,C;
+    float X,Y;
+
+    X = 2I;
+    Y = 2I + 3I;
+    X = 2I + 3.0;
+    X = 2I * 3.0 + 4I;
+}

@@ -1,50 +1,42 @@
 INICIO%PROGRAMA{
-float O;
-int Y;
+    float O;
+    int Y;
 
-Y = 2I + 2I;
+    Y = 2I + 2I;
 
+    float F2(int J, int B) {
+        float L1; 
+        L1 = 2I + 0I;
 
-float F2(int J,int K,int B){
-            float L1;
-            L1 = 2I + 0I;
-            int F3(float D){
-                D=2I+3I;
-                return(D);
-                float F8(cv float A){
-                    int Y;
-                    A=2I+L1;
-                    L1=1.234F+5;
-                    if (A > 2I){
-                        A = 2I + 2I;
-                        print("Adios");
-                    }else{
-                        Y = 2I;
-                        Y = 2I + 0I;
-                    }endif;
-                    L1=2.2;
-                    print("Hola");
-                    return(A);
-                };
-                D = F8(2I->A);
-            };
+        int F3(float D) {
+            D = 5I;
+            int Y; 
+            float A;
             
-            return(B);
+            A = 2I + L1; 
+            
+            L1 = 1.234 + 5I;
+            
+            if (A > 2I) { 
+                print (A);
+                A = 2I + 2I; 
+                print (A);
+                print("Adios");
+            } else {
+                Y = 2I;
+                Y = 2I + 0I;
+                print (Y);
+            } endif;
+            
+            L1 = 2.2; 
+            print("Hola");
+            
+            return(10I);
         };
+        
+        J = F3(O -> D);
+        print (J);
 
-    O = 2I+2I;
-
-    int F3(int U){
-        int H,D;
-        D=2I;
-        while(U>3I) do {
-            U=3I+Y;
-            Y=2I;
-        };
-        U=2I;
-        return(U);
+        return(B);
     };
-
-    O = F3(Y->U);
-
 }
