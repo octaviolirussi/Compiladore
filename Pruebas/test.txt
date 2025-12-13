@@ -3,45 +3,18 @@ INICIO%PROGRAMA{
     float X,Y;
 
     A = 2I;
-    B = 3I;
+    B = -3I;
 
     X = 1.5;
     Y = 2.F+1;     
 
-    int F1(int L){ 
-        int F2(cv int B){
-            
-            int F3(cv int J){
-                J = 2I;
-                J =  A + 2I;
-                return (J);
-                
-            };
-            B = F3(1I->J);
-            B =  2I + B;
-            return (B);
-        };
-        
-        L =  F2(6I->B);
+    
 
-        if (L<=15I)
-            return(10I + 10I);
-        else
-            return(4I);
-        endif;
-    };
+    if (2.1 < 3.0){
+        print("1");
+    }endif;
 
-    print(F1(B->L));
+    X = 3I + 3.1;
 
-    X = F1(B->L) + 2I;
-
-    while (B < 10I)do {
-        print(B);
-        B = B + 1I;
-    };
-
-    print(X);
-
-    print(B);
-
+    X = 2I/0I;
 }

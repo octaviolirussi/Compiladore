@@ -84,10 +84,10 @@ class CodeGenerator:
             if uso in ["CONSTANTE", "VARIABLE", "PARAMETRO"]:
                 asm_label = self._get_unique_asm_label(lexema_scope)
                 
-                # Ahora INT = DD (32 bits)
+                
                 if data_type == "INT":
                     initial_value = entry["Lexema"] if uso == "CONSTANTE" else "0"
-                    self._add_data_entry(asm_label, "DD", initial_value, data_type) # DD = 32 bits (INT)
+                    self._add_data_entry(asm_label, "DW", initial_value, data_type) # DD = 32 bits (INT)
                 elif data_type == "FLOAT":
                     if uso == "CONSTANTE":
                         lexema = str(entry["Lexema"])
@@ -111,7 +111,7 @@ class CodeGenerator:
                 result_type = self.tercetos[i].result_type.upper() if self.tercetos[i].result_type else "INT"
                 asm_label = self._get_unique_asm_label(terceto_ref)
                 if result_type == "INT":
-                    self._add_data_entry(asm_label, "DD", "0", result_type)
+                    self._add_data_entry(asm_label, "DW", "0", result_type)
                 elif result_type == "FLOAT":
                     self._add_data_entry(asm_label, "DD", "0.0", result_type)
 
@@ -166,6 +166,8 @@ class CodeGenerator:
             self.generate_return(op1_asm)
         elif t.operador == 'CALL':
             self.generate_call(t.op1, res_asm)
+        elif t.operador == 'END_PROGRAM':
+            self.asm_code.append("    JMP fin")
 
 
     def get_op_asm_label(self, op):
@@ -187,11 +189,11 @@ class CodeGenerator:
     def generate_addition(self, res_asm, op1_asm, op2_asm, result_type):
         """Genera código para la suma en 32 bits (INT) o en FLOAT (FPU)."""
         if result_type.upper() == 'INT':
-            self.asm_code.append(f"  ; Suma INT 32 bits - Terceto {len(self.asm_code)}")
-            self.asm_code.append(f"  MOV EAX, dword ptr {op1_asm}")
-            self.asm_code.append(f"  ADD EAX, dword ptr {op2_asm}")
+            self.asm_code.append(f"  ; Suma INT 16 bits")
+            self.asm_code.append(f"  MOV AX, WORD PTR [{op1_asm}]")
+            self.asm_code.append(f"  ADD AX, WORD PTR [{op2_asm}]")
             self.asm_code.append(f"  JO ErrorOverflowInt")
-            self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
+            self.asm_code.append(f"  MOV WORD PTR [{res_asm}], AX")
         
         elif result_type.upper() == 'FLOAT':
             INF_LABEL = self.runtime_labels.get("INF_CONST")
@@ -228,11 +230,12 @@ class CodeGenerator:
 
     def generate_subtraction(self, res_asm, op1_asm, op2_asm, result_type):
         if result_type.upper() == 'INT':
-            self.asm_code.append(f"  ; Resta INT 32 bits - Terceto {len(self.asm_code)}")
-            self.asm_code.append(f"  MOV EAX, dword ptr [{op1_asm}]")
-            self.asm_code.append(f"  SUB EAX, dword ptr [{op2_asm}]")
-            # self.asm_code.append(f"  JO ErrorOverflowInt")
-            self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
+            self.asm_code.append(f"  ; Resta INT 16 bits - Terceto {len(self.asm_code)}")
+            self.asm_code.append(f"  MOV AX, WORD PTR [{op1_asm}]")
+            self.asm_code.append(f"  SUB AX, WORD PTR [{op2_asm}]")
+            self.asm_code.append(f"  JO ErrorOverflowInt")
+            self.asm_code.append(f"  MOV WORD PTR [{res_asm}], AX")
+
         elif result_type.upper() == 'FLOAT':
             self.asm_code.append(f"  ; Resta FLOAT - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
@@ -245,11 +248,11 @@ class CodeGenerator:
     
     def generate_multiplication(self, res_asm, op1_asm, op2_asm, result_type):
         if result_type.upper() == 'INT':
-            self.asm_code.append(f"  ; Multiplicacion INT 32 bits - Terceto {len(self.asm_code)}")
-            self.asm_code.append(f"  MOV EAX, dword ptr [{op1_asm}]")
-            self.asm_code.append(f"  IMUL EAX, dword ptr [{op2_asm}]")
-            # self.asm_code.append(f"  JO ErrorOverflowInt")
-            self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
+            self.asm_code.append(f"  ; Multiplicacion INT 16 bits - Terceto {len(self.asm_code)}")
+            self.asm_code.append(f"  MOV AX, WORD PTR [{op1_asm}]")
+            self.asm_code.append(f"  IMUL WORD PTR [{op2_asm}]")   
+            self.asm_code.append(f"  JO ErrorOverflowInt")
+            self.asm_code.append(f"  MOV WORD PTR [{res_asm}], AX")
         elif result_type.upper() == 'FLOAT':
             self.asm_code.append(f"  ; Multiplicacion FLOAT - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
@@ -257,19 +260,26 @@ class CodeGenerator:
             self.asm_code.append(f"  FSTSW AX")
             self.asm_code.append(f"  FWAIT")
             self.asm_code.append(f"  TEST AX, 0004h")
-            # self.asm_code.append(f"  JNZ ErrorOverflowFloat")
             self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
 
     def generate_division(self, res_asm, op1_asm, op2_asm, result_type):
         if result_type.upper() == 'INT':
-            self.asm_code.append(f"  ; Division INT 32 bits - Terceto {len(self.asm_code)}")
-            self.asm_code.append(f"  MOV ECX, dword ptr [{op2_asm}]")
-            self.asm_code.append(f"  CMP ECX, 0")
+            self.asm_code.append(f"  ; Division INT 16 bits - Terceto {len(self.asm_code)}")
+
+            # divisor
+            self.asm_code.append(f"  MOV CX, WORD PTR [{op2_asm}]")
+            self.asm_code.append(f"  CMP CX, 0")
             self.asm_code.append(f"  JE ErrorDVC")
-            self.asm_code.append(f"  MOV EAX, dword ptr [{op1_asm}]")
-            self.asm_code.append(f"  CDQ")                    # Sign-extend EAX -> EDX:EAX
-            self.asm_code.append(f"  IDIV ECX")               # EAX = EDX:EAX / ECX
-            self.asm_code.append(f"  MOV dword ptr [{res_asm}], EAX")
+
+            # dividendo
+            self.asm_code.append(f"  MOV AX, WORD PTR [{op1_asm}]")
+            self.asm_code.append(f"  CWD")              
+
+            # division con signo
+            self.asm_code.append(f"  IDIV CX")           
+
+            # resultado
+            self.asm_code.append(f"  MOV WORD PTR [{res_asm}], AX")
         elif result_type.upper() == 'FLOAT':
             self.asm_code.append(f"  ; Division FLOAT - Terceto {len(self.asm_code)}")
             self.asm_code.append(f"  FLD dword ptr [{op2_asm}]")
@@ -283,9 +293,9 @@ class CodeGenerator:
             self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
 
     def generate_conv_if(self, res_asm, op1_asm):
-        self.asm_code.append(f"  ; CONV_I_F (INT a FLOAT) - Terceto {len(self.asm_code)}")
-        self.asm_code.append(f"  FILD dword ptr [{op1_asm}]")
-        self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
+        self.asm_code.append(f"  ; CONV_I_F (INT 16 → FLOAT 32)")
+        self.asm_code.append(f"  FILD WORD PTR [{op1_asm}]")
+        self.asm_code.append(f"  FSTP DWORD PTR [{res_asm}]")
 
     ## Asignación
     def generate_assignment(self, dest_asm, src_asm, dest_op, src_op, result_type):
@@ -293,8 +303,8 @@ class CodeGenerator:
         data_type_dest = entry.get("data_type").upper() if entry and entry.get("data_type") else None
 
         if data_type_dest == 'INT':
-            self.asm_code.append(f"    MOV EAX, dword ptr [{src_asm}]")
-            self.asm_code.append(f"    MOV dword ptr [{dest_asm}], EAX")
+            self.asm_code.append(f"    MOV AX, WORD PTR [{src_asm}]")
+            self.asm_code.append(f"    MOV WORD PTR [{dest_asm}], AX")
         elif data_type_dest == 'FLOAT':
             self.asm_code.append(f"    FLD dword ptr [{src_asm}]")
             self.asm_code.append(f"    FSTP dword ptr [{dest_asm}]")
@@ -305,28 +315,42 @@ class CodeGenerator:
     
     # Comparaciones
     def generate_comparison(self, res_asm, op1_asm, op2_asm, operator, result_type):
-        self.asm_code.append(f" ; Comparacion ({operator}) - Terceto {len(self.asm_code)}")
-        self.asm_code.append(f"   MOV EAX, dword ptr [{op1_asm}]")
-        self.asm_code.append(f"   CMP EAX, dword ptr [{op2_asm}]")
+        self.asm_code.append(f" ; Comparacion ({operator})")
 
-        set_instruction = ""
-        if operator == '<':
-            set_instruction = "SETL"
-        elif operator == '>':
-            set_instruction = "SETG"
-        elif operator == '==':
-            set_instruction = "SETE"
-        elif operator == '!=':
-            set_instruction = "SETNE"
-        elif operator == '<=':
-            set_instruction = "SETLE"
-        elif operator == '>=':
-            set_instruction = "SETGE"
+        if result_type.upper() == "INT":
+            self.asm_code.append(f"   MOVSX EAX, word ptr [{op1_asm}]")
+            self.asm_code.append(f"   MOVSX EBX, word ptr [{op2_asm}]")
+            self.asm_code.append(f"   CMP EAX, EBX")
 
-        if set_instruction:
-            self.asm_code.append(f"    {set_instruction} AL")
-            self.asm_code.append(f"    MOVZX EAX, AL")
-            self.asm_code.append(f"    MOV dword ptr [{res_asm}], EAX")
+            setcc = {
+                "<":  "SETL",
+                ">":  "SETG",
+                "==": "SETE",
+                "!=": "SETNE",
+                "<=": "SETLE",
+                ">=": "SETGE"
+            }[operator]
+
+        else:
+            self.asm_code.append(f"   FLD dword ptr [{op2_asm}]")  
+            self.asm_code.append(f"   FLD dword ptr [{op1_asm}]")  
+            self.asm_code.append(f"   FCOMPP")
+            self.asm_code.append(f"   FSTSW AX")
+            self.asm_code.append(f"   SAHF")
+
+            setcc = {
+                "<":  "SETB",
+                ">":  "SETA",
+                "==": "SETE",
+                "!=": "SETNE",
+                "<=": "SETBE",
+                ">=": "SETAE"
+            }[operator]
+
+        # Resultado booleano (0 o 1)
+        self.asm_code.append(f"   {setcc} AL")
+        self.asm_code.append(f"   MOVZX EAX, AL")
+        self.asm_code.append(f"   MOV word ptr [{res_asm}], AX")
         
     def generate_print(self, op_to_print):
         """
@@ -352,7 +376,9 @@ class CodeGenerator:
             label = self.get_op_asm_label(op_to_print)
 
             if data_type == "INT":
-                self.asm_code.append(f"    invoke printf, cfm$(\"%d\\n\"), dword ptr [{label}]")
+                self.asm_code.append(f"    MOV AX, WORD PTR [{label}]")
+                self.asm_code.append(f"    MOVSX EAX, AX")
+                self.asm_code.append(f"    invoke printf, cfm$(\"%d\\n\"), EAX")
             elif data_type == "FLOAT":
                 # Creamos un label temporal para almacenar el float como double
                 tmp_double_label = self._get_unique_asm_label("tmp_double")
@@ -464,7 +490,7 @@ class CodeGenerator:
         output.extend(self.asm_code)
 
         # Salto a fin al terminar el programa principal
-        output.append("    jmp fin")
+        
 
         # Handlers de error
         output.append("\n; ----- HANDLERS DE ERROR -----")

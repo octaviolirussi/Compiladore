@@ -884,33 +884,74 @@ class MyParser(Parser):
     @_('expr ">" expr')
     def expr(self, p):
         # El resultado de una comparación es siempre booleano, representado como INT (1/0)
-        result_type = 'INT' 
-        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+        temp = self.tercetos.nuevo('>', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
 
     @_('expr "<" expr')
     def expr(self, p):
-        temp = self.tercetos.nuevo('<', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+        temp = self.tercetos.nuevo('<', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
     
     @_('expr GE expr') # >=
     def expr(self, p):  
-        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+        temp = self.tercetos.nuevo('>=', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
     
     @_('expr LE expr') # <=
     def expr(self, p): 
-        temp = self.tercetos.nuevo('<=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+        temp = self.tercetos.nuevo('<=', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
     
     @_('expr EQ expr')# ==
     def expr(self, p): 
-        temp = self.tercetos.nuevo('==', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+        temp = self.tercetos.nuevo('==', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
     
     @_('expr NE expr') # !=
     def expr(self, p): 
-        temp = self.tercetos.nuevo('!=', p.expr0, p.expr1, 'INT',lineno=p.lineno)
+        type0 = self.get_type_of_value(p.expr0)
+        type1 = self.get_type_of_value(p.expr1)
+
+        if type0 == 'FLOAT' or type1 == 'FLOAT':
+            result_type = 'FLOAT'
+        else:
+            result_type = 'INT'
+        temp = self.tercetos.nuevo('!=', p.expr0, p.expr1, result_type,lineno=p.lineno)
         return temp
 
     #================================= Tipos =================================================================================================

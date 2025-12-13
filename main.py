@@ -5,7 +5,6 @@ from lexer import MyLexer
 from parser import MyParser
 from errorManager import ErrorManager
 from codeGenerator import CodeGenerator
-
 error = ErrorManager()
 
 symbol_Table = SymbolTable(error)
@@ -20,7 +19,7 @@ parser = MyParser(symbol_Table,error)
 # ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
-file = "pruebas/test_v1.txt"
+file = "pruebas/test.txt"
 try:
     with open(file, "r", encoding="utf-8") as f:
         

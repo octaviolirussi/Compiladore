@@ -512,15 +512,16 @@ class GeneradorTercetos:
             op1 = t.op1
             op2 = t.op2
 
+
             #--- Obtener tipos ---
             op1_type = None
             op2_type = None
 
             # Si son referencias a tercetos
-            if op1.startswith("[") and op1.endswith("]"):
+            if isinstance(op1, str) and op1.startswith("[") and op1.endswith("]"):
                 idx = int(op1[1:-1])
                 op1_type = self.tercetos[idx].result_type
-            if op2.startswith("[") and op2.endswith("]"):
+            if isinstance(op2, str) and op2.startswith("[") and op2.endswith("]"):
                 idx = int(op2[1:-1])
                 op2_type = self.tercetos[idx].result_type
 
@@ -530,6 +531,11 @@ class GeneradorTercetos:
                     op1_type = entry["data_type"]
                 if op2 == entry["Lexema"]:
                     op2_type = entry["data_type"]
+                if str(op1) == entry["Lexema"]:
+                    op1_type = entry["data_type"]
+                if str(op2) == entry["Lexema"]:
+                    op2_type = entry["data_type"]
+
 
             # Si todavía no se obtuvieron tipos, saltamos
             if op1_type is None or op2_type is None:
@@ -553,17 +559,20 @@ class GeneradorTercetos:
 
         self.actualizar_referencias(original,self.tercetos)
 
+
         for i, t in enumerate(self.tercetos):
             if t.operador == "CONV_I_F":
-                if not (t.op1.startswith("[") and t.op1.endswith("]")):
+                if isinstance(t.op1, (int, float)):
                     if self.tercetos[i+1].op1 == t.op1:
                         self.tercetos[i+1].op1 = f"[{i}]"
                     elif self.tercetos[i+1].op2 == t.op1:
                         self.tercetos[i+1].op2 = f"[{i}]"
                 
-                if (t.op1.startswith("[") and t.op1.endswith("]")):
+                else:
                     if self.tercetos[i+1].op1 == t.op1:
                         self.tercetos[i+1].op1 = f"[{i}]"
+                    elif self.tercetos[i+1].op2 == t.op1:
+                        self.tercetos[i+1].op2 = f"[{i}]"
     
     def correcciones(self):
         "Todas las correcciones del TP3 se ejecutan aca"
