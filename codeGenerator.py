@@ -71,9 +71,10 @@ class CodeGenerator:
         self.runtime_labels["OVF_INT"] = self._add_data_entry("OVF_INT_MSG", "DB", "'Error en tiempo de ejecución: Overflow en suma de INT.', 0", "STRING")
         self.runtime_labels["OVF_FLOAT"] = self._add_data_entry("OVF_FLOAT_MSG", "DB", "'Error en tiempo de ejecución: Overflow en suma de FLOAT.', 0", "STRING")
 
-        self.runtime_labels["INF_CONST"] = self._add_data_entry("V_INF_CONST", "DD", "7F800000h", "HEX_FLOAT")
-        self.runtime_labels["NINF_CONST"] = self._add_data_entry("V_NINF_CONST", "DD", "7F800000h", "HEX_FLOAT")
-
+        # 0x7F7FFFFF = Valor MAX (aproximadamente 3.402823466e+38)
+        # 0xFF7FFFFF = Valor MIN NEGATIVO (aproximadamente -3.402823466e+38)
+        self._add_data_entry("MAX_FLOAT_HEX", "DD", "7F7FFFFFh", "FLOAT_LIMIT")
+        self._add_data_entry("MIN_FLOAT_HEX", "DD", "0FF7FFFFFh", "FLOAT_LIMIT")
         
         # Variables / constantes / parámetros
         for entry in self.ts.symbols.values():
@@ -87,7 +88,7 @@ class CodeGenerator:
                 
                 if data_type == "INT":
                     initial_value = entry["Lexema"] if uso == "CONSTANTE" else "0"
-                    self._add_data_entry(asm_label, "DW", initial_value, data_type) # DD = 32 bits (INT)
+                    self._add_data_entry(asm_label, "DW", initial_value, data_type) 
                 elif data_type == "FLOAT":
                     if uso == "CONSTANTE":
                         lexema = str(entry["Lexema"])
@@ -99,7 +100,7 @@ class CodeGenerator:
                         initial_value = lexema
                     else:
                         initial_value = "0.0"
-                    self._add_data_entry(asm_label, "DD", initial_value, data_type)
+                    self._add_data_entry(asm_label, "DD", initial_value, data_type) # DD = 32 bits
                 elif data_type == "STRING":
                     value = entry["Lexema"]
                     self._add_data_entry(asm_label, "DB", f"{value}, 0", data_type)
@@ -196,36 +197,60 @@ class CodeGenerator:
             self.asm_code.append(f"  MOV WORD PTR [{res_asm}], AX")
         
         elif result_type.upper() == 'FLOAT':
-            INF_LABEL = self.runtime_labels.get("INF_CONST")
-            NINF_LABEL = self.runtime_labels.get("NINF_CONST")
-
-            self.asm_code.append(f"  ; Suma FLOAT - Deteccion por Valor INF")
+            MAX_FLOAT_LABEL = "MAX_FLOAT_HEX" 
+            MIN_FLOAT_LABEL = "MIN_FLOAT_HEX" 
+            AUX_FSTSW = "FPU_STATUS_WORD" # Etiqueta auxiliar de 2 bytes para FSTSW
             
+            # Asegurar que la variable auxiliar para el FSTSW esté definida en .data (DW = 16 bits)
+            self._add_data_entry(AUX_FSTSW, "DW", "0", "STATUS_WORD")
+            
+            self.asm_code.append(f"  ; Suma FLOAT (32 bits) y chequeo de Overflow")
+            
+            # Cargar operandos y realizar la suma. El resultado queda en ST(0)
             self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
             self.asm_code.append(f"  FADD dword ptr [{op2_asm}]")
             
+            # --- Chequeo de Overflow contra el límite positivo (0x7F7FFFFF) ---
+            # Cargar el límite superior. Queda en ST(0), resultado de la suma pasa a ST(1)
+            self.asm_code.append(f"  FLD dword ptr [{MAX_FLOAT_LABEL}]")
+            
+            # 3. Comparar: ST(1) (Suma) vs ST(0) (Límite). ST(0) y ST(1) se liberan.
+            self.asm_code.append(f"  FCOMPP") 
+            
+            # 4. Almacenar estado y setear flags de CPU.
+            self.asm_code.append(f"  FSTSW WORD PTR [{AUX_FSTSW}]") 
+            self.asm_code.append(f"  MOV AX, WORD PTR [{AUX_FSTSW}]") 
+            self.asm_code.append(f"  SAHF") 
+            
+            # 5. Salto si la suma fue MAYOR (OverFlow positivo)
+            # FCOMPP + SAHF: JA (Jump Above)
+            self.asm_code.append(f"  JA ErrorOverflowFloat ; Resultado > MAX_FLOAT_HEX")
+            
+            # --- Chequeo de Overflow contra el límite negativo (0xFF7FFFFF) ---
+            
+            # El resultado de FCOMPP deja la pila FPU limpia. Hay que recalcular la suma.
+            self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
+            self.asm_code.append(f"  FADD dword ptr [{op2_asm}]")
+            
+            # Cargar el límite inferior. Queda en ST(0), resultado de la suma en ST(1)
+            self.asm_code.append(f"  FLD dword ptr [{MIN_FLOAT_LABEL}]")
+            
+            # 7. Comparar: ST(1) (Suma) vs ST(0) (Límite). ST(0) y ST(1) se liberan.
+            self.asm_code.append(f"  FCOMPP") 
+            
+            # 8. Almacenar estado y setear flags de CPU.
+            self.asm_code.append(f"  FSTSW WORD PTR [{AUX_FSTSW}]") 
+            self.asm_code.append(f"  MOV AX, WORD PTR [{AUX_FSTSW}]") 
+            self.asm_code.append(f"  SAHF") 
+            
+            # Salto si la suma fue MENOR (Underflow o OverFlow negativo)
+            # FCOMPP + SAHF: JB (Jump Below)
+            self.asm_code.append(f"  JB ErrorOverflowFloat ; Resultado < MIN_FLOAT_HEX")
+            
+            # Si no hubo overflow, recalcular y guardar el resultado
+            self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
+            self.asm_code.append(f"  FADD dword ptr [{op2_asm}]")
             self.asm_code.append(f"  FSTP dword ptr [{res_asm}]") 
-            
-            # --- CHEQUEOS DE OVERFLOW ---
-            
-            # self.asm_code.append(f"  MOV EAX, dword ptr [{res_asm}]") 
-            
-            # self.asm_code.append(f"  CMP EAX, dword ptr [{INF_LABEL}]") 
-            # self.asm_code.append(f"  JE ErrorOverflowFloat") 
-            
-            # self.asm_code.append(f"  CMP EAX, dword ptr [{NINF_LABEL}]") 
-            # self.asm_code.append(f"  JE ErrorOverflowFloat")
-            
-            self.asm_code.append(f"  ; Suma FLOAT - Deteccion de Underflow y Overflow (Bandera)")
-            
-            self.asm_code.append(f"  FLD dword ptr [{op1_asm}]")
-            self.asm_code.append(f"  FADD dword ptr [{op2_asm}]")
-            
-            self.asm_code.append(f"  FSTSW AX")
-            self.asm_code.append(f"  FWAIT")
-            self.asm_code.append(f"  TEST AX, 0008h")  # Chequea el bit de excepción de Overflow (0008h)
-            self.asm_code.append(f"  JNZ ErrorOverflowFloat") # Salta si Overflow detectado
-            self.asm_code.append(f"  FSTP dword ptr [{res_asm}]")
             pass
 
     def generate_subtraction(self, res_asm, op1_asm, op2_asm, result_type):
