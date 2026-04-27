@@ -12,16 +12,15 @@ symbol_Table.load_keyword()
 lexer = MyLexer(symbol_Table,error)
 parser = MyParser(symbol_Table,error)
 
-# if len(sys.argv) != 2:
-#     print(f"Uso: python {sys.argv[0]} <ruta_del_txt>")
-#     sys.exit(1)
-
-# ruta_txt = sys.argv[1]
+if len(sys.argv) != 2:
+    print(f"Uso: python {sys.argv[0]} <ruta_del_txt>")
+    sys.exit(1)
+ruta_txt = sys.argv[1]
 
 # Abrimos el archivo en modo lectura ('r')
 file = "pruebas/test.txt"
 try:
-    with open(file, "r", encoding="utf-8") as f:
+    with open(ruta_txt, "r", encoding="utf-8") as f:
         
         text = f.read()  # lee todo el contenido y muestra los tokens
         tokens = list(lexer.tokenize(text))
@@ -66,7 +65,7 @@ else:
     # 2. Generar el código
     asm_code = code_gen.generate_code()
     
-    nombre_base_con_extension = os.path.basename(file) 
+    nombre_base_con_extension = os.path.basename(ruta_txt) 
     nombre_sin_extension, _ = os.path.splitext(nombre_base_con_extension)
     archivo_salida = nombre_sin_extension + ".asm"
  
@@ -74,7 +73,7 @@ else:
     if not os.path.exists(CARPETA_SALIDA):
         os.makedirs(CARPETA_SALIDA)
 
-    nombre_base_con_extension = os.path.basename(file) 
+    nombre_base_con_extension = os.path.basename(ruta_txt) 
     nombre_sin_extension, _ = os.path.splitext(nombre_base_con_extension)
 
     archivo_salida = os.path.join(CARPETA_SALIDA, nombre_sin_extension + ".asm")

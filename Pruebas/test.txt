@@ -1,20 +1,10 @@
 INICIO%PROGRAMA{
     int A,B,C;
-    float X,Y;
-
-    A = 2I;
-    B = -3I;
-
-    X = 1.5;
-    Y = 2.F+1;     
+    float X,Y,D,F;
+ 
 
     
 
-    if (2.1 < 3.0){
-        print("1");
-    }endif;
+    print(A);
 
-    X = 3I + 3.1;
-
-    X = 2I/0I;
 }
